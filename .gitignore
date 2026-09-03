@@ -73,3 +73,7 @@ Desktop.ini
 *.log
 logs/
 **/logs/
+
+# .NET build output
+bin/
+obj/

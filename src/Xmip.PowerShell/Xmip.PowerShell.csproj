@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- ADR-0014, amendment of 2026-08-30: the .NET 11 preview SDK compiles
+         this (global.json), and the target framework is owned by whoever
+         loads the assembly. This one loads into pwsh 7.6.5, which hosts
+         .NET 10 — proven by Import-Module refusing the net11.0 build. The
+         cli, an executable that owns its runtime, targets net11.0. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Xmip.PowerShell</RootNamespace>
+    <AssemblyName>Xmip.PowerShell</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- The whole point of this assembly is to cross a C ABI. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-time surface only. pwsh provides the real assembly at run
+         time, which is why this is never copied to the output. -->
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
