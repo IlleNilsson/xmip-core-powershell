@@ -43,6 +43,19 @@ boundary works.
 
 ## Verification
 
-`dotnet build`. Cmdlet behaviour is Pester-tested against the built module;
+`dotnet build`, then `Invoke-Pester -Path ./tests`. Eighteen tests, and seven
+of them compare this assembly against `xmip_module.h` rather than against
+itself: every status the header defines, the name each takes, and which are
+retryable and which terminal. ADR-0012 clause 1 makes the header normative and
+this C# a convenience over it; that is now enforced rather than asserted in a
+comment. They skip in a standalone clone, where the sibling header is absent.
+
 `Get-XmipModuleDescriptor` against a conforming module is the same first
 conformance rule the cli's probe exercises.
+
+**The suite builds into a temporary directory and imports from there.** A
+loaded binary module locks its own assembly: on 2026-09-03 a `dotnet build`
+here failed ten retries because a pwsh session opened the day before still held
+`bin/Debug/net10.0/Xmip.PowerShell.dll`. Testing out of `bin/` would make every
+test run do that to the next build. The repository's own output is never
+loaded.

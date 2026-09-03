@@ -16,7 +16,15 @@ on anything that changes the estate.
 
 ## State
 
-Declared, empty, and honestly so: `maturity = "planned"` in
-`architecture.toml`. The decisions that shape it are ADR-0014 (the operator
-surfaces) and ADR-0012 (the module boundary); the ABI it will call is
-`xmip-core-abi`.
+Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
+Three cmdlets answer over the ABI — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
+`Get-XmipModuleDescriptor` — and `tests/` holds eighteen Pester tests over them.
+
+Seven of those compare this assembly against `xmip_module.h` itself: every
+status the header defines, the name each one takes, and which are retryable and
+which terminal. ADR-0012 clause 1 makes the header normative and the C# here a
+convenience over it, and a comment saying so cannot enforce it. Changing one
+enum value fails four tests.
+
+The decisions that shape this are ADR-0014 (the operator surfaces) and ADR-0012
+(the module boundary); the ABI it calls is `xmip-core-abi`.
