@@ -10,15 +10,20 @@ same question differently. Here every surface calls the same ABI, so drift of
 that kind has nothing to grow from.
 
 PowerShell Core runs on .NET, so this module shares its binding assembly with
-the `cli` and `gui` surfaces. What it adds is the PowerShell shape: cmdlets
-with approved verbs, objects on the pipeline rather than text, and `-WhatIf`
-on anything that changes the estate.
+the `cli` and `gui` surfaces: the binding is `Xmip.Abi` in xmip-core-abi
+(`dotnet/Xmip.Abi`), referenced as a project, and nothing in this repository
+declares a struct of the header's own. What it adds is the PowerShell shape:
+cmdlets with approved verbs, objects on the pipeline rather than text, and
+`-WhatIf` on anything that changes the estate.
 
 ## State
 
 Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
-Three cmdlets answer over the ABI — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
-`Get-XmipModuleDescriptor` — and `tests/` holds eighteen Pester tests over them.
+Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
+`Get-XmipModuleDescriptor` — and two reach a running runtime through the
+operator boundary in `xmip_operate.h` (ADR-0027): `Get-XmipHealth -Library
+-Scope` and `Test-XmipNodeConfiguration -Library -Path`. `tests/` holds the
+Pester tests over them.
 
 Seven of those compare this assembly against `xmip_module.h` itself: every
 status the header defines, the name each one takes, and which are retryable and

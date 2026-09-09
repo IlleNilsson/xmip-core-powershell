@@ -10,7 +10,7 @@
     Author               = 'Ilian Nilsson'
     CompanyName          = 'Xmip'
     Copyright            = 'Copyright (c) Ilian Nilsson. Licensed AGPL-3.0-or-later.'
-    Description          = 'Operate Xmip from PowerShell: the module boundary, its statuses, and what a loadable module says it is.'
+    Description          = 'Operate Xmip from PowerShell: the module boundary, its statuses, what a loadable module says it is, and the health and configuration of a node through the operator boundary.'
 
     PowerShellVersion    = '7.6.5'
     CompatiblePSEditions = @('Core')
@@ -19,6 +19,8 @@
         'Get-XmipAbi'
         'ConvertFrom-XmipStatus'
         'Get-XmipModuleDescriptor'
+        'Get-XmipHealth'
+        'Test-XmipNodeConfiguration'
     )
     FunctionsToExport    = @()
     VariablesToExport    = @()
