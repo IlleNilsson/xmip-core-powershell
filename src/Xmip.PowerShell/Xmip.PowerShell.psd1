@@ -4,13 +4,14 @@
 # subprocess and never scraped JSON.
 #
 @{
-    RootModule           = 'Xmip.PowerShell.dll'
+    RootModule           = 'Xmip.PowerShell.psm1'
+    NestedModules         = @('Xmip.PowerShell.dll')
     ModuleVersion        = '0.1.0'
     GUID                 = '7c3d9f81-2e46-4b0a-9d15-8f6a1c24e7b3'
     Author               = 'Ilian Nilsson'
     CompanyName          = 'Xmip'
     Copyright            = 'Copyright (c) Ilian Nilsson. Licensed AGPL-3.0-or-later.'
-    Description          = 'Operate Xmip from PowerShell: the module boundary, its statuses, what a loadable module says it is, and the health and configuration of a node through the operator boundary.'
+    Description          = 'Operate Xmip from PowerShell and show its live health in the prompt through the shared operator surface.'
 
     PowerShellVersion    = '7.6.5'
     CompatiblePSEditions = @('Core')

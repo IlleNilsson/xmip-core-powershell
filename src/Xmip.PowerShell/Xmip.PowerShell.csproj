@@ -30,6 +30,12 @@
          2026-08-26). A sibling in the estate, not vendored: the path is the
          estate's layout, four levels up from this project. -->
     <ProjectReference Include="..\..\..\..\foundation\abi\dotnet\Xmip.Abi\Xmip.Abi.csproj" />
+    <ProjectReference Include="..\..\..\..\foundation\abi\dotnet\Xmip.Surface\Xmip.Surface.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Xmip.PowerShell.psd1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Xmip.PowerShell.psm1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
