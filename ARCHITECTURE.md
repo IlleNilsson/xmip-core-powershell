@@ -8,7 +8,10 @@ Owning capability: operator surfaces (ADR-0014)
 ## Responsibility
 
 The Xmip PowerShell surface. Cmdlets and objects over the C ABI in
-`xmip-core-abi` — never a subprocess, never scraped JSON. The three cmdlets
+`xmip-core-abi` — never a subprocess, never scraped JSON. Importing the
+module also composes a cached Xmip health segment into the existing interactive
+prompt. A background observer updates it from the shared operator change
+stream; prompt rendering never crosses the ABI or reads a file. The three cmdlets
 answer exactly what `xmip abi`, `xmip status` and `xmip probe` answer in
 `xmip-core-cli`, because two surfaces disagreeing over one boundary is the
 BizTalk console-versus-provider drift ADR-0014 exists to prevent.
@@ -40,6 +43,8 @@ boundary works.
   commits and reconciles repositories; this operates a running Xmip. They
   share a prefix and nothing else, and their commands must not collide.
 - Not a runtime, and holds no execution state.
+- Not a competing prompt framework: it preserves and invokes the prompt that
+  was installed before it, and restores that prompt when the module is removed.
 
 ## Verification
 
