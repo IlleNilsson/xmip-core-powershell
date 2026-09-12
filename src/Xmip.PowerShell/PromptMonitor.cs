@@ -1,10 +1,23 @@
 using Xmip.Abi.Operate;
 using Xmip.Surface;
+using System.Globalization;
 
 namespace Xmip.PowerShell;
 
-/// <summary>A prompt-safe rendering of the latest operator snapshot.</summary>
-public sealed record XmipPromptSegment(string Text, ConsoleColor Color);
+/// <summary>One coloured part of the compact prompt segment.</summary>
+public sealed record XmipPromptPart(string Text, ConsoleColor Color);
+
+/// <summary>A prompt-safe, independently coloured rendering of a snapshot.</summary>
+public sealed record XmipPromptSegment(IReadOnlyList<XmipPromptPart> Parts)
+{
+    public XmipPromptSegment(string text, ConsoleColor color)
+        : this([new XmipPromptPart(text, color)])
+    {
+    }
+
+    /// <summary>The uncoloured equivalent, useful outside an interactive host.</summary>
+    public string Text => string.Concat(Parts.Select(part => part.Text));
+}
 
 /// <summary>
 /// Follows Xmip in the background and exposes only an atomic cached segment to
@@ -16,9 +29,78 @@ public static class PromptMonitor
     private static CancellationTokenSource? _stop;
     private static Task? _worker;
     private static XmipPromptSegment _current = new("[Xmip connecting]", ConsoleColor.DarkGray);
+    private static IOperatorSurface? _surface;
+    private static IReadOnlyList<HealthRecord> _health = [];
+    private static ActivitySummary _activity = new(
+        ScopeTree.Root, null, null, null, null, null, null);
 
     /// <summary>The latest cached segment; reading it cannot block.</summary>
     public static XmipPromptSegment Current => Volatile.Read(ref _current);
+
+    /// <summary>The latest health snapshot used by the prompt and provider.</summary>
+    public static IReadOnlyList<HealthRecord> Health => Volatile.Read(ref _health);
+
+    /// <summary>The latest cluster activity used by the prompt and provider.</summary>
+    public static ActivitySummary Activity => Volatile.Read(ref _activity);
+
+    /// <summary>
+    /// Activity for an explicit provider query. The prompt itself never calls
+    /// this; it reads <see cref="Activity"/> without blocking.
+    /// </summary>
+    public static ActivitySummary ActivityAt(string scope)
+    {
+        if (scope == ScopeTree.Root)
+        {
+            return Activity;
+        }
+
+        IOperatorSurface? surface = Volatile.Read(ref _surface);
+
+        try
+        {
+            return surface?.Activity(scope)
+                ?? new ActivitySummary(scope, null, null, null, null, null, null);
+        }
+        catch (ObjectDisposedException)
+        {
+            return new ActivitySummary(scope, null, null, null, null, null, null);
+        }
+    }
+
+    /// <summary>Describe one provider path through the shared surface model.</summary>
+    public static ScopeItem ScopeAt(string scope)
+    {
+        IOperatorSurface? surface = Volatile.Read(ref _surface);
+
+        try
+        {
+            return surface?.Describe(scope)
+                ?? ScopeItem.From(scope,
+                    [.. Health.Where(record => ScopeTree.Beneath(record.Scope, scope))],
+                    ActivityAt(scope));
+        }
+        catch (ObjectDisposedException)
+        {
+            return ScopeItem.From(scope,
+                [.. Health.Where(record => ScopeTree.Beneath(record.Scope, scope))],
+                ActivityAt(scope));
+        }
+    }
+
+    /// <summary>Read direct provider children through the shared surface model.</summary>
+    public static IReadOnlyList<ScopeItem> ChildrenAt(string scope)
+    {
+        IOperatorSurface? surface = Volatile.Read(ref _surface);
+
+        try
+        {
+            return surface?.Children(scope) ?? [];
+        }
+        catch (ObjectDisposedException)
+        {
+            return [];
+        }
+    }
 
     /// <summary>Begin observing once. Safe to call on repeated imports.</summary>
     public static void Start()
@@ -53,6 +135,7 @@ public static class PromptMonitor
         try
         {
             surface = OpenSurface();
+            Volatile.Write(ref _surface, surface);
 
             await foreach (SurfaceChange _ in surface.WatchAsync(stop).ConfigureAwait(false))
             {
@@ -71,6 +154,7 @@ public static class PromptMonitor
         }
         finally
         {
+            Volatile.Write(ref _surface, null);
             if (surface is IDisposable disposable)
             {
                 disposable.Dispose();
@@ -101,19 +185,59 @@ public static class PromptMonitor
     private static void Publish(IOperatorSurface surface)
     {
         IReadOnlyList<HealthRecord> records = surface.Health(ScopeTree.Root);
-        HealthState state = ScopeTree.Rollup(records) ?? HealthState.Done;
-        string name = records.Count == 0 ? "unavailable" : state.ToString().ToLowerInvariant();
+        ActivitySummary activity = surface.Activity(ScopeTree.Root);
+        Volatile.Write(ref _health, records);
+        Volatile.Write(ref _activity, activity);
 
-        ConsoleColor color = state switch
+        if (records.Count == 0 && !activity.HasValues)
         {
-            HealthState.Fine => ConsoleColor.Green,
-            HealthState.Working => ConsoleColor.Cyan,
-            HealthState.Paused or HealthState.Stressed or HealthState.Holding =>
-                ConsoleColor.Yellow,
-            HealthState.Exhausted or HealthState.Done => ConsoleColor.Red,
-            _ => ConsoleColor.DarkGray,
+            Volatile.Write(
+                ref _current,
+                new XmipPromptSegment("[Xmip unavailable]", ConsoleColor.DarkRed));
+            return;
+        }
+
+        Volatile.Write(
+            ref _current,
+            new XmipPromptSegment(
+            [
+                new("[", ConsoleColor.DarkGray),
+                Part("R", activity.Received, ConsoleColor.Cyan),
+                new(" ", ConsoleColor.DarkGray),
+                Part("P", activity.Processed, ConsoleColor.Blue),
+                new(" ", ConsoleColor.DarkGray),
+                Part("S", activity.Sent, ConsoleColor.Green),
+                new(" ", ConsoleColor.DarkGray),
+                Part("T", activity.Retrying, ConsoleColor.Yellow),
+                new(" ", ConsoleColor.DarkGray),
+                Part("F", activity.Failed, ConsoleColor.Red),
+                new("]", ConsoleColor.DarkGray),
+            ]));
+    }
+
+    /// <summary>Apply a provider action to a live scope.</summary>
+    public static ScopeOperation Control(string scope, string action, string who)
+    {
+        IOperatorSurface surface = Volatile.Read(ref _surface)
+            ?? throw new InvalidOperationException("Xmip operator surface is not connected.");
+
+        ScopeAction parsed = action.ToLowerInvariant() switch
+        {
+            "paused" or "pause" => ScopeAction.Pause,
+            "resume" or "resumed" => ScopeAction.Resume,
+            "start" or "started" => ScopeAction.Start,
+            "stop" or "stopped" => ScopeAction.Stop,
+            "restart" or "restarted" => ScopeAction.Restart,
+            _ => throw new ArgumentException(
+                "Action must be Pause, Resume, Start, Stop, or Restart.", nameof(action)),
         };
 
-        Volatile.Write(ref _current, new XmipPromptSegment($"[Xmip {name}]", color));
+        return surface.ControlScope(scope, parsed, who);
     }
+
+    private static string Figure(ulong? value) =>
+        value?.ToString("N0", CultureInfo.InvariantCulture) ?? "–";
+
+    private static XmipPromptPart Part(string letter, ulong? value, ConsoleColor active) =>
+        new($"{letter}{Figure(value)}", value is > 0 ? active : ConsoleColor.DarkGray);
 }
