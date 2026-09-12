@@ -27,7 +27,7 @@ operator boundary in `xmip_operate.h` (ADR-0027): `Get-XmipHealth -Library
 Pester tests over them.
 
 When the module is imported into an interactive shell it prepends a compact,
-coloured segment such as `[Xmip fine]` or `[Xmip holding]` to the prompt
+colored segment such as `[Xmip fine]` or `[Xmip holding]` to the prompt
 already installed. It composes with posh-git and other prompt providers rather
 than replacing their result. A background observer follows the shared
 `Xmip.Surface` change stream and updates an in-memory segment; the prompt
