@@ -123,6 +123,29 @@ Describe 'The module loads and exports what it says' {
     }
 }
 
+Describe 'The Xmip provider' {
+    It 'creates the default Xmip drive' {
+        (Get-PSProvider -PSProvider Xmip).Name | Should -Be 'Xmip'
+        (Get-PSDrive -Name Xmip).Provider.Name | Should -Be 'Xmip'
+        Test-Path 'Xmip:\' | Should -BeTrue
+    }
+
+    It 'maps provider paths and scope URIs to the same canonical scope' {
+        [Xmip.PowerShell.XmipProvider]::ToScope('Xmip:\edge-01\receive\orders') |
+            Should -Be 'xmip:///edge-01/receive/orders'
+        [Xmip.PowerShell.XmipProvider]::ToScope('xmip:///edge-01/receive/orders') |
+            Should -Be 'xmip:///edge-01/receive/orders'
+    }
+
+    It 'exports all five lifecycle commands' {
+        foreach ($name in @(
+            'Suspend-XmipScope', 'Resume-XmipScope', 'Start-XmipScope',
+            'Stop-XmipScope', 'Restart-XmipScope')) {
+            $script:Module.ExportedCmdlets.Keys | Should -Contain $name
+        }
+    }
+}
+
 Describe 'The binding agrees with the normative header' {
     It 'finds the header to compare against' -Skip:($script:HeaderStatus.Count -eq 0) {
         $script:HeaderStatus.Count | Should -BeGreaterThan 0
