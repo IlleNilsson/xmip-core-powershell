@@ -11,11 +11,7 @@ if ($null -eq $script:PreviousPrompt) {
 
 $script:XmipPrompt = {
     $segment = [Xmip.PowerShell.PromptMonitor]::Current
-
-    foreach ($part in $segment.Parts) {
-        Write-Host -NoNewline $part.Text -ForegroundColor $part.Color
-    }
-
+    Write-Host -NoNewline $segment.Text -ForegroundColor $segment.Color
     Write-Host -NoNewline ' '
     & $script:PreviousPrompt
 }

@@ -25,9 +25,6 @@
         'Test-XmipNodeConfiguration'
         'Suspend-XmipScope'
         'Resume-XmipScope'
-        'Start-XmipScope'
-        'Stop-XmipScope'
-        'Restart-XmipScope'
     )
     FunctionsToExport    = @()
     VariablesToExport    = @()
