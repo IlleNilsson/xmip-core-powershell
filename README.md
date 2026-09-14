@@ -20,16 +20,14 @@ cmdlets with approved verbs, objects on the pipeline rather than text, and
 ## State
 
 Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
-Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
-`Get-XmipModuleDescriptor` — and four reach a running runtime through the
-operator boundary in `xmip_operate.h` (ADR-0027): `Get-XmipHealth -Library
--Scope`, `Test-XmipNodeConfiguration -Library -Path`, and the two acts the
-boundary carries, `Suspend-XmipScope -Library -Scope [-Who]` and
-`Resume-XmipScope -Library -Scope`, both with `-WhatIf`, both emitting the
-`ScopeOperation` the `xmip` executable renders. There is no Start-, Stop- or
-Restart-XmipScope: the boundary has no such call, because the thing that
+Three cmdlets form the Runtime surface. `Get-XmipRuntime -View
+Health|Abi|Status|Module` reads the boundary. `Test-XmipRuntime -Target
+NodeConfiguration` validates proposed node TOML. `Set-XmipRuntime -State
+Paused|Running` carries the boundary's two acts, supports `-WhatIf`, and emits
+the `ScopeOperation` the `xmip` executable renders. There is no Start-, Stop-
+or Restart-XmipRuntime: the boundary has no such call, because the thing that
 watches must not be able to stop the thing it watches. `tests/` holds the
-Pester tests over them.
+Pester tests over the three commands.
 
 The public contract is the cmdlet names and the shape of the objects they
 emit. Both are pre-alpha and unstable, like the cli's output — but objects, so
@@ -95,7 +93,7 @@ beside the binding (ADR-0014, amendment of 2026-09-09); the copy this
 repository carried until 2026-09-14 tested the same assembly against the same
 header and is gone.
 
-`Get-XmipModuleDescriptor` against a conforming module is the same first
+`Get-XmipRuntime -View Module` against a conforming module is the same first
 conformance rule the cli's probe exercises.
 
 **The suite builds into a temporary directory and imports from there.** A

@@ -7,7 +7,7 @@
     RootModule           = 'Xmip.PowerShell.psm1'
     RequiredAssemblies    = @('Xmip.PowerShell.dll')
     NestedModules         = @('Xmip.PowerShell.dll')
-    ModuleVersion        = '0.3.0'
+    ModuleVersion        = '1.0.0'
     GUID                 = '7c3d9f81-2e46-4b0a-9d15-8f6a1c24e7b3'
     Author               = 'Ilian Nilsson'
     CompanyName          = 'Xmip'
@@ -18,13 +18,9 @@
     CompatiblePSEditions = @('Core')
 
     CmdletsToExport      = @(
-        'Get-XmipAbi'
-        'ConvertFrom-XmipStatus'
-        'Get-XmipModuleDescriptor'
-        'Get-XmipHealth'
-        'Test-XmipNodeConfiguration'
-        'Suspend-XmipScope'
-        'Resume-XmipScope'
+        'Get-XmipRuntime'
+        'Test-XmipRuntime'
+        'Set-XmipRuntime'
     )
     FunctionsToExport    = @()
     VariablesToExport    = @()
