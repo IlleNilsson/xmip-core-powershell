@@ -20,4 +20,4 @@
 
 # The file to read when Surface = "snapshot". A path with no file behind it
 # is said so — [Xmip unavailable] — not silently replaced.
-# Snapshot = "C:/Users/you/AppData/Local/Temp/playground-snapshot.toml"
+# Snapshot = "D:/Repos/Xmip/.local-work/playground/C1-snapshot.toml"
