@@ -1,0 +1,23 @@
+# The PowerShell module's configuration, beside the module. TOML, like
+# everything Xmip configures — Xmip uses no JSON for configuration anywhere.
+# The same keys as the GUI hosts' xmip.gui.toml and the executable's
+# xmip.cli.toml, read by the same reader (ADR-0052).
+#
+# Paths are relative to this file's directory.
+
+[Xmip]
+# Which surface the prompt follows (ADR-0052 clause 3): "native", the
+# runtime's library loaded into this session, or "snapshot", a file a node or
+# the Playground publishes. Stated here and never guessed from an environment
+# variable or a file in a temp directory. With no surface named, the prompt
+# follows whatever library the one discovery rule finds — RuntimeLibrary
+# below, else XMIP_RUNTIME_LIBRARY, else the library beside the module — and
+# says [Xmip not configured] while nothing answers.
+# Surface = "native"
+
+# The runtime's native library, exporting xmip_operate_v1.
+# RuntimeLibrary = "../../../../platform/runtime/target/debug/xmip_core_runtime.dll"
+
+# The file to read when Surface = "snapshot". A path with no file behind it
+# is said so — [Xmip unavailable] — not silently replaced.
+# Snapshot = "C:/Users/you/AppData/Local/Temp/playground-snapshot.toml"

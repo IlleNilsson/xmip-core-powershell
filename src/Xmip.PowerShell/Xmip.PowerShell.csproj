@@ -36,6 +36,9 @@
   <ItemGroup>
     <None Update="Xmip.PowerShell.psd1" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Xmip.PowerShell.psm1" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The surface the prompt follows is stated here, beside the module,
+         never guessed (ADR-0052 clause 3). -->
+    <None Update="xmip.powershell.toml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

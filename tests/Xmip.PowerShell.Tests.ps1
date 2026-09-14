@@ -4,19 +4,19 @@
 <#
     The operator module had no tests, and ARCHITECTURE.md said it did.
 
-    Two things are checked here and they are not the same thing.
-
-    **The binding agrees with the header.** ADR-0012 clause 1 makes
-    `include/xmip_module.h` normative and this assembly's C# a convenience over
-    it, and the file says so in its own remarks: if the two ever differ, the
-    header is right and this is a defect. A comment cannot enforce that. These
-    tests parse the header and compare it to what the assembly actually
-    exposes, so the defect fails a run rather than waiting for a module to
-    return a status nobody handles.
-
-    **The cmdlets answer.** Names, manifest agreement, and the objects they
+    What is checked here is the PowerShell shape and nothing else: the
+    cmdlets answer, by name, by manifest agreement, and by the objects they
     emit. Objects rather than text is the whole reason this surface exists
     (ADR-0014), so the tests assert on properties and never on rendering.
+
+    The binding's agreement with the normative header is not tested here.
+    It was, until 2026-09-14: this file parsed `include/xmip_module.h` and
+    compared it with what the assembly exposed. Since ADR-0014's amendment of
+    2026-09-09 the binding is one project in xmip-core-abi, and
+    `Xmip.Abi.Tests` (Header.cs, XmipStatusTests.cs) compares that one
+    binding with the header. A second copy of the comparison here tested the
+    same assembly against the same header, and would have drifted from the
+    first — which is the failure a shared binding exists to prevent.
 
     ## Why this builds into a temporary directory
 
@@ -36,34 +36,8 @@
     a green run reads as a broken suite.
 #>
 
-BeforeDiscovery {
-    # Pester's own hook for anything a test name or a -Skip argument needs.
-    #
-    # Discovery runs before BeforeAll, so a value computed there is still $null
-    # when the skip is decided: $null.Count is 0 and every header test skips on
-    # a machine that has the header. That is what the first run of this file
-    # did.
-    #
-    # The helpers are dot-sourced rather than declared at file scope. A
-    # file-scope advanced function called from inside BeforeAll aborts the whole
-    # container in Pester 6.1.0, with every test reported failed and no message
-    # on any of them. HeaderStatus.ps1 carries the reduction.
-    . (Join-Path $PSScriptRoot 'HeaderStatus.ps1')
-
-    [string] $header =
-        Join-Path $PSScriptRoot '../../../foundation/abi/include/xmip_module.h'
-
-    $script:HeaderStatus = Get-XmipHeaderStatus -Path $header
-}
-
 BeforeAll {
-    . (Join-Path $PSScriptRoot 'HeaderStatus.ps1')
-
     [string] $script:Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-    [string] $script:Header =
-        Join-Path $script:Root '../../foundation/abi/include/xmip_module.h'
-
-    [hashtable] $script:HeaderStatus = Get-XmipHeaderStatus -Path $script:Header
 
     $script:Project = Join-Path $script:Root 'src/Xmip.PowerShell/Xmip.PowerShell.csproj'
     $script:Manifest = Join-Path $script:Root 'src/Xmip.PowerShell/Xmip.PowerShell.psd1'
@@ -123,6 +97,32 @@ Describe 'The module loads and exports what it says' {
     }
 }
 
+Describe 'The prompt reads its surface from the document beside the module' {
+    # ADR-0052 clause 3: the surface a host reads is stated in its
+    # configuration, never guessed. The module's document ships beside it and
+    # is read through the same choice as the GUI hosts and the executable.
+    It 'ships xmip.powershell.toml beside the module' {
+        [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
+
+        Test-Path -LiteralPath $document | Should -BeTrue
+        $document | Should -BeLike "*$([Xmip.PowerShell.PromptMonitor]::ConfigurationFile)"
+    }
+
+    It 'paints every mood by the color name the shared English gives it' {
+        # One mood-to-color map, in Xmip.Surface; the console picks its
+        # nearest color from the name (ADR-0041, ADR-0052 clause 1).
+        foreach ($mood in [System.Enum]::GetValues([Xmip.Abi.Operate.HealthState])) {
+            [string] $color = [Xmip.Surface.English]::Color($mood)
+
+            [Xmip.PowerShell.PromptMonitor]::Paint($color) |
+                Should -BeOfType ([System.ConsoleColor]) -Because "$mood is $color"
+        }
+
+        [Xmip.PowerShell.PromptMonitor]::Paint('green') | Should -Be 'Green'
+        [Xmip.PowerShell.PromptMonitor]::Paint('red') | Should -Be 'Red'
+    }
+}
+
 Describe 'The two acts the boundary carries' {
     # ADR-0027 clause 5: pause and resume, and nothing that stops what it
     # watches. A Start-, Stop- or Restart-XmipScope appearing here is a
@@ -143,80 +143,6 @@ Describe 'The two acts the boundary carries' {
         foreach ($name in @('Suspend-XmipScope', 'Resume-XmipScope')) {
             $script:Module.ExportedCmdlets[$name].Parameters.Keys | Should -Contain 'WhatIf'
         }
-    }
-}
-
-Describe 'The binding agrees with the normative header' {
-    It 'finds the header to compare against' -Skip:($script:HeaderStatus.Count -eq 0) {
-        $script:HeaderStatus.Count | Should -BeGreaterThan 0
-    }
-
-    It 'knows every status the header defines' -Skip:($script:HeaderStatus.Count -eq 0) {
-        # A status the header has and the binding does not is a code that
-        # reaches an operator as "not a status this build knows" — the exact
-        # failure ADR-0012 clause 1 says is a defect in the binding.
-        foreach ($constant in $script:HeaderStatus.Keys) {
-            [int] $code = $script:HeaderStatus[$constant]
-            [PSObject] $answer = ConvertFrom-XmipStatus -Code $code
-
-            [string] $because = "$constant is $code in the header"
-
-            $answer.Name | Should -Not -Be 'Unknown' -Because $because
-        }
-    }
-
-    It 'gives each status the name the header implies' -Skip:($script:HeaderStatus.Count -eq 0) {
-        foreach ($constant in $script:HeaderStatus.Keys) {
-            [int] $code = $script:HeaderStatus[$constant]
-            [string] $expected = ConvertTo-XmipMemberName -Constant $constant
-            [PSObject] $answer = ConvertFrom-XmipStatus -Code $code
-
-            $answer.Name | Should -Be $expected -Because "XMIP_$constant is $code"
-        }
-    }
-
-    It 'retries exactly what the header says is retryable' -Skip:($script:HeaderStatus.Count -eq 0) {
-        # XMIP_STATUS_IS_RETRYABLE in the header: timeout, unavailable,
-        # capacity, again. Not Io, which covers faults that repeat. Getting
-        # this wrong makes xmip-core-resilience retry something that cannot
-        # succeed, or give up on something that would have.
-        [string[]] $retryable = @('E_TIMEOUT', 'E_UNAVAILABLE', 'E_CAPACITY', 'E_AGAIN')
-
-        foreach ($constant in $script:HeaderStatus.Keys) {
-            [int] $code = $script:HeaderStatus[$constant]
-            [bool] $expected = $constant -in $retryable
-            [PSObject] $answer = ConvertFrom-XmipStatus -Code $code
-
-            $answer.Retryable | Should -Be $expected -Because "XMIP_$constant"
-        }
-    }
-
-    It 'calls terminal exactly what the header says is terminal' -Skip:($script:HeaderStatus.Count -eq 0) {
-        [string[]] $terminal = @('E_INTERNAL', 'E_PANIC')
-
-        foreach ($constant in $script:HeaderStatus.Keys) {
-            [int] $code = $script:HeaderStatus[$constant]
-            [bool] $expected = $constant -in $terminal
-            [PSObject] $answer = ConvertFrom-XmipStatus -Code $code
-
-            $answer.Terminal | Should -Be $expected -Because "XMIP_$constant"
-        }
-    }
-
-    It 'speaks the ABI version the header declares' -Skip:($script:HeaderStatus.Count -eq 0) {
-        [string] $header = Join-Path $script:Root '../../foundation/abi/include/xmip_module.h'
-        [string] $text = Get-Content -LiteralPath $header -Raw
-
-        $text | Should -Match '#define\s+XMIP_ABI_VERSION\s+1u?'
-        (Get-XmipAbi).AbiVersion | Should -Be 1
-    }
-
-    It 'names the entrypoint the header declares' -Skip:($script:HeaderStatus.Count -eq 0) {
-        [string] $header = Join-Path $script:Root '../../foundation/abi/include/xmip_module.h'
-        [string] $text = Get-Content -LiteralPath $header -Raw
-
-        $text | Should -Match 'xmip_create_module_v1'
-        (Get-XmipAbi).Entrypoint | Should -Be 'xmip_create_module_v1'
     }
 }
 
