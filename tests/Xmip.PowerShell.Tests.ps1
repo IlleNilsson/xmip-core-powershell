@@ -123,25 +123,25 @@ Describe 'The module loads and exports what it says' {
     }
 }
 
-Describe 'The Xmip provider' {
-    It 'creates the default Xmip drive' {
-        (Get-PSProvider -PSProvider Xmip).Name | Should -Be 'Xmip'
-        (Get-PSDrive -Name Xmip).Provider.Name | Should -Be 'Xmip'
-        Test-Path 'Xmip:\' | Should -BeTrue
-    }
-
-    It 'maps provider paths and scope URIs to the same canonical scope' {
-        [Xmip.PowerShell.XmipProvider]::ToScope('Xmip:\edge-01\receive\orders') |
-            Should -Be 'xmip:///edge-01/receive/orders'
-        [Xmip.PowerShell.XmipProvider]::ToScope('xmip:///edge-01/receive/orders') |
-            Should -Be 'xmip:///edge-01/receive/orders'
-    }
-
-    It 'exports all five lifecycle commands' {
-        foreach ($name in @(
-            'Suspend-XmipScope', 'Resume-XmipScope', 'Start-XmipScope',
-            'Stop-XmipScope', 'Restart-XmipScope')) {
+Describe 'The two acts the boundary carries' {
+    # ADR-0027 clause 5: pause and resume, and nothing that stops what it
+    # watches. A Start-, Stop- or Restart-XmipScope appearing here is a
+    # cmdlet the boundary cannot honor.
+    It 'exports Suspend-XmipScope and Resume-XmipScope' {
+        foreach ($name in @('Suspend-XmipScope', 'Resume-XmipScope')) {
             $script:Module.ExportedCmdlets.Keys | Should -Contain $name
+        }
+    }
+
+    It 'exports no start, stop or restart' {
+        foreach ($name in @('Start-XmipScope', 'Stop-XmipScope', 'Restart-XmipScope')) {
+            $script:Module.ExportedCmdlets.Keys | Should -Not -Contain $name
+        }
+    }
+
+    It 'supports -WhatIf on both, because both change the estate' {
+        foreach ($name in @('Suspend-XmipScope', 'Resume-XmipScope')) {
+            $script:Module.ExportedCmdlets[$name].Parameters.Keys | Should -Contain 'WhatIf'
         }
     }
 }

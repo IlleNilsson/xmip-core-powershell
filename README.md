@@ -1,7 +1,7 @@
 # xmip-core-powershell
 
-The PowerShell operator surface: cmdlets and objects over the Xmip ABI, a live
-`Xmip:` provider, and an operational summary in the interactive prompt.
+The PowerShell operator surface: cmdlets and objects over the Xmip ABI, plus
+a live Xmip status segment in the interactive prompt.
 
 **Not a subprocess.** An earlier design had this module driving the `xmip`
 executable and shaping its JSON into objects; ADR-0014 replaced it. Scraping
@@ -21,30 +21,24 @@ cmdlets with approved verbs, objects on the pipeline rather than text, and
 
 Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
-`Get-XmipModuleDescriptor` — and two reach a running runtime through the
+`Get-XmipModuleDescriptor` — and four reach a running runtime through the
 operator boundary in `xmip_operate.h` (ADR-0027): `Get-XmipHealth -Library
--Scope` and `Test-XmipNodeConfiguration -Library -Path`. `tests/` holds the
+-Scope`, `Test-XmipNodeConfiguration -Library -Path`, and the two acts the
+boundary carries, `Suspend-XmipScope -Library -Scope [-Who]` and
+`Resume-XmipScope -Library -Scope`, both with `-WhatIf`, both emitting the
+`ScopeOperation` the `xmip` executable renders. There is no Start-, Stop- or
+Restart-XmipScope: the boundary has no such call, because the thing that
+watches must not be able to stop the thing it watches. `tests/` holds the
 Pester tests over them.
 
-When the module is imported into an interactive shell it creates the `Xmip:`
-drive and prepends a compact, colored segment such as
-`[R12 P10 S9 T1 F0]` to the prompt. The five independently colored letters
-mean Received, Processed, Sent, Retrying and Failed
+When the module is imported into an interactive shell it prepends a compact,
+colored segment such as `[Xmip fine]` or `[Xmip holding]` to the prompt
 already installed. It composes with posh-git and other prompt providers rather
 than replacing their result. A background observer follows the shared
 `Xmip.Surface` change stream and updates an in-memory segment; the prompt
 itself performs no runtime call, file read, subprocess, wait, or poll.
 `XMIP_RUNTIME_LIBRARY` selects the native runtime by the estate-wide rule.
 For a published file instead, set `XMIP_SNAPSHOT`.
-
-Navigate the same live scope tree with `Get-ChildItem Xmip:\`. Every returned
-object carries health plus the five activity figures. `Set-Item` applies an
-operation to a scope, for example `Set-Item Xmip:\edge-01\receive\orders
--Value Paused`; the matching `Suspend-XmipScope`, `Resume-XmipScope`,
-`Start-XmipScope`, `Stop-XmipScope`, and `Restart-XmipScope` commands accept
-either provider paths or Xmip scope URIs and support `-WhatIf`. The current
-runtime implements pause/resume; start/stop/restart remain explicit unsupported
-operations until runtime host-service lifecycle is implemented.
 
 Seven of those compare this assembly against `xmip_module.h` itself: every
 status the header defines, the name each one takes, and which are retryable and

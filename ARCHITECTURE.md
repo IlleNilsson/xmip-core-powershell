@@ -9,8 +9,7 @@ Owning capability: operator surfaces (ADR-0014)
 
 The Xmip PowerShell surface. Cmdlets and objects over the C ABI in
 `xmip-core-abi` — never a subprocess, never scraped JSON. Importing the
-module also exposes the live scope tree as the `Xmip:` PowerShell provider and
-composes a cached five-figure activity segment into the existing interactive
+module also composes a cached Xmip health segment into the existing interactive
 prompt. A background observer updates it from the shared operator change
 stream; prompt rendering never crosses the ABI or reads a file. The three cmdlets
 answer exactly what `xmip abi`, `xmip status` and `xmip probe` answer in
@@ -46,8 +45,10 @@ boundary works.
 - Not a runtime, and holds no execution state.
 - Not a competing prompt framework: it preserves and invokes the prompt that
   was installed before it, and restores that prompt when the module is removed.
-- Not a filesystem: provider paths are projections of canonical `xmip:///`
-  scope URIs. Provider writes are operator actions, never file mutations.
+- Not a drive. A PowerShell provider over the scope tree was proposed on
+  2026-09-12 and declined on 2026-09-14: no record asks for one, and the
+  BizTalk provider is ADR-0014's example of a surface that drifted. Objects on
+  the pipeline are the PowerShell shape here.
 
 ## Verification
 
