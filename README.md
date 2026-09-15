@@ -61,6 +61,24 @@ and says `[Xmip not configured]` while nothing answers. The mood's color is
 the one `Xmip.Surface` names for it (ADR-0041); the console paints the nearest
 of its sixteen.
 
+## Seeing it
+
+In a fresh pwsh, nothing imported yet, from the estate root:
+
+```powershell
+dotnet build module/operation/powershell/src/Xmip.PowerShell
+Import-Module posh-git
+Import-Module ./Xmip/Xmip.psd1
+Import-Module module/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
+Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip -Nodes R1, P1, S1
+```
+
+Press Enter after the import and the prompt says `[Xmip unavailable]` until
+the roll publishes; a few seconds after the roll starts it says
+`[R12 P11 S10 T0 F0]`, in color, and moves on every Enter. `Stop-XmipTest`
+ends the roll. Build before you import, never after, in the same session: a
+loaded module locks its assemblies, and a build into them fails.
+
 ## Runtime
 
 Compiled by the .NET 11 preview SDK, targeting net10.0 — ADR-0014's amendment

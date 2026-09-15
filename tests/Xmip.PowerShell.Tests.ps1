@@ -133,8 +133,10 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
 
         [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
-        [Xmip.Surface.SurfaceChoice]::IsChosen([Xmip.Surface.TomlDocument]::Read($document)) |
-            Should -BeFalse -Because 'the shipped document names no surface'
+        $shipped = [Xmip.Surface.TomlDocument]::Read($document)
+        [Xmip.Surface.SurfaceChoice]::IsChosen($shipped) |
+            Should -BeTrue -Because 'the shipped document follows the roll started as C1'
+        $shipped['Xmip:Snapshot'] | Should -BeLike '*C1-snapshot.toml'
     }
 
     It 'says R P S T F with their letters and no word; the color carries the mood' {
