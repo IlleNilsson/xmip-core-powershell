@@ -53,6 +53,11 @@ BeforeAll {
 
     Copy-Item -LiteralPath $script:Manifest -Destination $script:Output -Force
 
+    # A prompt provider that exports its prompt from a module, as posh-git
+    # does, in force before the module is imported.
+    New-Module -Name FakePromptProvider -ScriptBlock { function prompt { 'provider> ' } } |
+        Import-Module -Global
+
     Import-Module (Join-Path $script:Output 'Xmip.PowerShell.psd1') -Force
 
     $script:Module = Get-Module -Name Xmip.PowerShell
@@ -61,6 +66,7 @@ BeforeAll {
 
 AfterAll {
     Remove-Module -Name Xmip.PowerShell -Force -ErrorAction SilentlyContinue
+    Remove-Module -Name FakePromptProvider -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'The module loads and exports what it says' {
@@ -106,6 +112,15 @@ Describe 'The prompt reads its surface from the document beside the module' {
 
         Test-Path -LiteralPath $document | Should -BeTrue
         $document | Should -BeLike "*$([Xmip.PowerShell.PromptMonitor]::ConfigurationFile)"
+    }
+
+    It 'chains to the prompt a provider module exported, as posh-git does' {
+        # 2026-09-15: the git segment vanished because the module looked only
+        # for a global prompt function. What was in force renders after ours.
+        [string] $rendered = & (Get-Item Function:\prompt).ScriptBlock 6>$null
+
+        $rendered | Should -Be 'provider> '
+        (Get-Item Function:\prompt).Module.Name | Should -Be 'Xmip.PowerShell'
     }
 
     It 'reads a snapshot in pwsh, so every assembly it needs lies beside it' {
