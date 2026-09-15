@@ -50,8 +50,10 @@ found when the module is removed. A background observer follows the shared `Xmip
 stream and updates an in-memory segment; the prompt itself performs no runtime
 call, file read, subprocess, wait, or poll. Which surface it follows is stated
 in `xmip.powershell.toml` beside the module, with the same `[Xmip]` keys as
-the GUI hosts and the executable — `Surface = "native" | "snapshot"`,
-`RuntimeLibrary`, `Snapshot` — and never guessed (ADR-0052 clause 3). With no
+the GUI hosts and the executable — `Surface = "native" | "snapshot" |
+"remote"`, `RuntimeLibrary`, `Snapshot`, `Url` — and never guessed (ADR-0052
+clause 3). Remote, it follows a web host's surface hub over SignalR and is
+told when that host's surface changes (ADR-0052, amendment 2026-09-15). With no
 surface named, the prompt follows whatever library the one discovery rule
 finds (`RuntimeLibrary`, else `XMIP_RUNTIME_LIBRARY`, else beside the module)
 and says `[Xmip not configured]` while nothing answers. The mood's color is

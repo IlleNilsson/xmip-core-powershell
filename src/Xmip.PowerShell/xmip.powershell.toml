@@ -7,8 +7,9 @@
 
 [Xmip]
 # Which surface the prompt follows (ADR-0052 clause 3): "native", the
-# runtime's library loaded into this session, or "snapshot", a file a node or
-# the Playground publishes. Stated here and never guessed from an environment
+# runtime's library loaded into this session, "snapshot", a file a node or
+# the Playground publishes, or "remote", a web host followed over its surface
+# hub at Url. Stated here and never guessed from an environment
 # variable or a file in a temp directory. With no surface named, the prompt
 # follows whatever library the one discovery rule finds — RuntimeLibrary
 # below, else XMIP_RUNTIME_LIBRARY, else the library beside the module — and
@@ -21,3 +22,7 @@
 # The file to read when Surface = "snapshot". A path with no file behind it
 # is said so — [Xmip unavailable] — not silently replaced.
 # Snapshot = "D:/Repos/Xmip/.local-work/playground/C1-snapshot.toml"
+
+# The web host to follow when Surface = "remote"; the prompt is told when its
+# surface changes and says [Xmip unavailable] while it does not answer.
+# Url = "http://another-host:5087"
