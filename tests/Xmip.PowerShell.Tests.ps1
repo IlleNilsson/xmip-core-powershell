@@ -108,25 +108,35 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $document | Should -BeLike "*$([Xmip.PowerShell.PromptMonitor]::ConfigurationFile)"
     }
 
-    It 'says the mood first, then R P S T F with their letters, like posh-git' {
-        # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures.
-        # R, P and S are what the stages count — Streams, Journeys, Messages.
+    It 'says R P S T F with their letters and no word; the color carries the mood' {
+        # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures,
+        # in red, yellow and green — space on a console line is precious.
+        $seen = [DateTimeOffset]::UtcNow
+        [Xmip.Abi.Operate.HealthRecord[]] $records = @(
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/orders', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///P1/process/ok', 'Stressed', 55, 'x', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///S1/send/bill', 'Done', 95, 'x', $seen)
+        )
+        [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
+        $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
         $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 1, 0, $null)
-        $holding = [Xmip.Abi.Operate.HealthState]::Holding
-        $segment = [Xmip.PowerShell.PromptMonitor]::Render($holding, $figures)
+        $segment = [Xmip.PowerShell.PromptMonitor]::Render($index, $figures)
 
-        $segment.Text | Should -Be '[Xmip holding R12 P11 S10 T1 F0]'
-        $segment.Parts[1].Color | Should -Be ([Xmip.PowerShell.PromptMonitor]::Paint('orange'))
-        $segment.Parts[5].Color | Should -Be 'Yellow'
-        $segment.Parts[6].Color | Should -Be 'DarkGray' -Because 'a zero is not lit'
+        $segment.Text | Should -Be '[R12 P11 S10 T1 F0]'
+        $segment.Parts[1].Color | Should -Be 'Green' -Because 'receive is fine'
+        $segment.Parts[2].Color | Should -Be 'Yellow' -Because 'process is stressed'
+        $segment.Parts[3].Color | Should -Be 'Red' -Because 'send is done'
+        $segment.Parts[4].Color | Should -Be 'Yellow' -Because 'one retrying'
+        $segment.Parts[5].Color | Should -Be 'Green' -Because 'nothing failed'
     }
 
     It 'shows an unpublished figure as absent, never as zero' {
         $none = [Xmip.Surface.Figures]::None('xmip:///')
-        $fine = [Xmip.Abi.Operate.HealthState]::Fine
+        $empty = [Xmip.Surface.ScopeIndex]::Empty('test')
 
-        [Xmip.PowerShell.PromptMonitor]::Render($fine, $none).Text |
-            Should -Be '[Xmip fine R– P– S– T– F–]'
+        $segment = [Xmip.PowerShell.PromptMonitor]::Render($empty, $none)
+        $segment.Text | Should -Be '[R– P– S– T– F–]'
+        $segment.Parts[1].Color | Should -Be 'DarkGray'
     }
 
     It 'paints every mood by the color name the shared English gives it' {
