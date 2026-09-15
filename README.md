@@ -38,13 +38,14 @@ a caller filters and compares rather than parsing.
 ## The prompt
 
 When the module is imported into an interactive shell it prepends a compact,
-colored segment such as `[Xmip fine R12 P11 S10 T0 F0]` or
-`[Xmip holding R12 P11 S9 T1 F2]` to the prompt already installed, the way
-posh-git says a repository's state: the mood first, in its color, then the
-five figures with their letters — R, P and S for what the three stages count
+colored segment such as `[R12 P11 S10 T0 F0]` to the prompt already
+installed, the way posh-git says a repository's state and no wider: five
+figures with their letters — R, P and S for what the three stages count
 (Streams received, Journeys in process, Messages sent), T for Retrying and F
-for Failed (the owner, 2026-09-15; ADR-0052). A figure the publisher has not
-published is a dash, never a zero. It composes with posh-git and other prompt
+for Failed. No mood is spelled out; the color carries it: a stage letter is
+green, yellow or red by the worst leaf on that stage, T is yellow and F is
+red when above zero (the owner, 2026-09-15; ADR-0052). A figure the publisher
+has not published is a dash, never a zero. It composes with posh-git and other prompt
 providers rather than replacing their result, and restores the prompt it
 found when the module is removed. A background observer follows the shared `Xmip.Surface` change
 stream and updates an in-memory segment; the prompt itself performs no runtime

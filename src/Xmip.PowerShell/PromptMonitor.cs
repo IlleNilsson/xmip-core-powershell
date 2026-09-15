@@ -176,39 +176,58 @@ public static class PromptMonitor
             return;
         }
 
-        HealthState state = index.Rollup(ScopeTree.Root) ?? HealthState.Done;
-
-        Volatile.Write(ref _current, Render(state, surface.Figures(ScopeTree.Root)));
+        Volatile.Write(ref _current, Render(index, surface.Figures(ScopeTree.Root)));
     }
 
     /// <summary>
-    /// The segment the way posh-git says a repository: the mood first, in its
-    /// color, then the five figures with their letters — R, P and S for what
-    /// the three stages count (<see cref="ScopeTree.CountedAt"/>: Streams,
-    /// Journeys, Messages), T for Retrying and F for Failed. The letter is the
-    /// word beside the number; an unpublished figure is a dash, never a zero
-    /// (ADR-0052, amendment 2026-09-15).
+    /// The segment the way posh-git says a repository, and no wider: five
+    /// figures with their letters, R, P and S for what the three stages count
+    /// (<see cref="ScopeTree.CountedAt"/>: Streams, Journeys, Messages), T for
+    /// Retrying, F for Failed. No mood is spelled out; the color carries it —
+    /// a stage letter is green, yellow or red by the worst leaf on that stage,
+    /// T is yellow and F red when above zero. An unpublished figure is a dash,
+    /// never a zero (ADR-0052, amendment 2026-09-15, the owner's second word).
     /// </summary>
-    public static XmipPromptSegment Render(HealthState state, Figures figures)
+    public static XmipPromptSegment Render(ScopeIndex index, Figures figures)
     {
         return new XmipPromptSegment(
         [
             new XmipPromptPart("[", ConsoleColor.DarkGray),
-            new XmipPromptPart($"Xmip {English.Mood(state)}", Paint(English.Color(state))),
-            Figure(" R", figures.Streams, ConsoleColor.Gray),
-            Figure(" P", figures.Journeys, ConsoleColor.Gray),
-            Figure(" S", figures.Messages, ConsoleColor.Gray),
-            Figure(" T", figures.Retrying, ConsoleColor.Yellow),
-            Figure(" F", figures.Failed, ConsoleColor.Red),
+            Figure("R", figures.Streams, Traffic(index.WorstAtStage("receive")?.State)),
+            Figure(" P", figures.Journeys, Traffic(index.WorstAtStage("process")?.State)),
+            Figure(" S", figures.Messages, Traffic(index.WorstAtStage("send")?.State)),
+            Figure(" T", figures.Retrying, Lit(figures.Retrying, ConsoleColor.Yellow)),
+            Figure(" F", figures.Failed, Lit(figures.Failed, ConsoleColor.Red)),
             new XmipPromptPart("]", ConsoleColor.DarkGray),
         ]);
     }
 
-    /// <summary>One figure: its letter and its count, lit when there is one.</summary>
-    private static XmipPromptPart Figure(string letter, ulong? value, ConsoleColor lit)
+    /// <summary>Green, yellow or red for a leaf's mood (ADR-0041): Fine is
+    /// green; Paused, Working and Stressed are yellow; Exhausted and Done are
+    /// red. Gray when no leaf is there.</summary>
+    public static ConsoleColor Traffic(HealthState? state)
+    {
+        return state switch
+        {
+            null => ConsoleColor.DarkGray,
+            HealthState.Fine => ConsoleColor.Green,
+            HealthState.Paused or HealthState.Working or HealthState.Stressed
+                => ConsoleColor.Yellow,
+            _ => ConsoleColor.Red,
+        };
+    }
+
+    /// <summary>An outcome count's color: its warning color above zero, green at zero.</summary>
+    private static ConsoleColor Lit(ulong? value, ConsoleColor warning)
+    {
+        return value > 0 ? warning : ConsoleColor.Green;
+    }
+
+    /// <summary>One figure: its letter and its count; a gray dash for none.</summary>
+    private static XmipPromptPart Figure(string letter, ulong? value, ConsoleColor color)
     {
         string count = value?.ToString("N0", CultureInfo.InvariantCulture) ?? "–";
 
-        return new XmipPromptPart(letter + count, value > 0 ? lit : ConsoleColor.DarkGray);
+        return new XmipPromptPart(letter + count, value is null ? ConsoleColor.DarkGray : color);
     }
 }
