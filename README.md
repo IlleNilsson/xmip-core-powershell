@@ -69,7 +69,7 @@ In a fresh pwsh, nothing imported yet, from the estate root:
 dotnet build module/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
-Import-Module module/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
+Import-Module ./module/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
 Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip -Nodes R1, P1, S1
 ```
 
