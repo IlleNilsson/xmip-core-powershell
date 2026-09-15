@@ -1,11 +1,29 @@
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Xmip.Abi.Operate;
 using Xmip.Surface;
 
 namespace Xmip.PowerShell;
 
-/// <summary>A prompt-safe rendering of the latest operator snapshot.</summary>
-public sealed record XmipPromptSegment(string Text, ConsoleColor Color);
+/// <summary>One colored piece of the prompt segment.</summary>
+public sealed record XmipPromptPart(string Text, ConsoleColor Color);
+
+/// <summary>A prompt-safe rendering of the latest operator snapshot: the parts
+/// in order, each in its color, and the whole as one line of text.</summary>
+public sealed record XmipPromptSegment(XmipPromptPart[] Parts)
+{
+    /// <summary>The whole segment as text, for anything that wants a line.</summary>
+    public string Text => string.Concat(Parts.Select(part => part.Text));
+
+    /// <summary>The first part's color, the segment's color when it is one word.</summary>
+    public ConsoleColor Color => Parts.Length > 0 ? Parts[0].Color : ConsoleColor.DarkGray;
+
+    /// <summary>A segment of one part.</summary>
+    public static XmipPromptSegment Plain(string text, ConsoleColor color)
+    {
+        return new XmipPromptSegment([new XmipPromptPart(text, color)]);
+    }
+}
 
 /// <summary>
 /// Follows Xmip in the background and exposes only an atomic cached segment to
@@ -79,7 +97,7 @@ public static class PromptMonitor
 
     private static XmipPromptSegment Connecting()
     {
-        return new XmipPromptSegment("[Xmip connecting]", ConsoleColor.DarkGray);
+        return XmipPromptSegment.Plain("[Xmip connecting]", ConsoleColor.DarkGray);
     }
 
     private static async Task ObserveAsync(CancellationToken stop)
@@ -105,13 +123,13 @@ public static class PromptMonitor
             // snapshot with no path: SurfaceChoice refused it, as it should.
             Volatile.Write(
                 ref _current,
-                new XmipPromptSegment("[Xmip misconfigured]", ConsoleColor.DarkRed));
+                XmipPromptSegment.Plain("[Xmip misconfigured]", ConsoleColor.DarkRed));
         }
         catch (Exception)
         {
             Volatile.Write(
                 ref _current,
-                new XmipPromptSegment("[Xmip unavailable]", ConsoleColor.DarkRed));
+                XmipPromptSegment.Plain("[Xmip unavailable]", ConsoleColor.DarkRed));
         }
         finally
         {
@@ -153,15 +171,44 @@ public static class PromptMonitor
         {
             string nothing = configured ? "unavailable" : "not configured";
             Volatile.Write(
-                ref _current, new XmipPromptSegment($"[Xmip {nothing}]", ConsoleColor.DarkGray));
+                ref _current, XmipPromptSegment.Plain($"[Xmip {nothing}]", ConsoleColor.DarkGray));
 
             return;
         }
 
         HealthState state = ScopeTree.Rollup(records) ?? HealthState.Done;
 
-        Volatile.Write(
-            ref _current,
-            new XmipPromptSegment($"[Xmip {English.Mood(state)}]", Paint(English.Color(state))));
+        Volatile.Write(ref _current, Render(state, surface.Figures(ScopeTree.Root)));
+    }
+
+    /// <summary>
+    /// The segment the way posh-git says a repository: the mood first, in its
+    /// color, then the five figures with their letters — R, P and S for what
+    /// the three stages count (<see cref="ScopeTree.CountedAt"/>: Streams,
+    /// Journeys, Messages), T for Retrying and F for Failed. The letter is the
+    /// word beside the number; an unpublished figure is a dash, never a zero
+    /// (ADR-0052, amendment 2026-09-15).
+    /// </summary>
+    public static XmipPromptSegment Render(HealthState state, Figures figures)
+    {
+        return new XmipPromptSegment(
+        [
+            new XmipPromptPart("[", ConsoleColor.DarkGray),
+            new XmipPromptPart($"Xmip {English.Mood(state)}", Paint(English.Color(state))),
+            Figure(" R", figures.Streams, ConsoleColor.Gray),
+            Figure(" P", figures.Journeys, ConsoleColor.Gray),
+            Figure(" S", figures.Messages, ConsoleColor.Gray),
+            Figure(" T", figures.Retrying, ConsoleColor.Yellow),
+            Figure(" F", figures.Failed, ConsoleColor.Red),
+            new XmipPromptPart("]", ConsoleColor.DarkGray),
+        ]);
+    }
+
+    /// <summary>One figure: its letter and its count, lit when there is one.</summary>
+    private static XmipPromptPart Figure(string letter, ulong? value, ConsoleColor lit)
+    {
+        string count = value?.ToString("N0", CultureInfo.InvariantCulture) ?? "–";
+
+        return new XmipPromptPart(letter + count, value > 0 ? lit : ConsoleColor.DarkGray);
     }
 }

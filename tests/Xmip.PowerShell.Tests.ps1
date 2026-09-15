@@ -108,6 +108,27 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $document | Should -BeLike "*$([Xmip.PowerShell.PromptMonitor]::ConfigurationFile)"
     }
 
+    It 'says the mood first, then R P S T F with their letters, like posh-git' {
+        # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures.
+        # R, P and S are what the stages count — Streams, Journeys, Messages.
+        $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 1, 0, $null)
+        $holding = [Xmip.Abi.Operate.HealthState]::Holding
+        $segment = [Xmip.PowerShell.PromptMonitor]::Render($holding, $figures)
+
+        $segment.Text | Should -Be '[Xmip holding R12 P11 S10 T1 F0]'
+        $segment.Parts[1].Color | Should -Be ([Xmip.PowerShell.PromptMonitor]::Paint('orange'))
+        $segment.Parts[5].Color | Should -Be 'Yellow'
+        $segment.Parts[6].Color | Should -Be 'DarkGray' -Because 'a zero is not lit'
+    }
+
+    It 'shows an unpublished figure as absent, never as zero' {
+        $none = [Xmip.Surface.Figures]::None('xmip:///')
+        $fine = [Xmip.Abi.Operate.HealthState]::Fine
+
+        [Xmip.PowerShell.PromptMonitor]::Render($fine, $none).Text |
+            Should -Be '[Xmip fine R– P– S– T– F–]'
+    }
+
     It 'paints every mood by the color name the shared English gives it' {
         # One mood-to-color map, in Xmip.Surface; the console picks its
         # nearest color from the name (ADR-0041, ADR-0052 clause 1).
