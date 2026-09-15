@@ -108,6 +108,20 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $document | Should -BeLike "*$([Xmip.PowerShell.PromptMonitor]::ConfigurationFile)"
     }
 
+    It 'reads a snapshot in pwsh, so every assembly it needs lies beside it' {
+        # 2026-09-15: the build copied only the Xmip assemblies, and the prompt
+        # said [Xmip unavailable] for a document it could not read. Reading a
+        # published snapshot here loads the TOML reader and the configuration
+        # abstractions in the session, which is what a prompt does.
+        [string] $fixture = Join-Path $script:Root `
+            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+        [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
+
+        [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
+        [Xmip.Surface.SurfaceChoice]::IsChosen([Xmip.Surface.TomlDocument]::Read($document)) |
+            Should -BeFalse -Because 'the shipped document names no surface'
+    }
+
     It 'says R P S T F with their letters and no word; the color carries the mood' {
         # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures,
         # in red, yellow and green — space on a console line is precious.
