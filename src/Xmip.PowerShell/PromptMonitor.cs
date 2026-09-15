@@ -165,9 +165,9 @@ public static class PromptMonitor
 
     private static void Publish(IOperatorSurface surface, bool configured)
     {
-        IReadOnlyList<HealthRecord> records = surface.Health(ScopeTree.Root);
+        ScopeIndex index = surface.Index();
 
-        if (records.Count == 0)
+        if (index.Leaves == 0)
         {
             string nothing = configured ? "unavailable" : "not configured";
             Volatile.Write(
@@ -176,7 +176,7 @@ public static class PromptMonitor
             return;
         }
 
-        HealthState state = ScopeTree.Rollup(records) ?? HealthState.Done;
+        HealthState state = index.Rollup(ScopeTree.Root) ?? HealthState.Done;
 
         Volatile.Write(ref _current, Render(state, surface.Figures(ScopeTree.Root)));
     }
