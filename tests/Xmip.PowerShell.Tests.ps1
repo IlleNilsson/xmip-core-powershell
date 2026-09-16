@@ -70,6 +70,11 @@ AfterAll {
 }
 
 Describe 'The module loads and exports what it says' {
+    It 'exports only the three Runtime commands' {
+        @($script:Module.ExportedCmdlets.Keys | Sort-Object) |
+            Should -Be @('Get-XmipRuntime', 'Set-XmipRuntime', 'Test-XmipRuntime')
+    }
+
     It 'exports every cmdlet the manifest names' {
         foreach ($name in $script:Declared.CmdletsToExport) {
             $script:Module.ExportedCmdlets.Keys |
@@ -185,32 +190,33 @@ Describe 'The prompt reads its surface from the document beside the module' {
     }
 }
 
-Describe 'The two acts the boundary carries' {
+Describe 'Set-XmipRuntime carries the boundary''s two acts' {
     # ADR-0027 clause 5: pause and resume, and nothing that stops what it
-    # watches. A Start-, Stop- or Restart-XmipScope appearing here is a
+    # watches. A Start-, Stop- or Restart-XmipRuntime appearing here is a
     # cmdlet the boundary cannot honor.
-    It 'exports Suspend-XmipScope and Resume-XmipScope' {
-        foreach ($name in @('Suspend-XmipScope', 'Resume-XmipScope')) {
-            $script:Module.ExportedCmdlets.Keys | Should -Contain $name
-        }
+    It 'takes Paused and Running as states' {
+        [string[]] $states = @(
+            (Get-Command Set-XmipRuntime).Parameters.State.ParameterType.GetEnumNames()
+        )
+
+        $states | Should -Be @('Paused', 'Running')
     }
 
     It 'exports no start, stop or restart' {
-        foreach ($name in @('Start-XmipScope', 'Stop-XmipScope', 'Restart-XmipScope')) {
+        foreach ($name in @('Start-XmipRuntime', 'Stop-XmipRuntime', 'Restart-XmipRuntime')) {
             $script:Module.ExportedCmdlets.Keys | Should -Not -Contain $name
         }
     }
 
-    It 'supports -WhatIf on both, because both change the estate' {
-        foreach ($name in @('Suspend-XmipScope', 'Resume-XmipScope')) {
-            $script:Module.ExportedCmdlets[$name].Parameters.Keys | Should -Contain 'WhatIf'
-        }
+    It 'supports -WhatIf because both states change the runtime' {
+        $script:Module.ExportedCmdlets['Set-XmipRuntime'].Parameters.Keys |
+            Should -Contain 'WhatIf'
     }
 }
 
-Describe 'ConvertFrom-XmipStatus' {
+Describe 'Get-XmipRuntime -View Status' {
     It 'explains success as success' {
-        [PSObject] $ok = ConvertFrom-XmipStatus -Code 0
+        [PSObject] $ok = Get-XmipRuntime -View Status -Code 0
 
         $ok.Name | Should -Be 'Ok'
         $ok.Retryable | Should -BeFalse
@@ -221,14 +227,14 @@ Describe 'ConvertFrom-XmipStatus' {
         # A number that is not a status is data, not an exception. A module
         # returning something unexpected must not take the operator's session
         # down with it.
-        [PSObject] $answer = ConvertFrom-XmipStatus -Code 4711
+        [PSObject] $answer = Get-XmipRuntime -View Status -Code 4711
 
         $answer.Name | Should -Be 'Unknown'
         $answer.Code | Should -Be 4711
     }
 
-    It 'takes codes from the pipeline, one object out per code' {
-        [PSObject[]] $answer = @(0, -1, -21 | ConvertFrom-XmipStatus)
+    It 'takes several codes, one object out per code' {
+        [PSObject[]] $answer = @(Get-XmipRuntime -View Status -Code 0, -1, -21)
 
         $answer.Count | Should -Be 3
         $answer[0].Name | Should -Be 'Ok'
@@ -240,18 +246,18 @@ Describe 'ConvertFrom-XmipStatus' {
         # ADR-0014's reason for this surface existing. A rendered string
         # cannot be filtered, compared or piped, and a caller that has to
         # parse one is back to scraping.
-        [PSObject] $answer = ConvertFrom-XmipStatus -Code -21
+        [PSObject] $answer = Get-XmipRuntime -View Status -Code -21
 
         $answer | Should -Not -BeOfType ([string])
         $answer.PSObject.Properties.Name | Should -Contain 'Retryable'
     }
 }
 
-Describe 'Get-XmipAbi' {
+Describe 'Get-XmipRuntime -View Abi' {
     It 'names the library the way this platform does' {
         # Section 1 of the header. Getting this wrong means the probe looks
         # for a file that is never there, on whichever platform nobody tested.
-        [string] $name = (Get-XmipAbi).ExampleLibraryName
+        [string] $name = (Get-XmipRuntime -View Abi).ExampleLibraryName
 
         if ($IsWindows) {
             $name | Should -BeLike '*.dll'
@@ -265,20 +271,37 @@ Describe 'Get-XmipAbi' {
     }
 }
 
-Describe 'Get-XmipModuleDescriptor' {
+Describe 'Get-XmipRuntime -View Module' {
     It 'writes an error rather than throwing when the library is not there' {
         # An operator probing a path that does not exist gets a record they
         # can inspect, and the pipeline survives to probe the next one.
         [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
 
-        { Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue -ErrorVariable failure } |
+        $argument = @{
+            View = 'Module'
+            Library = $missing
+            ErrorAction = 'SilentlyContinue'
+            ErrorVariable = 'failure'
+        }
+        $probe = {
+            Get-XmipRuntime @argument
+        }
+
+        $probe |
             Should -Not -Throw
     }
 
     It 'reports the path it was asked about' {
         [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
 
-        Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue -ErrorVariable failure |
+        $probe = @{
+            View = 'Module'
+            Library = $missing
+            ErrorAction = 'SilentlyContinue'
+            ErrorVariable = 'failure'
+        }
+
+        Get-XmipRuntime @probe |
             Out-Null
 
         $failure.Count | Should -BeGreaterThan 0
