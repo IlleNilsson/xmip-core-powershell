@@ -7,17 +7,29 @@
 
 [Xmip]
 # Which surface the prompt follows (ADR-0052 clause 3): "native", the
-# runtime's library loaded into this session, or "snapshot", a file a node or
-# the Playground publishes. Stated here and never guessed from an environment
+# runtime's library loaded into this session, "snapshot", a file a node or
+# the Playground publishes, or "remote", a web host followed over its surface
+# hub at Url. Stated here and never guessed from an environment
 # variable or a file in a temp directory. With no surface named, the prompt
 # follows whatever library the one discovery rule finds — RuntimeLibrary
 # below, else XMIP_RUNTIME_LIBRARY, else the library beside the module — and
 # says [Xmip not configured] while nothing answers.
-# Surface = "native"
+#
+# As shipped, in a developer's clone: the Playground roll started as cluster
+# C1 (Start-XmipTest -Suite Playground -Cluster C1 ...). A deployment writes
+# its own.
+Surface = "snapshot"
 
 # The runtime's native library, exporting xmip_operate_v1.
 # RuntimeLibrary = "../../../../platform/runtime/target/debug/xmip_core_runtime.dll"
 
 # The file to read when Surface = "snapshot". A path with no file behind it
-# is said so — [Xmip unavailable] — not silently replaced.
-# Snapshot = "C:/Users/you/AppData/Local/Temp/playground-snapshot.toml"
+# is said so — [Xmip unavailable] — not silently replaced. A relative path
+# is from the directory the module is loaded from, bin/Debug/net10.0 under
+# this project: eight levels up is the estate root, where a roll publishes
+# under .local-work/playground.
+Snapshot = "../../../../../../../../.local-work/playground/C1-snapshot.toml"
+
+# The web host to follow when Surface = "remote"; the prompt is told when its
+# surface changes and says [Xmip unavailable] while it does not answer.
+# Url = "http://another-host:5087"
