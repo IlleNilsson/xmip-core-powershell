@@ -193,7 +193,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $segment = [Xmip.PowerShell.PromptMonitor]::Render($index, $figures)
 
         # 2026-09-18: T and F are there only when there are any; F0 is not said.
-        $segment.Text | Should -Be '[R12 P11 S10 T1]'
+        $segment.Text | Should -Be '[R:12 P:11 S:10 T:1]'
         $segment.Parts[1].Color | Should -Be 'Green' -Because 'receive is fine'
         $segment.Parts[2].Color | Should -Be 'Yellow' -Because 'process is stressed'
         $segment.Parts[3].Color | Should -Be 'Red' -Because 'send is done'
@@ -201,12 +201,12 @@ Describe 'The prompt reads its surface from the document beside the module' {
 
         $failing = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 2, $null)
         $failed = [Xmip.PowerShell.PromptMonitor]::Render($index, $failing)
-        $failed.Text | Should -Be '[R12 P11 S10 F2]'
+        $failed.Text | Should -Be '[R:12 P:11 S:10 F:2]'
         $failed.Parts[4].Color | Should -Be 'Red' -Because 'two failed'
 
         $quiet = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, $null, $null, $null)
         [Xmip.PowerShell.PromptMonitor]::Render($index, $quiet).Text |
-            Should -Be '[R12 P11 S10]' -Because 'none, or none published, is nothing on the line'
+            Should -Be '[R:12 P:11 S:10]' -Because 'none, or none published, is not on the line'
     }
 
     It 'shows an unpublished stage figure as a dash, never as zero, and no T or F' {

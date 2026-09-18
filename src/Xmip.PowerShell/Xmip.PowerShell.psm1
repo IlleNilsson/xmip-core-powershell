@@ -15,7 +15,7 @@ if ($null -eq $script:PreviousPrompt) {
 [Xmip.PowerShell.PromptMonitor]::Start()
 
 # Where posh-git puts a repository's state: after the path and before the
-# closing ">", "D:\Repos\Xmip [main] [R12 P11 S10 T0 F0]> ". The owner asked
+# closing ">", "D:\Repos\Xmip [main] [R:12 P:11 S:10]> ". The owner asked
 # for the same kind of output as posh-git and the segment stood in front of
 # the whole prompt until 2026-09-18. The prompt in force is rendered first;
 # ours goes in before its trailing ">" and whatever escape codes close it. A
