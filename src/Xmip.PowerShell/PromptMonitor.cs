@@ -163,7 +163,17 @@ public static class PromptMonitor
 
             await foreach (SurfaceChange _ in surface.WatchAsync(stop).ConfigureAwait(false))
             {
-                Publish(generation, surface, configured);
+                try
+                {
+                    Publish(generation, surface, configured);
+                }
+                catch (Exception failure) when (failure is not OperationCanceledException)
+                {
+                    // One publication that could not be read is one missed
+                    // tick, and the segment keeps what it said. It used to
+                    // end the observer: the prompt went blank and stayed so
+                    // (2026-09-18, three rolls writing one file).
+                }
             }
         }
         catch (OperationCanceledException)
