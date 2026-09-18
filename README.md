@@ -52,9 +52,14 @@ a troubled one `[R:12 P:11 S:10 T:3 F:1]`, T in yellow and F in red. A colon
 stands between a letter and its number wherever there is a number (the
 owner, 2026-09-18). It wears posh-git's clothes, by the owner's word the same
 evening: yellow brackets, the cyan posh-git gives a branch in step with its
-remote for a stage that is fine, and posh-git's own `≡` at the end when
-every stage is fine and nothing is retrying or failed,
-`[R:12 P:11 S:10 ≡]`. A stage figure the publisher has not published is a
+remote for a stage that is fine, and posh-git's own `≡` when every stage is
+fine and nothing is retrying or failed. It keeps posh-git's order too,
+`[main ≡ +0 ~1 -0]` there and `[R1 ≡ R:12 P:11 S:10]` here: first what the
+prompt is at — the node's name where it follows one node, the cluster's
+where it follows a cluster, in the color of the worst stage — then `≡` when
+square, then the counts. A count is kept short in K, M and G, `R:5.3K`,
+`S:1.2M`, because Xmip counts past what an integer holds and a line that
+grows with its numbers goes wild. A stage figure the publisher has not published is a
 dash, never a zero. It composes with posh-git and other prompt
 providers rather than replacing their result, and restores the prompt it
 found when the module is removed. A background observer follows the shared `Xmip.Surface` change

@@ -253,17 +253,31 @@ public static class PromptMonitor
             index.WorstAtStage("process")?.State,
             index.WorstAtStage("send")?.State,
         ];
-        List<XmipPromptPart> parts =
-        [
-            new XmipPromptPart("[", ConsoleColor.Yellow),
-            Figure("R", figures.Streams, Traffic(stages[0])),
-            Figure(" P", figures.Journeys, Traffic(stages[1])),
-            Figure(" S", figures.Messages, Traffic(stages[2])),
-        ];
         bool square = stages.Any(stage => stage is not null)
             && stages.All(stage => stage is null or HealthState.Fine)
             && figures.Retrying is null or 0
             && figures.Failed is null or 0;
+
+        // posh-git's order: what the prompt is at, its sign when square,
+        // then the counts — [main ≡ +0 ~1 -0] there, [R1 ≡ R:12 P:11 S:10]
+        // here (the owner, 2026-09-18). The name wears the worst stage's color.
+        List<XmipPromptPart> parts = [new XmipPromptPart("[", ConsoleColor.Yellow)];
+        string name = At(index);
+
+        if (name.Length > 0)
+        {
+            ConsoleColor worst = stages.Select(Traffic).MaxBy(Rank);
+            parts.Add(new XmipPromptPart(name + " ", worst));
+        }
+
+        if (square)
+        {
+            parts.Add(new XmipPromptPart("≡ ", ConsoleColor.Cyan));
+        }
+
+        parts.Add(Figure("R", figures.Streams, Traffic(stages[0])));
+        parts.Add(Figure(" P", figures.Journeys, Traffic(stages[1])));
+        parts.Add(Figure(" S", figures.Messages, Traffic(stages[2])));
 
         if (figures.Retrying > 0)
         {
@@ -275,14 +289,80 @@ public static class PromptMonitor
             parts.Add(Figure(" F", figures.Failed, ConsoleColor.Red));
         }
 
-        if (square)
-        {
-            parts.Add(new XmipPromptPart(" ≡", ConsoleColor.Cyan));
-        }
-
         parts.Add(new XmipPromptPart("]", ConsoleColor.Yellow));
 
         return new XmipPromptSegment([.. parts]);
+    }
+
+    /// <summary>
+    /// What the prompt is at: the last name every published scope shares. A
+    /// node's own publication shares its node, so it is the node's name; a
+    /// cluster's shares only the cluster, so it is the cluster's. Nothing
+    /// shared is no name. A segment that is only a kind, such as the
+    /// Playground's <c>node</c>, names nothing and is passed over.
+    /// </summary>
+    public static string At(ScopeIndex index)
+    {
+        string[][] scopes =
+        [
+            .. index.Health(ScopeTree.Root).Select(record => ScopeTree.Parts(record.Scope)),
+        ];
+
+        if (scopes.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        int shared = 0;
+
+        // A leaf's own name is not where the prompt is, so stop one short.
+        while (scopes.All(parts => parts.Length > shared + 1 && parts[shared] == scopes[0][shared]))
+        {
+            shared++;
+        }
+
+        return scopes[0].Take(shared).LastOrDefault(part => part != "node") ?? string.Empty;
+    }
+
+    /// <summary>
+    /// A count short enough for a prompt: as it is below a thousand, then in
+    /// K, M and G with one decimal below ten of a unit — 5.3K, 53K, 532K,
+    /// 1.2M. Xmip counts past what an integer holds, and a line that grows
+    /// with its numbers goes wild (the owner, 2026-09-18).
+    /// </summary>
+    public static string Short(ulong count)
+    {
+        if (count < 1000)
+        {
+            return count.ToString(CultureInfo.InvariantCulture);
+        }
+
+        string[] units = ["K", "M", "G"];
+        double value = count;
+        int unit = -1;
+
+        // 999,950 is 1M and not 1000K: what would round up to a thousand moves on.
+        while (unit < units.Length - 1 && value >= 999.5)
+        {
+            value /= 1000;
+            unit++;
+        }
+
+        string format = value < 9.95 ? "0.#" : "0";
+
+        return value.ToString(format, CultureInfo.InvariantCulture) + units[unit];
+    }
+
+    // Trouble outranks calm when the name takes the worst stage's color.
+    private static int Rank(ConsoleColor color)
+    {
+        return color switch
+        {
+            ConsoleColor.Red => 3,
+            ConsoleColor.Yellow => 2,
+            ConsoleColor.Cyan => 1,
+            _ => 0,
+        };
     }
 
     /// <summary>Cyan, yellow or red for a leaf's mood (ADR-0041): Fine is
@@ -307,8 +387,7 @@ public static class PromptMonitor
         // to present (the owner, 2026-09-18): R:5,317 reads as a figure, and
         // R5,317 read as a name. A figure nobody published keeps its dash.
         return value is { } count
-            ? new XmipPromptPart(
-                letter + ":" + count.ToString("N0", CultureInfo.InvariantCulture), color)
+            ? new XmipPromptPart(letter + ":" + Short(count), color)
             : new XmipPromptPart(letter + "–", ConsoleColor.DarkGray);
     }
 }
