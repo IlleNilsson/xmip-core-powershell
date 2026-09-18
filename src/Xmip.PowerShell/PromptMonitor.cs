@@ -48,6 +48,12 @@ public static class PromptMonitor
     private static Task? _worker;
     private static XmipPromptSegment _current = Connecting();
 
+    // The snapshot the session said to follow, over the document's choice,
+    // and which observer may write the segment: one that was replaced must
+    // not overwrite what its successor published.
+    private static string? _followed;
+    private static int _generation;
+
     /// <summary>The latest cached segment; reading it cannot block.</summary>
     public static XmipPromptSegment Current => Volatile.Read(ref _current);
 
@@ -61,10 +67,44 @@ public static class PromptMonitor
                 return;
             }
 
-            _stop?.Dispose();
-            _stop = new CancellationTokenSource();
-            _current = Connecting();
-            _worker = Task.Run(() => ObserveAsync(_stop.Token));
+            Restart();
+        }
+    }
+
+    /// <summary>
+    /// Follow this snapshot from now on, in place of what the document names.
+    /// The shipped document follows the roll started as cluster C1; a roll
+    /// the operator starts under another name publishes elsewhere, and on
+    /// 2026-09-18 the prompt sat frozen on C1 while CC1 rolled. The command
+    /// that starts a roll knows the file and says so here: stated by the
+    /// operator in the session, not guessed (ADR-0052 clause 3).
+    /// </summary>
+    public static void Follow(string snapshot)
+    {
+        lock (Gate)
+        {
+            _followed = Path.GetFullPath(snapshot);
+            _stop?.Cancel();
+            Restart();
+        }
+    }
+
+    // Under the gate: a new observer under a new generation.
+    private static void Restart()
+    {
+        _stop?.Dispose();
+        _stop = new CancellationTokenSource();
+        int generation = Interlocked.Increment(ref _generation);
+        CancellationToken stop = _stop.Token;
+        Volatile.Write(ref _current, Connecting());
+        _worker = Task.Run(() => ObserveAsync(generation, stop));
+    }
+
+    private static void Say(int generation, XmipPromptSegment segment)
+    {
+        if (generation == Volatile.Read(ref _generation))
+        {
+            Volatile.Write(ref _current, segment);
         }
     }
 
@@ -100,7 +140,7 @@ public static class PromptMonitor
         return XmipPromptSegment.Plain("[Xmip connecting]", ConsoleColor.DarkGray);
     }
 
-    private static async Task ObserveAsync(CancellationToken stop)
+    private static async Task ObserveAsync(int generation, CancellationToken stop)
     {
         IOperatorSurface? surface = null;
 
@@ -110,7 +150,7 @@ public static class PromptMonitor
 
             await foreach (SurfaceChange _ in surface.WatchAsync(stop).ConfigureAwait(false))
             {
-                Publish(surface, configured);
+                Publish(generation, surface, configured);
             }
         }
         catch (OperationCanceledException)
@@ -121,15 +161,11 @@ public static class PromptMonitor
         {
             // The document names a surface this build does not know, or a
             // snapshot with no path: SurfaceChoice refused it, as it should.
-            Volatile.Write(
-                ref _current,
-                XmipPromptSegment.Plain("[Xmip misconfigured]", ConsoleColor.DarkRed));
+            Say(generation, XmipPromptSegment.Plain("[Xmip misconfigured]", ConsoleColor.DarkRed));
         }
         catch (Exception)
         {
-            Volatile.Write(
-                ref _current,
-                XmipPromptSegment.Plain("[Xmip unavailable]", ConsoleColor.DarkRed));
+            Say(generation, XmipPromptSegment.Plain("[Xmip unavailable]", ConsoleColor.DarkRed));
         }
         finally
         {
@@ -142,6 +178,12 @@ public static class PromptMonitor
 
     private static IOperatorSurface OpenSurface(out bool configured)
     {
+        if (Volatile.Read(ref _followed) is { } followed)
+        {
+            configured = true;
+            return new SnapshotOperator(followed);
+        }
+
         string moduleDirectory = Path.GetDirectoryName(typeof(PromptMonitor).Assembly.Location)
             ?? AppContext.BaseDirectory;
         IConfigurationRoot document =
@@ -163,20 +205,19 @@ public static class PromptMonitor
             moduleDirectory));
     }
 
-    private static void Publish(IOperatorSurface surface, bool configured)
+    private static void Publish(int generation, IOperatorSurface surface, bool configured)
     {
         ScopeIndex index = surface.Index();
 
         if (index.Leaves == 0)
         {
             string nothing = configured ? "unavailable" : "not configured";
-            Volatile.Write(
-                ref _current, XmipPromptSegment.Plain($"[Xmip {nothing}]", ConsoleColor.DarkGray));
+            Say(generation, XmipPromptSegment.Plain($"[Xmip {nothing}]", ConsoleColor.DarkGray));
 
             return;
         }
 
-        Volatile.Write(ref _current, Render(index, surface.Figures(ScopeTree.Root)));
+        Say(generation, Render(index, surface.Figures(ScopeTree.Root)));
     }
 
     /// <summary>

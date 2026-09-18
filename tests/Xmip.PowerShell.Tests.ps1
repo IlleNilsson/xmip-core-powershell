@@ -139,6 +139,25 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $shipped['Xmip:Snapshot'] | Should -BeLike '*C1-snapshot.toml'
     }
 
+    It 'follows the snapshot the session names, over the one the document ships' {
+        # 2026-09-18: the owner rolled cluster CC1 and the prompt sat on C1,
+        # the file the shipped document names. Start-XmipTest now says which
+        # file its roll publishes, through this.
+        [string] $fixture = Join-Path $script:Root `
+            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+
+        [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
+
+        [string] $said = ''
+        foreach ($attempt in 1..40) {
+            $said = [Xmip.PowerShell.PromptMonitor]::Current.Text
+            if ($said -like '`[R*') { break }
+            Start-Sleep -Milliseconds 100
+        }
+
+        $said | Should -BeLike '`[R* P* S* T* F*]'
+    }
+
     It 'says R P S T F with their letters and no word; the color carries the mood' {
         # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures,
         # in red, yellow and green — space on a console line is precious.
