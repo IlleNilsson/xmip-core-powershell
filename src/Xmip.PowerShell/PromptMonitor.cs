@@ -239,16 +239,31 @@ public static class PromptMonitor
     /// are there only when there is something retrying or failed: the owner,
     /// 2026-09-18, on <c>[R5,317 P60 S60 T– F–]</c> — they do not need to be
     /// there if there are none, as posh-git shows no count it has nothing for.
+    /// And it wears posh-git's clothes (the owner, the same evening: *I like
+    /// the posh-git style better*): yellow brackets, the cyan posh-git gives
+    /// a branch that is in step with its remote for a stage that is fine, and
+    /// posh-git's own ≡ at the end when every stage is fine and nothing is
+    /// retrying or failed — the cluster is square, as the branch is.
     /// </summary>
     public static XmipPromptSegment Render(ScopeIndex index, Figures figures)
     {
+        HealthState?[] stages =
+        [
+            index.WorstAtStage("receive")?.State,
+            index.WorstAtStage("process")?.State,
+            index.WorstAtStage("send")?.State,
+        ];
         List<XmipPromptPart> parts =
         [
-            new XmipPromptPart("[", ConsoleColor.DarkGray),
-            Figure("R", figures.Streams, Traffic(index.WorstAtStage("receive")?.State)),
-            Figure(" P", figures.Journeys, Traffic(index.WorstAtStage("process")?.State)),
-            Figure(" S", figures.Messages, Traffic(index.WorstAtStage("send")?.State)),
+            new XmipPromptPart("[", ConsoleColor.Yellow),
+            Figure("R", figures.Streams, Traffic(stages[0])),
+            Figure(" P", figures.Journeys, Traffic(stages[1])),
+            Figure(" S", figures.Messages, Traffic(stages[2])),
         ];
+        bool square = stages.Any(stage => stage is not null)
+            && stages.All(stage => stage is null or HealthState.Fine)
+            && figures.Retrying is null or 0
+            && figures.Failed is null or 0;
 
         if (figures.Retrying > 0)
         {
@@ -260,12 +275,17 @@ public static class PromptMonitor
             parts.Add(Figure(" F", figures.Failed, ConsoleColor.Red));
         }
 
-        parts.Add(new XmipPromptPart("]", ConsoleColor.DarkGray));
+        if (square)
+        {
+            parts.Add(new XmipPromptPart(" ≡", ConsoleColor.Cyan));
+        }
+
+        parts.Add(new XmipPromptPart("]", ConsoleColor.Yellow));
 
         return new XmipPromptSegment([.. parts]);
     }
 
-    /// <summary>Green, yellow or red for a leaf's mood (ADR-0041): Fine is
+    /// <summary>Cyan, yellow or red for a leaf's mood (ADR-0041): Fine is
     /// green; Paused, Working and Stressed are yellow; Exhausted and Done are
     /// red. Gray when no leaf is there.</summary>
     public static ConsoleColor Traffic(HealthState? state)
@@ -273,7 +293,7 @@ public static class PromptMonitor
         return state switch
         {
             null => ConsoleColor.DarkGray,
-            HealthState.Fine => ConsoleColor.Green,
+            HealthState.Fine => ConsoleColor.Cyan,
             HealthState.Paused or HealthState.Working or HealthState.Stressed
                 => ConsoleColor.Yellow,
             _ => ConsoleColor.Red,

@@ -194,7 +194,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
 
         # 2026-09-18: T and F are there only when there are any; F0 is not said.
         $segment.Text | Should -Be '[R:12 P:11 S:10 T:1]'
-        $segment.Parts[1].Color | Should -Be 'Green' -Because 'receive is fine'
+        $segment.Parts[0].Color | Should -Be 'Yellow' -Because 'the brackets are posh-git yellow'
+        $segment.Parts[1].Color | Should -Be 'Cyan' -Because 'receive is fine, in posh-git cyan'
         $segment.Parts[2].Color | Should -Be 'Yellow' -Because 'process is stressed'
         $segment.Parts[3].Color | Should -Be 'Red' -Because 'send is done'
         $segment.Parts[4].Color | Should -Be 'Yellow' -Because 'one retrying'
@@ -203,6 +204,21 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $failed = [Xmip.PowerShell.PromptMonitor]::Render($index, $failing)
         $failed.Text | Should -Be '[R:12 P:11 S:10 F:2]'
         $failed.Parts[4].Color | Should -Be 'Red' -Because 'two failed'
+
+        # The owner, 2026-09-18: posh-git's look. Every stage fine and nothing
+        # retrying or failed is square, and says so with posh-git's own sign.
+        [Xmip.Abi.Operate.HealthRecord[]] $fine = @(
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/orders', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///P1/process/ok', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///S1/send/bill', 'Fine', 0, '', $seen)
+        )
+        $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
+        $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
+        $square = [Xmip.PowerShell.PromptMonitor]::Render($allFine, $calm)
+        $square.Text | Should -Be '[R:12 P:11 S:10 ≡]'
+        $square.Parts[4].Color | Should -Be 'Cyan' -Because 'the sign is posh-git cyan'
+        [Xmip.PowerShell.PromptMonitor]::Render($allFine, $failing).Text |
+            Should -Be '[R:12 P:11 S:10 F:2]' -Because 'a failure is not square'
 
         $quiet = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, $null, $null, $null)
         [Xmip.PowerShell.PromptMonitor]::Render($index, $quiet).Text |

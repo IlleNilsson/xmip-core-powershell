@@ -50,7 +50,11 @@ red (the owner, 2026-09-15; ADR-0052). T and F are there only when something
 is retrying or has failed, so a quiet cluster reads `[R:12 P:11 S:10]` and
 a troubled one `[R:12 P:11 S:10 T:3 F:1]`, T in yellow and F in red. A colon
 stands between a letter and its number wherever there is a number (the
-owner, 2026-09-18). A stage figure the publisher has not published is a
+owner, 2026-09-18). It wears posh-git's clothes, by the owner's word the same
+evening: yellow brackets, the cyan posh-git gives a branch in step with its
+remote for a stage that is fine, and posh-git's own `≡` at the end when
+every stage is fine and nothing is retrying or failed,
+`[R:12 P:11 S:10 ≡]`. A stage figure the publisher has not published is a
 dash, never a zero. It composes with posh-git and other prompt
 providers rather than replacing their result, and restores the prompt it
 found when the module is removed. A background observer follows the shared `Xmip.Surface` change
