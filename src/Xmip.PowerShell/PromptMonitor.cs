@@ -283,8 +283,12 @@ public static class PromptMonitor
     /// <summary>One figure: its letter and its count; a gray dash for none.</summary>
     private static XmipPromptPart Figure(string letter, ulong? value, ConsoleColor color)
     {
-        string count = value?.ToString("N0", CultureInfo.InvariantCulture) ?? "–";
-
-        return new XmipPromptPart(letter + count, value is null ? ConsoleColor.DarkGray : color);
+        // A colon between the letter and its number, where there is a number
+        // to present (the owner, 2026-09-18): R:5,317 reads as a figure, and
+        // R5,317 read as a name. A figure nobody published keeps its dash.
+        return value is { } count
+            ? new XmipPromptPart(
+                letter + ":" + count.ToString("N0", CultureInfo.InvariantCulture), color)
+            : new XmipPromptPart(letter + "–", ConsoleColor.DarkGray);
     }
 }

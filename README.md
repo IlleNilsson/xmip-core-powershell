@@ -38,16 +38,18 @@ a caller filters and compares rather than parsing.
 ## The prompt
 
 When the module is imported into an interactive shell it adds a compact,
-colored segment such as `[R12 P11 S10 T0 F0]` to the prompt already
+colored segment such as `[R:12 P:11 S:10]` to the prompt already
 installed, where posh-git puts a repository's state — after the path and
-before the closing `>`, as in `D:\Repos\Xmip [main] [R12 P11 S10 T0 F0]>`
+before the closing `>`, as in `D:\Repos\Xmip [main] [R:12 P:11 S:10]>`
 (the owner, 2026-09-18) — and says it the same way and no wider: five
 figures with their letters — R, P and S for what the three stages count
 (Streams received, Journeys in process, Messages sent), T for Retrying and F
 for Failed. No mood is spelled out; the color carries it: a stage letter is
 green, yellow or red by the worst leaf on that stage, T is yellow and F is
 red (the owner, 2026-09-15; ADR-0052). T and F are there only when something
-is retrying or has failed, so a quiet cluster reads `[R12 P11 S10]` (the
+is retrying or has failed, so a quiet cluster reads `[R:12 P:11 S:10]` and
+a troubled one `[R:12 P:11 S:10 T:3 F:1]`, T in yellow and F in red. A colon
+stands between a letter and its number wherever there is a number (the
 owner, 2026-09-18). A stage figure the publisher has not published is a
 dash, never a zero. It composes with posh-git and other prompt
 providers rather than replacing their result, and restores the prompt it
@@ -82,7 +84,7 @@ Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip -Nodes R1, P1, S1
 
 Press Enter after the import and the prompt is as it was, with no segment,
 until the roll publishes; a few seconds after the roll starts it says
-`[R12 P11 S10 T0 F0]`, in color, and moves on every Enter. `Stop-XmipTest`
+`[R:12 P:11 S:10]`, in color, and moves on every Enter. `Stop-XmipTest`
 ends the roll. Build before you import, never after, in the same session: a
 loaded module locks its assemblies, and a build into them fails. For that
 reason the import belongs in the session that wants the segment and not in
