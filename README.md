@@ -90,7 +90,7 @@ CC1` shows CC1 and not the C1 the shipped document names (ADR-0052,
 amendment 2026-09-18). A roll started in another session is followed by
 writing its file into `xmip.powershell.toml`.
 
-The executable reads the same file: `xmip show xmip:///C1` from the cli's
+The executable reads the same file: `xmip-cli show xmip:///C1` from the cli's
 build directory answers with the same figures, because its `xmip.cli.toml`
 ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 
