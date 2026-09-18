@@ -79,6 +79,10 @@ the roll publishes; a few seconds after the roll starts it says
 ends the roll. Build before you import, never after, in the same session: a
 loaded module locks its assemblies, and a build into them fails.
 
+The executable reads the same file: `xmip show xmip:///C1` from the cli's
+build directory answers with the same figures, because its `xmip.cli.toml`
+ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
+
 ## Runtime
 
 Compiled by the .NET 11 preview SDK, targeting net10.0 — ADR-0014's amendment
