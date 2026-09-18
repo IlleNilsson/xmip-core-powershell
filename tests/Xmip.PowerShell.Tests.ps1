@@ -190,7 +190,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
         $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 1, 0, $null)
-        $segment = [Xmip.PowerShell.PromptMonitor]::Render($index, $figures)
+        $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $figures)
 
         # 2026-09-18: T and F are there only when there are any; F0 is not said.
         $segment.Text | Should -Be '[R:12 P:11 S:10 T:1]'
@@ -201,7 +201,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $segment.Parts[4].Color | Should -Be 'Yellow' -Because 'one retrying'
 
         $failing = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 2, $null)
-        $failed = [Xmip.PowerShell.PromptMonitor]::Render($index, $failing)
+        $failed = [Xmip.PowerShell.SegmentRender]::Render($index, $failing)
         $failed.Text | Should -Be '[R:12 P:11 S:10 F:2]'
         $failed.Parts[4].Color | Should -Be 'Red' -Because 'two failed'
 
@@ -214,7 +214,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         )
         $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
         $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
-        $square = [Xmip.PowerShell.PromptMonitor]::Render($allFine, $calm)
+        $square = [Xmip.PowerShell.SegmentRender]::Render($allFine, $calm)
         $square.Text | Should -Be '[≡ R:12 P:11 S:10]' -Because 'three nodes share no name'
         $square.Parts[1].Color | Should -Be 'Cyan' -Because 'the sign is posh-git cyan'
 
@@ -226,8 +226,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
             [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/send/b', 'Fine', 0, '', $seen)
         )
         $atNode = [Xmip.Surface.ScopeIndex]::Build($oneNode, $counts, 3, 'test')
-        [Xmip.PowerShell.PromptMonitor]::At($atNode) | Should -Be 'R1'
-        [Xmip.PowerShell.PromptMonitor]::Render($atNode, $calm).Text |
+        [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be 'R1'
+        [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm).Text |
             Should -Be '[R1 ≡ R:12 P:11 S:10]'
 
         [Xmip.Abi.Operate.HealthRecord[]] $twoNodes = @(
@@ -235,14 +235,14 @@ Describe 'The prompt reads its surface from the document beside the module' {
             [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/S1/send/b', 'Done', 95, 'x', $seen)
         )
         $atCluster = [Xmip.Surface.ScopeIndex]::Build($twoNodes, $counts, 4, 'test')
-        $troubled = [Xmip.PowerShell.PromptMonitor]::Render($atCluster, $calm)
+        $troubled = [Xmip.PowerShell.SegmentRender]::Render($atCluster, $calm)
         $troubled.Text | Should -Be '[C1 R:12 P:11 S:10]' -Because 'not square, so no sign'
         $troubled.Parts[1].Color | Should -Be 'Red' -Because 'the name wears the worst stage'
-        [Xmip.PowerShell.PromptMonitor]::Render($allFine, $failing).Text |
+        [Xmip.PowerShell.SegmentRender]::Render($allFine, $failing).Text |
             Should -Be '[R:12 P:11 S:10 F:2]' -Because 'a failure is not square'
 
         $quiet = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, $null, $null, $null)
-        [Xmip.PowerShell.PromptMonitor]::Render($index, $quiet).Text |
+        [Xmip.PowerShell.SegmentRender]::Render($index, $quiet).Text |
             Should -Be '[R:12 P:11 S:10]' -Because 'none, or none published, is not on the line'
     }
 
@@ -250,21 +250,48 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $none = [Xmip.Surface.Figures]::None('xmip:///')
         $empty = [Xmip.Surface.ScopeIndex]::Empty('test')
 
-        $segment = [Xmip.PowerShell.PromptMonitor]::Render($empty, $none)
+        $segment = [Xmip.PowerShell.SegmentRender]::Render($empty, $none)
         $segment.Text | Should -Be '[R– P– S–]'
         $segment.Parts[1].Color | Should -Be 'DarkGray'
     }
 
     It 'keeps a count short, in K, M and G, so the line does not grow with its numbers' {
         # The owner, 2026-09-18: Xmip counts past what an integer holds.
-        [Xmip.PowerShell.PromptMonitor]::Short(999) | Should -Be '999'
-        [Xmip.PowerShell.PromptMonitor]::Short(1000) | Should -Be '1K'
-        [Xmip.PowerShell.PromptMonitor]::Short(5317) | Should -Be '5.3K'
-        [Xmip.PowerShell.PromptMonitor]::Short(53170) | Should -Be '53K'
-        [Xmip.PowerShell.PromptMonitor]::Short(999950) | Should -Be '1M'
-        [Xmip.PowerShell.PromptMonitor]::Short(1234567) | Should -Be '1.2M'
-        [Xmip.PowerShell.PromptMonitor]::Short(5000000000) | Should -Be '5G'
-        [Xmip.PowerShell.PromptMonitor]::Short([ulong]::MaxValue) | Should -BeLike '*G'
+        [Xmip.PowerShell.SegmentRender]::Short(999) | Should -Be '999'
+        [Xmip.PowerShell.SegmentRender]::Short(1000) | Should -Be '1K'
+        [Xmip.PowerShell.SegmentRender]::Short(5317) | Should -Be '5.3K'
+        [Xmip.PowerShell.SegmentRender]::Short(53170) | Should -Be '53K'
+        [Xmip.PowerShell.SegmentRender]::Short(999950) | Should -Be '1M'
+        [Xmip.PowerShell.SegmentRender]::Short(1234567) | Should -Be '1.2M'
+        [Xmip.PowerShell.SegmentRender]::Short(5000000000) | Should -Be '5G'
+        [Xmip.PowerShell.SegmentRender]::Short([ulong]::MaxValue) | Should -BeLike '*G'
+    }
+
+    It 'paints a short count hotter where it rises and icier where it falls' {
+        # The owner, 2026-09-18: 5.3K is 5.3K for a long while, so the color
+        # of the number says which way it is going; the letter keeps the mood.
+        [Xmip.PowerShell.SegmentRender]::Trend(5400, 5300) | Should -Be 'DarkYellow'
+        [Xmip.PowerShell.SegmentRender]::Trend(6000, 5000) | Should -Be 'DarkRed'
+        [Xmip.PowerShell.SegmentRender]::Trend(5300, 5400) | Should -Be 'DarkCyan'
+        [Xmip.PowerShell.SegmentRender]::Trend(4000, 5000) | Should -Be 'Blue'
+        [Xmip.PowerShell.SegmentRender]::Trend(5300, 5300) | Should -BeNullOrEmpty
+        [Xmip.PowerShell.SegmentRender]::Trend(5300, $null) | Should -BeNullOrEmpty
+        [Xmip.PowerShell.SegmentRender]::Trend(900, 100) |
+            Should -BeNullOrEmpty -Because 'a count written in full shows its own movement'
+
+        $seen = [DateTimeOffset]::UtcNow
+        [Xmip.Abi.Operate.HealthRecord[]] $records = @(
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/a', 'Fine', 0, '', $seen)
+        )
+        [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
+        $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
+        $then = [Xmip.Surface.Figures]::new('xmip:///', 5300, 60, 60, 0, $null, $null, $null)
+        $now = [Xmip.Surface.Figures]::new('xmip:///', 5400, 60, 60, 0, $null, $null, $null)
+        $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $now, $then)
+
+        $segment.Text | Should -BeLike '*R:5.4K P:60 S:60*'
+        ($segment.Parts | Where-Object Text -EQ 'R:').Color | Should -Be 'Cyan'
+        ($segment.Parts | Where-Object Text -EQ '5.4K').Color | Should -Be 'DarkYellow'
     }
 
     It 'paints every mood by the color name the shared English gives it' {
