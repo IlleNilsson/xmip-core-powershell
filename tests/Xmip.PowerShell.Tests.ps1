@@ -215,8 +215,29 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
         $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
         $square = [Xmip.PowerShell.PromptMonitor]::Render($allFine, $calm)
-        $square.Text | Should -Be '[R:12 P:11 S:10 ≡]'
-        $square.Parts[4].Color | Should -Be 'Cyan' -Because 'the sign is posh-git cyan'
+        $square.Text | Should -Be '[≡ R:12 P:11 S:10]' -Because 'three nodes share no name'
+        $square.Parts[1].Color | Should -Be 'Cyan' -Because 'the sign is posh-git cyan'
+
+        # posh-git's order, [main ≡ +0 ~1 -0]: what the prompt is at, its sign
+        # when square, then the counts. At one node it is the node's name; at
+        # a cluster, the cluster's; the Playground's `node` segment names nothing.
+        [Xmip.Abi.Operate.HealthRecord[]] $oneNode = @(
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/receive/a', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/send/b', 'Fine', 0, '', $seen)
+        )
+        $atNode = [Xmip.Surface.ScopeIndex]::Build($oneNode, $counts, 3, 'test')
+        [Xmip.PowerShell.PromptMonitor]::At($atNode) | Should -Be 'R1'
+        [Xmip.PowerShell.PromptMonitor]::Render($atNode, $calm).Text |
+            Should -Be '[R1 ≡ R:12 P:11 S:10]'
+
+        [Xmip.Abi.Operate.HealthRecord[]] $twoNodes = @(
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/receive/a', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/S1/send/b', 'Done', 95, 'x', $seen)
+        )
+        $atCluster = [Xmip.Surface.ScopeIndex]::Build($twoNodes, $counts, 4, 'test')
+        $troubled = [Xmip.PowerShell.PromptMonitor]::Render($atCluster, $calm)
+        $troubled.Text | Should -Be '[C1 R:12 P:11 S:10]' -Because 'not square, so no sign'
+        $troubled.Parts[1].Color | Should -Be 'Red' -Because 'the name wears the worst stage'
         [Xmip.PowerShell.PromptMonitor]::Render($allFine, $failing).Text |
             Should -Be '[R:12 P:11 S:10 F:2]' -Because 'a failure is not square'
 
@@ -232,6 +253,18 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $segment = [Xmip.PowerShell.PromptMonitor]::Render($empty, $none)
         $segment.Text | Should -Be '[R– P– S–]'
         $segment.Parts[1].Color | Should -Be 'DarkGray'
+    }
+
+    It 'keeps a count short, in K, M and G, so the line does not grow with its numbers' {
+        # The owner, 2026-09-18: Xmip counts past what an integer holds.
+        [Xmip.PowerShell.PromptMonitor]::Short(999) | Should -Be '999'
+        [Xmip.PowerShell.PromptMonitor]::Short(1000) | Should -Be '1K'
+        [Xmip.PowerShell.PromptMonitor]::Short(5317) | Should -Be '5.3K'
+        [Xmip.PowerShell.PromptMonitor]::Short(53170) | Should -Be '53K'
+        [Xmip.PowerShell.PromptMonitor]::Short(999950) | Should -Be '1M'
+        [Xmip.PowerShell.PromptMonitor]::Short(1234567) | Should -Be '1.2M'
+        [Xmip.PowerShell.PromptMonitor]::Short(5000000000) | Should -Be '5G'
+        [Xmip.PowerShell.PromptMonitor]::Short([ulong]::MaxValue) | Should -BeLike '*G'
     }
 
     It 'paints every mood by the color name the shared English gives it' {
