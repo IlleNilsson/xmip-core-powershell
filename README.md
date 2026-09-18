@@ -82,7 +82,13 @@ Press Enter after the import and the prompt is as it was, with no segment,
 until the roll publishes; a few seconds after the roll starts it says
 `[R12 P11 S10 T0 F0]`, in color, and moves on every Enter. `Stop-XmipTest`
 ends the roll. Build before you import, never after, in the same session: a
-loaded module locks its assemblies, and a build into them fails.
+loaded module locks its assemblies, and a build into them fails. For that
+reason the import belongs in the session that wants the segment and not in
+a console's start-up command line or a profile: a console that always holds
+the module always blocks its build, and it is `pwsh`, so
+`Get-Process -Name Xmip-*` does not find it. posh-git must be loaded for the
+segment to sit beside a repository's state; a console started with
+`-NoProfile` has skipped the profile that imports it.
 
 A roll started under another name is followed too: `Start-XmipTest` tells
 the prompt in its session which snapshot its roll publishes, so `-Cluster
