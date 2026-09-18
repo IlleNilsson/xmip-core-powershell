@@ -46,8 +46,10 @@ figures with their letters — R, P and S for what the three stages count
 (Streams received, Journeys in process, Messages sent), T for Retrying and F
 for Failed. No mood is spelled out; the color carries it: a stage letter is
 green, yellow or red by the worst leaf on that stage, T is yellow and F is
-red when above zero (the owner, 2026-09-15; ADR-0052). A figure the publisher
-has not published is a dash, never a zero. It composes with posh-git and other prompt
+red (the owner, 2026-09-15; ADR-0052). T and F are there only when something
+is retrying or has failed, so a quiet cluster reads `[R12 P11 S10]` (the
+owner, 2026-09-18). A stage figure the publisher has not published is a
+dash, never a zero. It composes with posh-git and other prompt
 providers rather than replacing their result, and restores the prompt it
 found when the module is removed. A background observer follows the shared `Xmip.Surface` change
 stream and updates an in-memory segment; the prompt itself performs no runtime
