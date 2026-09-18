@@ -234,21 +234,35 @@ public static class PromptMonitor
     /// (<see cref="ScopeTree.CountedAt"/>: Streams, Journeys, Messages), T for
     /// Retrying, F for Failed. No mood is spelled out; the color carries it —
     /// a stage letter is green, yellow or red by the worst leaf on that stage,
-    /// T is yellow and F red when above zero. An unpublished figure is a dash,
-    /// never a zero (ADR-0052, amendment 2026-09-15, the owner's second word).
+    /// T is yellow and F red. An unpublished stage figure is a dash, never a
+    /// zero (ADR-0052, amendment 2026-09-15, the owner's second word). T and F
+    /// are there only when there is something retrying or failed: the owner,
+    /// 2026-09-18, on <c>[R5,317 P60 S60 T– F–]</c> — they do not need to be
+    /// there if there are none, as posh-git shows no count it has nothing for.
     /// </summary>
     public static XmipPromptSegment Render(ScopeIndex index, Figures figures)
     {
-        return new XmipPromptSegment(
+        List<XmipPromptPart> parts =
         [
             new XmipPromptPart("[", ConsoleColor.DarkGray),
             Figure("R", figures.Streams, Traffic(index.WorstAtStage("receive")?.State)),
             Figure(" P", figures.Journeys, Traffic(index.WorstAtStage("process")?.State)),
             Figure(" S", figures.Messages, Traffic(index.WorstAtStage("send")?.State)),
-            Figure(" T", figures.Retrying, Lit(figures.Retrying, ConsoleColor.Yellow)),
-            Figure(" F", figures.Failed, Lit(figures.Failed, ConsoleColor.Red)),
-            new XmipPromptPart("]", ConsoleColor.DarkGray),
-        ]);
+        ];
+
+        if (figures.Retrying > 0)
+        {
+            parts.Add(Figure(" T", figures.Retrying, ConsoleColor.Yellow));
+        }
+
+        if (figures.Failed > 0)
+        {
+            parts.Add(Figure(" F", figures.Failed, ConsoleColor.Red));
+        }
+
+        parts.Add(new XmipPromptPart("]", ConsoleColor.DarkGray));
+
+        return new XmipPromptSegment([.. parts]);
     }
 
     /// <summary>Green, yellow or red for a leaf's mood (ADR-0041): Fine is
@@ -264,12 +278,6 @@ public static class PromptMonitor
                 => ConsoleColor.Yellow,
             _ => ConsoleColor.Red,
         };
-    }
-
-    /// <summary>An outcome count's color: its warning color above zero, green at zero.</summary>
-    private static ConsoleColor Lit(ulong? value, ConsoleColor warning)
-    {
-        return value > 0 ? warning : ConsoleColor.Green;
     }
 
     /// <summary>One figure: its letter and its count; a gray dash for none.</summary>

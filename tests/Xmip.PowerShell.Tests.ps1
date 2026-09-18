@@ -192,20 +192,29 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 1, 0, $null)
         $segment = [Xmip.PowerShell.PromptMonitor]::Render($index, $figures)
 
-        $segment.Text | Should -Be '[R12 P11 S10 T1 F0]'
+        # 2026-09-18: T and F are there only when there are any; F0 is not said.
+        $segment.Text | Should -Be '[R12 P11 S10 T1]'
         $segment.Parts[1].Color | Should -Be 'Green' -Because 'receive is fine'
         $segment.Parts[2].Color | Should -Be 'Yellow' -Because 'process is stressed'
         $segment.Parts[3].Color | Should -Be 'Red' -Because 'send is done'
         $segment.Parts[4].Color | Should -Be 'Yellow' -Because 'one retrying'
-        $segment.Parts[5].Color | Should -Be 'Green' -Because 'nothing failed'
+
+        $failing = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 2, $null)
+        $failed = [Xmip.PowerShell.PromptMonitor]::Render($index, $failing)
+        $failed.Text | Should -Be '[R12 P11 S10 F2]'
+        $failed.Parts[4].Color | Should -Be 'Red' -Because 'two failed'
+
+        $quiet = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, $null, $null, $null)
+        [Xmip.PowerShell.PromptMonitor]::Render($index, $quiet).Text |
+            Should -Be '[R12 P11 S10]' -Because 'none, or none published, is nothing on the line'
     }
 
-    It 'shows an unpublished figure as absent, never as zero' {
+    It 'shows an unpublished stage figure as a dash, never as zero, and no T or F' {
         $none = [Xmip.Surface.Figures]::None('xmip:///')
         $empty = [Xmip.Surface.ScopeIndex]::Empty('test')
 
         $segment = [Xmip.PowerShell.PromptMonitor]::Render($empty, $none)
-        $segment.Text | Should -Be '[R– P– S– T– F–]'
+        $segment.Text | Should -Be '[R– P– S–]'
         $segment.Parts[1].Color | Should -Be 'DarkGray'
     }
 
