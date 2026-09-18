@@ -37,9 +37,11 @@ a caller filters and compares rather than parsing.
 
 ## The prompt
 
-When the module is imported into an interactive shell it prepends a compact,
+When the module is imported into an interactive shell it adds a compact,
 colored segment such as `[R12 P11 S10 T0 F0]` to the prompt already
-installed, the way posh-git says a repository's state and no wider: five
+installed, where posh-git puts a repository's state — after the path and
+before the closing `>`, as in `D:\Repos\Xmip [main] [R12 P11 S10 T0 F0]>`
+(the owner, 2026-09-18) — and says it the same way and no wider: five
 figures with their letters — R, P and S for what the three stages count
 (Streams received, Journeys in process, Messages sent), T for Retrying and F
 for Failed. No mood is spelled out; the color carries it: a stage letter is
@@ -57,7 +59,10 @@ clause 3). Remote, it follows a web host's surface hub over SignalR and is
 told when that host's surface changes (ADR-0052, amendment 2026-09-15). With no
 surface named, the prompt follows whatever library the one discovery rule
 finds (`RuntimeLibrary`, else `XMIP_RUNTIME_LIBRARY`, else beside the module)
-and says `[Xmip not configured]` while nothing answers. The mood's color is
+and shows nothing while nothing answers, as posh-git shows nothing outside a
+repository: that Xmip is connected is obvious where the figures show (the
+owner, 2026-09-18). Only a document that names a surface this build does not
+know says a word, `[Xmip misconfigured]`. The mood's color is
 the one `Xmip.Surface` names for it (ADR-0041); the console paints the nearest
 of its sixteen.
 
@@ -73,8 +78,8 @@ Import-Module ./module/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.
 Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip -Nodes R1, P1, S1
 ```
 
-Press Enter after the import and the prompt says `[Xmip unavailable]` until
-the roll publishes; a few seconds after the roll starts it says
+Press Enter after the import and the prompt is as it was, with no segment,
+until the roll publishes; a few seconds after the roll starts it says
 `[R12 P11 S10 T0 F0]`, in color, and moves on every Enter. `Stop-XmipTest`
 ends the roll. Build before you import, never after, in the same session: a
 loaded module locks its assemblies, and a build into them fails.

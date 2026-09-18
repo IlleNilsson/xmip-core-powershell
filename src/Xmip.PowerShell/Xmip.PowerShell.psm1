@@ -14,15 +14,34 @@ if ($null -eq $script:PreviousPrompt) {
 
 [Xmip.PowerShell.PromptMonitor]::Start()
 
+# Where posh-git puts a repository's state: after the path and before the
+# closing ">", "D:\Repos\Xmip [main] [R12 P11 S10 T0 F0]> ". The owner asked
+# for the same kind of output as posh-git and the segment stood in front of
+# the whole prompt until 2026-09-18. The prompt in force is rendered first;
+# ours goes in before its trailing ">" and whatever escape codes close it. A
+# prompt that ends some other way keeps ours in front, as before. Colored
+# with escape codes, because a returned string is what a prompt composes.
 $script:XmipPrompt = {
-    $segment = [Xmip.PowerShell.PromptMonitor]::Current
+    [string] $text = ''
+    $parts = [Xmip.PowerShell.PromptMonitor]::Current.Parts
 
-    foreach ($part in $segment.Parts) {
-        Write-Host -NoNewline $part.Text -ForegroundColor $part.Color
+    # Nothing to say is nothing on the line, as posh-git outside a repository.
+    if ($parts.Count -eq 0) {
+        return & $script:PreviousPrompt
     }
 
-    Write-Host -NoNewline ' '
-    & $script:PreviousPrompt
+    foreach ($part in $parts) {
+        $text += $PSStyle.Foreground.FromConsoleColor($part.Color) + $part.Text
+    }
+
+    $text += $PSStyle.Reset
+    [string] $previous = -join @(& $script:PreviousPrompt)
+
+    if ($previous -match '(?s)^(?<before>.*?)(?<close>\s*>+\s*(?:\e\[[0-9;]*m)*)$') {
+        return $Matches['before'] + ' ' + $text + $Matches['close']
+    }
+
+    $text + ' ' + $previous
 }
 
 Set-Item Function:\global:prompt -Value $script:XmipPrompt

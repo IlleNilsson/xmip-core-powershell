@@ -116,10 +116,30 @@ Describe 'The prompt reads its surface from the document beside the module' {
 
     It 'chains to the prompt a provider module exported, as posh-git does' {
         # 2026-09-15: the git segment vanished because the module looked only
-        # for a global prompt function. What was in force renders after ours.
-        [string] $rendered = & (Get-Item Function:\prompt).ScriptBlock 6>$null
+        # for a global prompt function. 2026-09-18: ours sits where posh-git
+        # puts a repository's state, after what was in force and before its
+        # closing ">", not in front of the whole prompt.
+        # The same day: nothing to say is nothing on the line, as posh-git
+        # outside a repository, so the segment shows once a snapshot is read.
+        [string] $fixture = Join-Path $script:Root `
+            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+        [Xmip.PowerShell.PromptMonitor]::Follow(
+            (Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.toml'))
+        Start-Sleep -Milliseconds 500
+        [string] $silent = -join @(& (Get-Item Function:\prompt).ScriptBlock)
+        $silent | Should -Be 'provider> '
 
-        $rendered | Should -Be 'provider> '
+        [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
+        [string] $plain = ''
+
+        foreach ($attempt in 1..40) {
+            [string] $rendered = -join @(& (Get-Item Function:\prompt).ScriptBlock)
+            $plain = $rendered -replace '\e\[[0-9;]*m', ''
+            if ($plain -like '*`[R*') { break }
+            Start-Sleep -Milliseconds 100
+        }
+
+        $plain | Should -Match '^provider \[R.+\]> $'
         (Get-Item Function:\prompt).Module.Name | Should -Be 'Xmip.PowerShell'
     }
 

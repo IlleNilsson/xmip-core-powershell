@@ -135,9 +135,17 @@ public static class PromptMonitor
         };
     }
 
+    /// <summary>
+    /// Nothing at all, the way posh-git says nothing outside a repository.
+    /// The owner, 2026-09-18: that Xmip is connected is obvious where the
+    /// prompt shows figures, so connecting, unavailable and not configured
+    /// are no words on the line; they are the absence of the segment.
+    /// </summary>
+    public static XmipPromptSegment Nothing { get; } = new([]);
+
     private static XmipPromptSegment Connecting()
     {
-        return XmipPromptSegment.Plain("[Xmip connecting]", ConsoleColor.DarkGray);
+        return Nothing;
     }
 
     private static async Task ObserveAsync(int generation, CancellationToken stop)
@@ -165,7 +173,7 @@ public static class PromptMonitor
         }
         catch (Exception)
         {
-            Say(generation, XmipPromptSegment.Plain("[Xmip unavailable]", ConsoleColor.DarkRed));
+            Say(generation, Nothing);
         }
         finally
         {
@@ -211,8 +219,8 @@ public static class PromptMonitor
 
         if (index.Leaves == 0)
         {
-            string nothing = configured ? "unavailable" : "not configured";
-            Say(generation, XmipPromptSegment.Plain($"[Xmip {nothing}]", ConsoleColor.DarkGray));
+            _ = configured;
+            Say(generation, Nothing);
 
             return;
         }
