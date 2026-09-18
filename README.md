@@ -61,7 +61,7 @@ square, then the counts. A count is kept short in K, M and G, `R:5.3K`,
 `S:1.2M`, because Xmip counts past what an integer holds and a line that
 grows with its numbers goes wild. A count written that short hides its own
 movement, so its number is painted by which way it is going since the last
-publication: warmer where it rose, hot where it rose by a tenth or more,
+publication: orange where it rose, magenta where it rose by a tenth or more,
 cooler where it fell, icy where it fell by as much. The letter keeps the
 mood's color; a count below a thousand shows its own movement and is not
 painted. A stage figure the publisher has not published is a

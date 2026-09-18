@@ -174,7 +174,9 @@ public static class SegmentRender
     /// thousand. A count written in K, M or G hides its own movement — 5.3K
     /// is 5.3K for a long while — so the color says what the digits cannot
     /// (the owner, 2026-09-18: paint it hotter or icier). The letter keeps
-    /// the mood's color; only the number takes this one.
+    /// the mood's color; only the number takes this one. Hot is magenta and
+    /// not a red: on a console dark red and red read alike, and red is the
+    /// mood's word for a stage that is done.
     /// </summary>
     public static ConsoleColor? Trend(ulong now, ulong? before)
     {
@@ -188,7 +190,7 @@ public static class SegmentRender
         bool fast = moved >= Math.Max(then / 10, 1);
 
         return now > then
-            ? (fast ? ConsoleColor.DarkRed : ConsoleColor.DarkYellow)
+            ? (fast ? ConsoleColor.Magenta : ConsoleColor.DarkYellow)
             : (fast ? ConsoleColor.Blue : ConsoleColor.DarkCyan);
     }
 

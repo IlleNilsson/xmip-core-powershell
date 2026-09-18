@@ -271,7 +271,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # The owner, 2026-09-18: 5.3K is 5.3K for a long while, so the color
         # of the number says which way it is going; the letter keeps the mood.
         [Xmip.PowerShell.SegmentRender]::Trend(5400, 5300) | Should -Be 'DarkYellow'
-        [Xmip.PowerShell.SegmentRender]::Trend(6000, 5000) | Should -Be 'DarkRed'
+        [Xmip.PowerShell.SegmentRender]::Trend(6000, 5000) | Should -Be 'Magenta'
         [Xmip.PowerShell.SegmentRender]::Trend(5300, 5400) | Should -Be 'DarkCyan'
         [Xmip.PowerShell.SegmentRender]::Trend(4000, 5000) | Should -Be 'Blue'
         [Xmip.PowerShell.SegmentRender]::Trend(5300, 5300) | Should -BeNullOrEmpty
