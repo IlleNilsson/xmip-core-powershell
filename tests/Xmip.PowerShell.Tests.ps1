@@ -231,10 +231,10 @@ Describe 'The prompt reads its surface from the document beside the module' {
             Should -Be '[R1 ≡ R:12 P:11 S:10]'
 
         # A roll of one test shares its scenario too; the prompt is at the
-        # cluster still, never at pingpong (the owner's RoundTrip, 2026-09-19).
+        # cluster still, never at round-trip (the owner's RoundTrip, 2026-09-19).
         [Xmip.Abi.Operate.HealthRecord[]] $oneTest = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/pingpong/process/tcp/json', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/pingpong/process/udp/xml', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/round-trip/process/tcp/json', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/round-trip/process/udp/xml', 'Fine', 0, '', $seen)
         )
         $atOneTest = [Xmip.Surface.ScopeIndex]::Build($oneTest, $counts, 5, 'test')
         [Xmip.PowerShell.SegmentRender]::At($atOneTest) | Should -Be 'C1'
