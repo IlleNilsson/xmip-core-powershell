@@ -16,7 +16,7 @@
 # shows nothing while nothing answers, as posh-git outside a repository.
 #
 # As shipped, in a developer's clone: the Playground roll started as cluster
-# C1 (Start-XmipTest -Suite Playground -Cluster C1 ...). A deployment writes
+# C1 (Start-XmipTest -Suite Core.Playground -Cluster C1 ...). A deployment writes
 # its own.
 Surface = "snapshot"
 
