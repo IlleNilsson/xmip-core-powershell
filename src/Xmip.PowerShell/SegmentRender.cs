@@ -81,11 +81,11 @@ public static class SegmentRender
     }
 
     /// <summary>
-    /// What the prompt is at: the last name every published scope shares. A
-    /// node's own publication shares its node, so it is the node's name; a
-    /// cluster's shares only the cluster, so it is the cluster's. Nothing
+    /// What the prompt is at, from what every published scope shares: the
+    /// node where they share one, else the cluster, the first name. Nothing
     /// shared is no name. A segment that is only a kind, such as the
-    /// Playground's <c>node</c>, names nothing and is passed over.
+    /// Playground's <c>node</c>, names nothing; and what lies below the node
+    /// or the cluster, a scenario or a stage, is never where the prompt is.
     /// </summary>
     public static string At(ScopeIndex index)
     {
@@ -107,7 +107,15 @@ public static class SegmentRender
             shared++;
         }
 
-        return scopes[0].Take(shared).LastOrDefault(part => part != "node") ?? string.Empty;
+        // A node where one node is shared, else the cluster: the first name.
+        // Never what lies deeper. A roll of one test shares its scenario too,
+        // and the prompt is at C1 then, not at pingpong.
+        string[] common = [.. scopes[0].Take(shared)];
+        int node = Array.IndexOf(common, "node");
+
+        return node >= 0 && node + 1 < common.Length
+            ? common[node + 1]
+            : common.FirstOrDefault(part => part != "node") ?? string.Empty;
     }
 
     /// <summary>
