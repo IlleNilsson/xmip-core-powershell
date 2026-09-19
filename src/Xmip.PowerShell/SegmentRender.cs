@@ -109,7 +109,7 @@ public static class SegmentRender
 
         // A node where one node is shared, else the cluster: the first name.
         // Never what lies deeper. A roll of one test shares its scenario too,
-        // and the prompt is at C1 then, not at pingpong.
+        // and the prompt is at C1 then, not at round-trip.
         string[] common = [.. scopes[0].Take(shared)];
         int node = Array.IndexOf(common, "node");
 
