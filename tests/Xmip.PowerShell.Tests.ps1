@@ -178,9 +178,74 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $said | Should -BeLike '`[R* P* S* T* F*]'
     }
 
-    It 'says R P S T F with their letters and no word; the color carries the mood' {
+    It 'says a rate once a publisher has published twice, and a dash before that' {
+        # The owner, 2026-09-20: the number has to mean something over time.
+        # The interval is the reader's own, between the two publications it
+        # saw, because a published snapshot carries no clock for its counts.
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-rate-$stamp.toml"
+
+        function Write-Publication {
+            param([int] $Streams, [int] $Journeys)
+
+            @"
+source = "rate test"
+node = "xmip:///W9"
+
+[[records]]
+scope = "xmip:///W9/receive/a"
+state = "fine"
+severity = 0
+evidence = ""
+observed_unix_nanos = 1789111688000000000
+
+[[counts]]
+counted = "streams"
+value = $Streams
+
+[[counts]]
+counted = "journeys"
+value = $Journeys
+"@ | Set-Content -LiteralPath $moving -Encoding utf8
+        }
+
+        try {
+            Write-Publication -Streams 1000 -Journeys 200
+            [Xmip.PowerShell.PromptMonitor]::Follow($moving)
+
+            [string] $first = ''
+            foreach ($attempt in 1..40) {
+                $first = [Xmip.PowerShell.PromptMonitor]::Current.Text
+                if ($first -like '`[W9*') { break }
+                Start-Sleep -Milliseconds 100
+            }
+
+            $first | Should -Be '[W9 ≡ R– P– S–]' -Because 'one publication is no interval'
+
+            Start-Sleep -Seconds 1
+            Write-Publication -Streams 3000 -Journeys 400
+
+            [string] $second = ''
+            foreach ($attempt in 1..40) {
+                $second = [Xmip.PowerShell.PromptMonitor]::Current.Text
+                if ($second -like '*R:*/s*') { break }
+                Start-Sleep -Milliseconds 100
+            }
+
+            $second | Should -BeLike '`[W9 ≡ R:*/s P:*/s S–]'
+        }
+        finally {
+            [Xmip.PowerShell.PromptMonitor]::Stop()
+            Remove-Item -LiteralPath $moving -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'says R P S as a rate and T F as counts; the color carries the mood' {
         # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures,
-        # in red, yellow and green — space on a console line is precious.
+        # in red, yellow and green — space on a console line is precious. And
+        # 2026-09-20: R, P and S are what the stage is moving now, per second.
+        # A total is bounded by uptime and means nothing over time; a rate is
+        # bounded by throughput and can say stalled.
         $seen = [DateTimeOffset]::UtcNow
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
             [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/orders', 'Fine', 0, '', $seen)
@@ -190,10 +255,12 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
         $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 1, 0, $null)
-        $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $figures)
+        # FigureFlow is Streams, Journeys, Messages: what R, P and S move.
+        $flow = [Xmip.Surface.FigureFlow]::new([double] 12, [double] 11, [double] 10)
+        $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow)
 
         # 2026-09-18: T and F are there only when there are any; F0 is not said.
-        $segment.Text | Should -Be '[R:12 P:11 S:10 T:1]'
+        $segment.Text | Should -Be '[R:12/s P:11/s S:10/s T:1]'
         $segment.Parts[0].Color | Should -Be 'Yellow' -Because 'the brackets are posh-git yellow'
         $segment.Parts[1].Color | Should -Be 'Cyan' -Because 'receive is fine, in posh-git cyan'
         $segment.Parts[2].Color | Should -Be 'Yellow' -Because 'process is stressed'
@@ -201,8 +268,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
         $segment.Parts[4].Color | Should -Be 'Yellow' -Because 'one retrying'
 
         $failing = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 2, $null)
-        $failed = [Xmip.PowerShell.SegmentRender]::Render($index, $failing)
-        $failed.Text | Should -Be '[R:12 P:11 S:10 F:2]'
+        $failed = [Xmip.PowerShell.SegmentRender]::Render($index, $failing, $flow)
+        $failed.Text | Should -Be '[R:12/s P:11/s S:10/s F:2]'
         $failed.Parts[4].Color | Should -Be 'Red' -Because 'two failed'
 
         # The owner, 2026-09-18: posh-git's look. Every stage fine and nothing
@@ -214,8 +281,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
         )
         $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
         $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
-        $square = [Xmip.PowerShell.SegmentRender]::Render($allFine, $calm)
-        $square.Text | Should -Be '[≡ R:12 P:11 S:10]' -Because 'three nodes share no name'
+        $square = [Xmip.PowerShell.SegmentRender]::Render($allFine, $calm, $flow)
+        $square.Text | Should -Be '[≡ R:12/s P:11/s S:10/s]' -Because 'three nodes share no name'
         $square.Parts[1].Color | Should -Be 'Cyan' -Because 'the sign is posh-git cyan'
 
         # posh-git's order, [main ≡ +0 ~1 -0]: what the prompt is at, its sign
@@ -227,8 +294,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
         )
         $atNode = [Xmip.Surface.ScopeIndex]::Build($oneNode, $counts, 3, 'test')
         [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be 'R1'
-        [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm).Text |
-            Should -Be '[R1 ≡ R:12 P:11 S:10]'
+        [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm, $flow).Text |
+            Should -Be '[R1 ≡ R:12/s P:11/s S:10/s]'
 
         # A roll of one test shares its scenario too; the prompt is at the
         # cluster still, never at round-trip (the owner's RoundTrip, 2026-09-19).
@@ -244,24 +311,56 @@ Describe 'The prompt reads its surface from the document beside the module' {
             [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/S1/send/b', 'Done', 95, 'x', $seen)
         )
         $atCluster = [Xmip.Surface.ScopeIndex]::Build($twoNodes, $counts, 4, 'test')
-        $troubled = [Xmip.PowerShell.SegmentRender]::Render($atCluster, $calm)
-        $troubled.Text | Should -Be '[C1 R:12 P:11 S:10]' -Because 'not square, so no sign'
+        $troubled = [Xmip.PowerShell.SegmentRender]::Render($atCluster, $calm, $flow)
+        $troubled.Text | Should -Be '[C1 R:12/s P:11/s S:10/s]' -Because 'not square, no sign'
         $troubled.Parts[1].Color | Should -Be 'Red' -Because 'the name wears the worst stage'
-        [Xmip.PowerShell.SegmentRender]::Render($allFine, $failing).Text |
-            Should -Be '[R:12 P:11 S:10 F:2]' -Because 'a failure is not square'
+        [Xmip.PowerShell.SegmentRender]::Render($allFine, $failing, $flow).Text |
+            Should -Be '[R:12/s P:11/s S:10/s F:2]' -Because 'a failure is not square'
 
         $quiet = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, $null, $null, $null)
-        [Xmip.PowerShell.SegmentRender]::Render($index, $quiet).Text |
-            Should -Be '[R:12 P:11 S:10]' -Because 'none, or none published, is not on the line'
+        [Xmip.PowerShell.SegmentRender]::Render($index, $quiet, $flow).Text |
+            Should -Be '[R:12/s P:11/s S:10/s]' -Because 'no T or F published is no T or F'
     }
 
-    It 'shows an unpublished stage figure as a dash, never as zero, and no T or F' {
-        $none = [Xmip.Surface.Figures]::None('xmip:///')
+    It 'shows a rate it cannot compute as a dash, and a stalled one as zero' {
+        # The owner, 2026-09-20: 0/s means stalled, so "not known yet" must not
+        # be written 0/s — it is the dash an unpublished figure already gets.
         $empty = [Xmip.Surface.ScopeIndex]::Empty('test')
+        $none = [Xmip.Surface.Figures]::None('xmip:///')
 
-        $segment = [Xmip.PowerShell.SegmentRender]::Render($empty, $none)
-        $segment.Text | Should -Be '[R– P– S–]'
-        $segment.Parts[1].Color | Should -Be 'DarkGray'
+        $nothing = [Xmip.PowerShell.SegmentRender]::Render(
+            $empty, $none, [Xmip.Surface.FigureFlow]::Unknown)
+        $nothing.Text | Should -Be '[R– P– S–]'
+        $nothing.Parts[1].Color | Should -Be 'DarkGray'
+
+        # One publication is no interval: the figures are there and the rate
+        # is not.
+        $first = [Xmip.Surface.Figures]::new('xmip:///', 5000, 640, 660, 0, $null, $null, $null)
+        $opening = [Xmip.Surface.FigureFlow]::Between($first, $null, [TimeSpan]::Zero)
+        [Xmip.PowerShell.SegmentRender]::Render($empty, $first, $opening).Text |
+            Should -Be '[R– P– S–]' -Because 'not known yet is not stalled'
+
+        # Two publications and nothing moved: stalled, and it says so.
+        $stalled = [Xmip.Surface.FigureFlow]::Between(
+            $first, $first, [TimeSpan]::FromSeconds(2))
+        [Xmip.PowerShell.SegmentRender]::Render($empty, $first, $stalled).Text |
+            Should -Be '[R:0/s P:0/s S:0/s]'
+
+        # And two that moved: the rate is per second over the interval.
+        $later = [Xmip.Surface.Figures]::new('xmip:///', 5600, 700, 720, 0, 3, 1, $null)
+        $moving = [Xmip.Surface.FigureFlow]::Between(
+            $later, $first, [TimeSpan]::FromSeconds(5))
+        [Xmip.PowerShell.SegmentRender]::Render($empty, $later, $moving).Text |
+            Should -Be '[R:120/s P:12/s S:12/s T:3 F:1]' -Because 'T and F stay counts'
+    }
+
+    It 'keeps a rate on the same ladder as a count and never writes a trickle as zero' {
+        [Xmip.PowerShell.SegmentRender]::Rate(0) | Should -Be '0'
+        [Xmip.PowerShell.SegmentRender]::Rate(0.3) | Should -Be '0.3'
+        [Xmip.PowerShell.SegmentRender]::Rate(9.94) | Should -Be '9.9'
+        [Xmip.PowerShell.SegmentRender]::Rate(240) | Should -Be '240'
+        [Xmip.PowerShell.SegmentRender]::Rate(1234) | Should -Be '1.2K'
+        [Xmip.PowerShell.SegmentRender]::Rate(1234567) | Should -Be '1.2M'
     }
 
     It 'keeps a count short, in K, M and G, so the line does not grow with its numbers' {
@@ -276,9 +375,11 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [Xmip.PowerShell.SegmentRender]::Short([ulong]::MaxValue) | Should -BeLike '*G'
     }
 
-    It 'paints a short count hotter where it rises and icier where it falls' {
+    It 'paints a short number hotter where it rises and icier where it falls' {
         # The owner, 2026-09-18: 5.3K is 5.3K for a long while, so the color
         # of the number says which way it is going; the letter keeps the mood.
+        # Since 2026-09-20 the number is a rate, so the color says whether the
+        # rate is climbing — acceleration, which no digit on the line shows.
         [Xmip.PowerShell.SegmentRender]::Trend(5400, 5300) | Should -Be 'DarkYellow'
         [Xmip.PowerShell.SegmentRender]::Trend(6000, 5000) | Should -Be 'Magenta'
         [Xmip.PowerShell.SegmentRender]::Trend(5300, 5400) | Should -Be 'DarkCyan'
@@ -286,7 +387,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [Xmip.PowerShell.SegmentRender]::Trend(5300, 5300) | Should -BeNullOrEmpty
         [Xmip.PowerShell.SegmentRender]::Trend(5300, $null) | Should -BeNullOrEmpty
         [Xmip.PowerShell.SegmentRender]::Trend(900, 100) |
-            Should -BeNullOrEmpty -Because 'a count written in full shows its own movement'
+            Should -BeNullOrEmpty -Because 'a number written in full shows its own movement'
 
         $seen = [DateTimeOffset]::UtcNow
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
@@ -294,13 +395,73 @@ Describe 'The prompt reads its surface from the document beside the module' {
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
-        $then = [Xmip.Surface.Figures]::new('xmip:///', 5300, 60, 60, 0, $null, $null, $null)
-        $now = [Xmip.Surface.Figures]::new('xmip:///', 5400, 60, 60, 0, $null, $null, $null)
-        $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $now, $then)
+        $figures = [Xmip.Surface.Figures]::None('xmip:///')
+        $then = [Xmip.Surface.FigureFlow]::new([double] 5300, [double] 60, [double] 60)
+        $now = [Xmip.Surface.FigureFlow]::new([double] 5400, [double] 60, [double] 60)
+        $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $now, $then)
 
-        $segment.Text | Should -BeLike '*R:5.4K P:60 S:60*'
+        $segment.Text | Should -BeLike '*R:5.4K/s P:60/s S:60/s*'
         ($segment.Parts | Where-Object Text -EQ 'R:').Color | Should -Be 'Cyan'
         ($segment.Parts | Where-Object Text -EQ '5.4K').Color | Should -Be 'DarkYellow'
+    }
+
+    It 'says there is another cluster when the session named more than one' {
+        # ADR-0052, amendment 2026-09-20: Start-XmipTest followed whichever
+        # roll started last, and with two rolling the segment read as the whole
+        # estate. The prompt still reads one publication — a mood over two
+        # clusters is at a scope in neither tree — and now says how many it is
+        # not showing. Nothing beside is nothing on the line.
+        $seen = [DateTimeOffset]::UtcNow
+        $leaf = [Xmip.Abi.Operate.HealthRecord]
+        [Xmip.Abi.Operate.HealthRecord[]] $records = @(
+            $leaf::new('xmip:///C1/node/R1/receive/a', 'Fine', 0, '', $seen)
+            $leaf::new('xmip:///C1/node/S1/send/b', 'Done', 95, 'x', $seen)
+        )
+        [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
+        $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
+        $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
+        $flow = [Xmip.Surface.FigureFlow]::new([double] 12, [double] 11, [double] 10)
+
+        [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow, $null, 0).Text |
+            Should -Be '[C1 R:12/s P:11/s S:10/s]' -Because 'one cluster says nothing of others'
+
+        $ofTwo = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow, $null, 1)
+        $ofTwo.Text | Should -Be '[C1+1 R:12/s P:11/s S:10/s]'
+        ($ofTwo.Parts | Where-Object Text -EQ 'C1').Color |
+            Should -Be 'Red' -Because 'the name still wears the worst stage'
+        ($ofTwo.Parts | Where-Object Text -EQ '+1 ').Color |
+            Should -Be 'DarkGray' -Because 'what is not shown is gray, as an unpublished figure is'
+    }
+
+    It 'follows one roll and counts the others the session named beside it' {
+        [string] $fixture = Join-Path $script:Root `
+            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
+        [string] $beside = Join-Path $script:Root `
+            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-c2.toml'
+
+        # Named by the session, never counted from files on disk: a surface is
+        # stated (ADR-0052 clause 3). The followed one among them is not an
+        # "other", however the caller lists them.
+        [Xmip.PowerShell.PromptMonitor]::Follow($fixture, @($fixture, $beside))
+
+        [string] $said = ''
+        foreach ($attempt in 1..40) {
+            $said = [Xmip.PowerShell.PromptMonitor]::Current.Text
+            if ($said -like '`[C1+1*') { break }
+            Start-Sleep -Milliseconds 100
+        }
+
+        $said | Should -BeLike '`[C1+1 *]'
+
+        [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
+
+        foreach ($attempt in 1..40) {
+            $said = [Xmip.PowerShell.PromptMonitor]::Current.Text
+            if ($said -like '`[C1 *') { break }
+            Start-Sleep -Milliseconds 100
+        }
+
+        $said | Should -BeLike '`[C1 *]' -Because 'one roll alone says nothing of others'
     }
 
     It 'paints every mood by the color name the shared English gives it' {

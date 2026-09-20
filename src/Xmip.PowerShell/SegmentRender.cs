@@ -6,16 +6,16 @@ namespace Xmip.PowerShell;
 
 /// <summary>
 /// What the prompt segment says and in which colors, from one publication's
-/// index and figures and, where there was one, the figures before it. Pure:
-/// no surface, no clock, no state — <see cref="PromptMonitor"/> observes and
-/// remembers, this renders. Apart since 2026-09-18, when the two together
-/// reached the length a file may be.
+/// index, its figures and the rate it is moving at. Pure: no surface, no
+/// clock, no state — <see cref="PromptMonitor"/> observes and remembers, this
+/// renders. Apart since 2026-09-18, when the two together reached the length a
+/// file may be.
 /// </summary>
 public static class SegmentRender
 {
     /// <summary>
     /// The segment the way posh-git says a repository, and no wider: five
-    /// figures with their letters, R, P and S for what the three stages count
+    /// figures with their letters, R, P and S for what the three stages move
     /// (<see cref="ScopeTree.CountedAt"/>: Streams, Journeys, Messages), T for
     /// Retrying, F for Failed. No mood is spelled out; the color carries it —
     /// a stage letter is green, yellow or red by the worst leaf on that stage,
@@ -29,10 +29,38 @@ public static class SegmentRender
     /// a branch that is in step with its remote for a stage that is fine, and
     /// posh-git's own ≡ at the end when every stage is fine and nothing is
     /// retrying or failed — the cluster is square, as the branch is.
+    /// <para>
+    /// <paramref name="beside"/> is how many clusters are rolling that this
+    /// prompt is not following. The prompt reads one publication — a mood or a
+    /// sum over two clusters would be at a scope in neither tree — so where
+    /// there are more it says so rather than reading as the whole estate:
+    /// <c>[C2+1 ≡ R:5.3K P:60 S:60]</c>, the count in gray, the color this
+    /// segment already gives what it is not showing (ADR-0052, amendment
+    /// 2026-09-20). None beside is nothing on the line, as everything else here.
+    /// </para>
+    /// <para>
+    /// R, P and S are a rate — <c>R:1.2K/s</c>, what the stage is moving now,
+    /// <see cref="FigureFlow"/> between the last two publications — and not a
+    /// total since the roll began (the owner, 2026-09-20: *the number does not
+    /// mean anything over time*). A rate is bounded by throughput rather than
+    /// by uptime, and <c>R:0/s</c> says stalled, which a rising total never
+    /// can. One publication is no interval and therefore no rate, and that is
+    /// the dash this segment already uses for a figure nobody published:
+    /// *not known yet* must not read as *stalled*. T and F stay counts —
+    /// a retry total and a failure total mean something and should be small —
+    /// and keep the rule they had, on the line only when above zero.
+    /// </para>
     /// </summary>
     public static XmipPromptSegment Render(
-        ScopeIndex index, Figures figures, Figures? before = null)
+        ScopeIndex index,
+        Figures figures,
+        FigureFlow flow,
+        FigureFlow? before = null,
+        int beside = 0)
     {
+        ArgumentNullException.ThrowIfNull(figures);
+        ArgumentNullException.ThrowIfNull(flow);
+
         HealthState?[] stages =
         [
             index.WorstAtStage("receive")?.State,
@@ -53,7 +81,16 @@ public static class SegmentRender
         if (name.Length > 0)
         {
             ConsoleColor worst = stages.Select(Traffic).MaxBy(Rank);
-            parts.Add(new XmipPromptPart(name + " ", worst));
+            parts.Add(new XmipPromptPart(beside > 0 ? name : name + " ", worst));
+        }
+
+        // What this segment is not showing, in the gray it gives everything
+        // it has no figure for: the name is the cluster in the prompt, and
+        // +1 says there is another the operator is not looking at.
+        if (beside > 0)
+        {
+            parts.Add(new XmipPromptPart(
+                "+" + beside.ToString(CultureInfo.InvariantCulture) + " ", ConsoleColor.DarkGray));
         }
 
         if (square)
@@ -61,18 +98,18 @@ public static class SegmentRender
             parts.Add(new XmipPromptPart("≡ ", ConsoleColor.Cyan));
         }
 
-        parts.AddRange(Figure("R", figures.Streams, before?.Streams, Traffic(stages[0])));
-        parts.AddRange(Figure(" P", figures.Journeys, before?.Journeys, Traffic(stages[1])));
-        parts.AddRange(Figure(" S", figures.Messages, before?.Messages, Traffic(stages[2])));
+        parts.AddRange(Moving("R", flow.Streams, before?.Streams, Traffic(stages[0])));
+        parts.AddRange(Moving(" P", flow.Journeys, before?.Journeys, Traffic(stages[1])));
+        parts.AddRange(Moving(" S", flow.Messages, before?.Messages, Traffic(stages[2])));
 
         if (figures.Retrying > 0)
         {
-            parts.AddRange(Figure(" T", figures.Retrying, before?.Retrying, ConsoleColor.Yellow));
+            parts.AddRange(Figure(" T", figures.Retrying, ConsoleColor.Yellow));
         }
 
         if (figures.Failed > 0)
         {
-            parts.AddRange(Figure(" F", figures.Failed, before?.Failed, ConsoleColor.Red));
+            parts.AddRange(Figure(" F", figures.Failed, ConsoleColor.Red));
         }
 
         parts.Add(new XmipPromptPart("]", ConsoleColor.Yellow));
@@ -147,6 +184,30 @@ public static class SegmentRender
         return value.ToString(format, CultureInfo.InvariantCulture) + units[unit];
     }
 
+    /// <summary>
+    /// A rate short enough for a prompt: the same K, M and G ladder as a count
+    /// and the same one decimal below ten of a unit, carried down to the unit
+    /// itself — 0.3, 9.9, 240, 1.2K. A trickle is written 0.3 and never 0,
+    /// because on this line <c>0/s</c> means stalled and nothing else may.
+    /// </summary>
+    public static string Rate(double perSecond)
+    {
+        string[] units = ["K", "M", "G"];
+        double value = perSecond;
+        int unit = -1;
+
+        while (unit < units.Length - 1 && value >= 999.5)
+        {
+            value /= 1000;
+            unit++;
+        }
+
+        string format = value < 9.95 ? "0.#" : "0";
+
+        return value.ToString(format, CultureInfo.InvariantCulture)
+            + (unit < 0 ? string.Empty : units[unit]);
+    }
+
     // Trouble outranks calm when the name takes the worst stage's color.
     private static int Rank(ConsoleColor color)
     {
@@ -175,26 +236,36 @@ public static class SegmentRender
     }
 
     /// <summary>
-    /// Which way a short count is going, as a color for its number: warmer
-    /// where it rose since the last publication and hot where it rose by a
-    /// tenth or more, cooler where it fell and icy where it fell by as much;
-    /// null where it stands still, was not published before, or is below a
-    /// thousand. A count written in K, M or G hides its own movement — 5.3K
-    /// is 5.3K for a long while — so the color says what the digits cannot
-    /// (the owner, 2026-09-18: paint it hotter or icier). The letter keeps
-    /// the mood's color; only the number takes this one. Hot is magenta and
-    /// not a red: on a console dark red and red read alike, and red is the
-    /// mood's word for a stage that is done.
+    /// Which way a number is going, as a color for it: warmer where it rose
+    /// since the last publication and hot where it rose by a tenth or more,
+    /// cooler where it fell and icy where it fell by as much; null where it
+    /// stands still, was not there before, or is below a thousand. A number
+    /// written in K, M or G hides its own movement — 5.3K is 5.3K for a long
+    /// while — so the color says what the digits cannot (the owner,
+    /// 2026-09-18: paint it hotter or icier). The letter keeps the mood's
+    /// color; only the number takes this one. Hot is magenta and not a red: on
+    /// a console dark red and red read alike, and red is the mood's word for a
+    /// stage that is done.
+    /// <para>
+    /// <b>It still earns its place now that the number is a rate</b>, and the
+    /// judgement is stated rather than assumed (the owner, 2026-09-20). It
+    /// answers a different question than it did: over a total it said *is
+    /// anything moving*, which the rate now says outright; over a rate it says
+    /// *is the rate climbing or falling* — whether a cluster is speeding up or
+    /// winding down — and no digit on this line says that, because 1.2K/s is
+    /// 1.2K/s across a wide band of throughput. The rule that a number below a
+    /// thousand is not painted holds for the same reason it always did: 238/s
+    /// to 241/s is visible in the digits themselves.
+    /// </para>
     /// </summary>
-    public static ConsoleColor? Trend(ulong now, ulong? before)
+    public static ConsoleColor? Trend(double now, double? before)
     {
         if (now < 1000 || before is not { } then || then == now)
         {
             return null;
         }
 
-        // A tenth, without multiplying: a count near the top of its type must not wrap.
-        ulong moved = now > then ? now - then : then - now;
+        double moved = Math.Abs(now - then);
         bool fast = moved >= Math.Max(then / 10, 1);
 
         return now > then
@@ -202,21 +273,38 @@ public static class SegmentRender
             : (fast ? ConsoleColor.Blue : ConsoleColor.DarkCyan);
     }
 
-    /// <summary>One figure: its letter and its count, the count in its own
-    /// part where it has a trend to show; a gray dash for none.</summary>
-    private static XmipPromptPart[] Figure(
-        string letter, ulong? value, ulong? before, ConsoleColor color)
+    /// <summary>One rate: its letter and what the stage is moving per second,
+    /// the number in its own part where it has a trend to show; a gray dash
+    /// where there is no interval to divide by, which is not a stall.</summary>
+    private static XmipPromptPart[] Moving(
+        string letter, double? value, double? before, ConsoleColor color)
     {
         // A colon between the letter and its number, where there is a number
-        // to present (the owner, 2026-09-18): R:5,317 reads as a figure, and
-        // R5,317 read as a name. A figure nobody published keeps its dash.
-        if (value is not { } count)
+        // to present (the owner, 2026-09-18): R:1.2K/s reads as a figure, and
+        // R1.2K/s read as a name. A rate nobody can compute keeps its dash.
+        if (value is not { } rate)
         {
             return [new XmipPromptPart(letter + "–", ConsoleColor.DarkGray)];
         }
 
-        return Trend(count, before) is { } going
-            ? [new XmipPromptPart(letter + ":", color), new XmipPromptPart(Short(count), going)]
-            : [new XmipPromptPart(letter + ":" + Short(count), color)];
+        return Trend(rate, before) is { } going
+            ?
+            [
+                new XmipPromptPart(letter + ":", color),
+                new XmipPromptPart(Rate(rate), going),
+                new XmipPromptPart("/s", color),
+            ]
+            : [new XmipPromptPart(letter + ":" + Rate(rate) + "/s", color)];
+    }
+
+    /// <summary>One count: its letter and its value. T and F are totals that
+    /// mean something and should be small, and <see cref="Trend"/> paints
+    /// nothing below a thousand, so they carry no trend — a promise never kept
+    /// is not kept here either.</summary>
+    private static XmipPromptPart[] Figure(string letter, ulong? value, ConsoleColor color)
+    {
+        return value is { } count
+            ? [new XmipPromptPart(letter + ":" + Short(count), color)]
+            : [new XmipPromptPart(letter + "–", ConsoleColor.DarkGray)];
     }
 }
