@@ -54,9 +54,23 @@ public static class PromptMonitor
     private static string? _followed;
     private static int _generation;
 
-    // What was last published, for the next rendering to compare with; one
-    // observer writes it, so it needs no guard beyond the generation's.
+    // How many clusters the session said are rolling beside the one followed.
+    // The prompt follows one publication — a rollup over two clusters would be
+    // a mood at a scope in neither tree — but it must not read as the whole
+    // estate when it is half of it (ADR-0052, amendment 2026-09-20).
+    private static int _beside;
+
+    // What was last published and when this observer read it, so the next
+    // rendering has an interval to divide by, and the rate it gave, so the
+    // next one can say whether the rate is climbing (ADR-0052, amendment
+    // 2026-09-20). One observer writes these, so they need no guard beyond
+    // the generation's. The clock is the reader's: a published snapshot
+    // carries no observation time for its counts, and the prompt asks at
+    // every notice, so the interval between two reads is the interval
+    // between two publications.
     private static Figures? _published;
+    private static DateTimeOffset _readAt;
+    private static FigureFlow? _flow;
 
     /// <summary>The latest cached segment; reading it cannot block.</summary>
     public static XmipPromptSegment Current => Volatile.Read(ref _current);
@@ -85,9 +99,32 @@ public static class PromptMonitor
     /// </summary>
     public static void Follow(string snapshot)
     {
+        Follow(snapshot, []);
+    }
+
+    /// <summary>
+    /// Follow this snapshot, knowing these others are rolling beside it. The
+    /// prompt reads one publication and says so: the segment names the cluster
+    /// it is at and, where the session named more, how many it is not showing
+    /// (ADR-0052, amendment 2026-09-20). Until then <c>Start-XmipTest</c>
+    /// followed whichever roll started last and an operator with two could not
+    /// tell the segment was one of them. The others are named, never counted
+    /// from files on disk: a surface is stated (clause 3).
+    /// </summary>
+    public static void Follow(string snapshot, params string[] beside)
+    {
+        ArgumentNullException.ThrowIfNull(beside);
+
         lock (Gate)
         {
-            _followed = Path.GetFullPath(snapshot);
+            string followed = Path.GetFullPath(snapshot);
+            _followed = followed;
+            _beside = beside
+                .Where(other => !string.IsNullOrWhiteSpace(other))
+                .Select(Path.GetFullPath)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count(other => !string.Equals(
+                    other, followed, StringComparison.OrdinalIgnoreCase));
             _stop?.Cancel();
             Restart();
         }
@@ -100,6 +137,8 @@ public static class PromptMonitor
         _stop = new CancellationTokenSource();
         int generation = Interlocked.Increment(ref _generation);
         _published = null;
+        _flow = null;
+        _readAt = default;
         CancellationToken stop = _stop.Token;
         Volatile.Write(ref _current, Connecting());
         _worker = Task.Run(() => ObserveAsync(generation, stop));
@@ -216,7 +255,9 @@ public static class PromptMonitor
 
         if (configured)
         {
-            return SurfaceChoice.Open(document, moduleDirectory);
+            // One publication, and the first where the document names several
+            // (ADR-0052, amendment 2026-09-20): the prompt is one line.
+            return SurfaceChoice.OpenFirst(document, moduleDirectory);
         }
 
         // Nothing named: the one rule, with "beside the executable" read as
@@ -241,7 +282,16 @@ public static class PromptMonitor
         }
 
         Figures figures = surface.Figures(ScopeTree.Root);
-        Say(generation, SegmentRender.Render(index, figures, _published));
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        FigureFlow flow = FigureFlow.Between(
+            figures, _published, _published is null ? TimeSpan.Zero : now - _readAt);
+        int beside = Volatile.Read(ref _beside);
+        Say(generation, SegmentRender.Render(index, figures, flow, _flow, beside));
         _published = figures;
+        _readAt = now;
+
+        // A publication that moved nothing leaves the rate as it was rather
+        // than as unknown: the observer read twice, so the interval is real.
+        _flow = flow.Known ? flow : _flow;
     }
 }

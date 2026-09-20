@@ -104,7 +104,7 @@ loaded module locks its assemblies, and a build into them fails. For that
 reason the import belongs in the session that wants the segment and not in
 a console's start-up command line or a profile: a console that always holds
 the module always blocks its build, and it is `pwsh`, so
-`Get-Process -Name Xmip-*` does not find it. posh-git must be loaded for the
+`Get-Process -Name xmip-*` does not find it. posh-git must be loaded for the
 segment to sit beside a repository's state; a console started with
 `-NoProfile` has skipped the profile that imports it.
 
