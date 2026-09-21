@@ -54,10 +54,12 @@ owner, 2026-09-18). It wears posh-git's clothes, by the owner's word the same
 evening: yellow brackets, the cyan posh-git gives a branch in step with its
 remote for a stage that is fine, and posh-git's own `≡` when every stage is
 fine and nothing is retrying or failed. It keeps posh-git's order too,
-`[main ≡ +0 ~1 -0]` there and `[R1 ≡ R:12 P:11 S:10]` here: first what the
+`[main ≡ +0 ~1 -0]` there and `[orders ≡ R:12 P:11 S:10]` here: first what the
 prompt is at — the node's name where it follows one node, the cluster's
 where it follows a cluster, in the color of the worst stage — then `≡` when
-square, then the counts. A count is kept short in K, M and G, `R:5.3K`,
+square, then the counts. R, P and S are the stage letters; a cluster or a
+node is called whatever its operator called it, and that name says nothing
+about what it does. A count is kept short in K, M and G, `R:5.3K`,
 `S:1.2M`, because Xmip counts past what an integer holds and a line that
 grows with its numbers goes wild. A count written that short hides its own
 movement, so its number is painted by which way it is going since the last
@@ -93,8 +95,14 @@ dotnet build module/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
 Import-Module ./module/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
-Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip -Nodes R1, P1, S1
+Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip `
+    -Nodes alpha, beta, gamma `
+    -NodeCapability @{ alpha = 'receive'; beta = 'process'; gamma = 'send' }
 ```
+
+`C1` and the three node names are arguments, nothing more: name them anything
+a file can be called. `C1` is written here only because the shipped
+`xmip.powershell.toml` follows that roll's snapshot.
 
 Press Enter after the import and the prompt is as it was, with no segment,
 until the roll publishes; a few seconds after the roll starts it says

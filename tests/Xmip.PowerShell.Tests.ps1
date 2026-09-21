@@ -228,11 +228,11 @@ value = $Journeys
             [string] $second = ''
             foreach ($attempt in 1..40) {
                 $second = [Xmip.PowerShell.PromptMonitor]::Current.Text
-                if ($second -like '*R:*/s*') { break }
+                if ($second -like '*R:*') { break }
                 Start-Sleep -Milliseconds 100
             }
 
-            $second | Should -BeLike '`[W9 ≡ R:*/s P:*/s S–]'
+            $second | Should -BeLike '`[W9 ≡ R:* P:* S–]'
         }
         finally {
             [Xmip.PowerShell.PromptMonitor]::Stop()
@@ -240,12 +240,13 @@ value = $Journeys
         }
     }
 
-    It 'says R P S as a rate and T F as counts; the color carries the mood' {
+    It 'says every figure as a rate, never spells the unit, and the color carries the mood' {
         # The owner, 2026-09-15: Receive, Process, Send, reTries and Failures,
         # in red, yellow and green — space on a console line is precious. And
-        # 2026-09-20: R, P and S are what the stage is moving now, per second.
-        # A total is bounded by uptime and means nothing over time; a rate is
-        # bounded by throughput and can say stalled.
+        # 2026-09-20: every letter is what is moving now, per second, and the
+        # line does not spell /s out five times. A total is bounded by uptime
+        # and means nothing over time; a rate is bounded by throughput and can
+        # say stalled.
         $seen = [DateTimeOffset]::UtcNow
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
             [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/orders', 'Fine', 0, '', $seen)
@@ -255,12 +256,14 @@ value = $Journeys
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
         $figures = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 1, 0, $null)
-        # FigureFlow is Streams, Journeys, Messages: what R, P and S move.
-        $flow = [Xmip.Surface.FigureFlow]::new([double] 12, [double] 11, [double] 10)
+        # FigureFlow is Streams, Journeys, Messages, then Retrying and Failed:
+        # what R, P, S, T and F are each moving per second.
+        $flow = [Xmip.Surface.FigureFlow]::new(
+            [double] 12, [double] 11, [double] 10, [double] 1, [double] 2)
         $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow)
 
         # 2026-09-18: T and F are there only when there are any; F0 is not said.
-        $segment.Text | Should -Be '[R:12/s P:11/s S:10/s T:1]'
+        $segment.Text | Should -Be '[R:12 P:11 S:10 T:1]'
         $segment.Parts[0].Color | Should -Be 'Yellow' -Because 'the brackets are posh-git yellow'
         $segment.Parts[1].Color | Should -Be 'Cyan' -Because 'receive is fine, in posh-git cyan'
         $segment.Parts[2].Color | Should -Be 'Yellow' -Because 'process is stressed'
@@ -269,7 +272,7 @@ value = $Journeys
 
         $failing = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 2, $null)
         $failed = [Xmip.PowerShell.SegmentRender]::Render($index, $failing, $flow)
-        $failed.Text | Should -Be '[R:12/s P:11/s S:10/s F:2]'
+        $failed.Text | Should -Be '[R:12 P:11 S:10 F:2]'
         $failed.Parts[4].Color | Should -Be 'Red' -Because 'two failed'
 
         # The owner, 2026-09-18: posh-git's look. Every stage fine and nothing
@@ -282,7 +285,7 @@ value = $Journeys
         $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
         $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
         $square = [Xmip.PowerShell.SegmentRender]::Render($allFine, $calm, $flow)
-        $square.Text | Should -Be '[≡ R:12/s P:11/s S:10/s]' -Because 'three nodes share no name'
+        $square.Text | Should -Be '[≡ R:12 P:11 S:10]' -Because 'three nodes share no name'
         $square.Parts[1].Color | Should -Be 'Cyan' -Because 'the sign is posh-git cyan'
 
         # posh-git's order, [main ≡ +0 ~1 -0]: what the prompt is at, its sign
@@ -295,7 +298,7 @@ value = $Journeys
         $atNode = [Xmip.Surface.ScopeIndex]::Build($oneNode, $counts, 3, 'test')
         [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be 'R1'
         [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm, $flow).Text |
-            Should -Be '[R1 ≡ R:12/s P:11/s S:10/s]'
+            Should -Be '[R1 ≡ R:12 P:11 S:10]'
 
         # A roll of one test shares its scenario too; the prompt is at the
         # cluster still, never at round-trip (the owner's RoundTrip, 2026-09-19).
@@ -312,19 +315,19 @@ value = $Journeys
         )
         $atCluster = [Xmip.Surface.ScopeIndex]::Build($twoNodes, $counts, 4, 'test')
         $troubled = [Xmip.PowerShell.SegmentRender]::Render($atCluster, $calm, $flow)
-        $troubled.Text | Should -Be '[C1 R:12/s P:11/s S:10/s]' -Because 'not square, no sign'
+        $troubled.Text | Should -Be '[C1 R:12 P:11 S:10]' -Because 'not square, no sign'
         $troubled.Parts[1].Color | Should -Be 'Red' -Because 'the name wears the worst stage'
         [Xmip.PowerShell.SegmentRender]::Render($allFine, $failing, $flow).Text |
-            Should -Be '[R:12/s P:11/s S:10/s F:2]' -Because 'a failure is not square'
+            Should -Be '[R:12 P:11 S:10 F:2]' -Because 'a failure is not square'
 
         $quiet = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, $null, $null, $null)
         [Xmip.PowerShell.SegmentRender]::Render($index, $quiet, $flow).Text |
-            Should -Be '[R:12/s P:11/s S:10/s]' -Because 'no T or F published is no T or F'
+            Should -Be '[R:12 P:11 S:10]' -Because 'no T or F published is no T or F'
     }
 
     It 'shows a rate it cannot compute as a dash, and a stalled one as zero' {
-        # The owner, 2026-09-20: 0/s means stalled, so "not known yet" must not
-        # be written 0/s — it is the dash an unpublished figure already gets.
+        # The owner, 2026-09-20: 0 means stalled, so "not known yet" must not
+        # be written 0 — it is the dash an unpublished figure already gets.
         $empty = [Xmip.Surface.ScopeIndex]::Empty('test')
         $none = [Xmip.Surface.Figures]::None('xmip:///')
 
@@ -344,14 +347,33 @@ value = $Journeys
         $stalled = [Xmip.Surface.FigureFlow]::Between(
             $first, $first, [TimeSpan]::FromSeconds(2))
         [Xmip.PowerShell.SegmentRender]::Render($empty, $first, $stalled).Text |
-            Should -Be '[R:0/s P:0/s S:0/s]'
+            Should -Be '[R:0 P:0 S:0]'
 
-        # And two that moved: the rate is per second over the interval.
+        # And two that moved: the rate is per second over the interval, and
+        # not one letter on the line spells the unit (the owner, 2026-09-20:
+        # *the Xmip Prompt does not need /s spelled out*).
+        $quiet = [Xmip.Surface.Figures]::new('xmip:///', 5000, 640, 660, 0, 0, 0, $null)
         $later = [Xmip.Surface.Figures]::new('xmip:///', 5600, 700, 720, 0, 3, 1, $null)
         $moving = [Xmip.Surface.FigureFlow]::Between(
-            $later, $first, [TimeSpan]::FromSeconds(5))
+            $later, $quiet, [TimeSpan]::FromSeconds(5))
         [Xmip.PowerShell.SegmentRender]::Render($empty, $later, $moving).Text |
-            Should -Be '[R:120/s P:12/s S:12/s T:3 F:1]' -Because 'T and F stay counts'
+            Should -Be '[R:120 P:12 S:12 T:0.6 F:0.2]' -Because 'T and F are rates too'
+
+        # T and F are gated on the total and drawn as the rate, so a run that
+        # retried once carries T for as long as it rolls even when nothing has
+        # retried since. The owner, 2026-09-20, had never seen either letter in
+        # a test that had both, and a rate gate is why: it would show for one
+        # prompt and go.
+        $settled = [Xmip.Surface.FigureFlow]::Between(
+            $later, $later, [TimeSpan]::FromSeconds(5))
+        [Xmip.PowerShell.SegmentRender]::Render($empty, $later, $settled).Text |
+            Should -Be '[R:0 P:0 S:0 T:0 F:0]' -Because 'the trouble is there and has stopped arriving'
+
+        # One publication is no interval for T and F either: the totals put the
+        # letters on the line and the rate is the dash every figure gets.
+        $opened = [Xmip.Surface.FigureFlow]::Between($later, $null, [TimeSpan]::Zero)
+        [Xmip.PowerShell.SegmentRender]::Render($empty, $later, $opened).Text |
+            Should -Be '[R– P– S– T– F–]' -Because 'not known yet is not none'
     }
 
     It 'keeps a rate on the same ladder as a count and never writes a trickle as zero' {
@@ -363,17 +385,10 @@ value = $Journeys
         [Xmip.PowerShell.SegmentRender]::Rate(1234567) | Should -Be '1.2M'
     }
 
-    It 'keeps a count short, in K, M and G, so the line does not grow with its numbers' {
-        # The owner, 2026-09-18: Xmip counts past what an integer holds.
-        [Xmip.PowerShell.SegmentRender]::Short(999) | Should -Be '999'
-        [Xmip.PowerShell.SegmentRender]::Short(1000) | Should -Be '1K'
-        [Xmip.PowerShell.SegmentRender]::Short(5317) | Should -Be '5.3K'
-        [Xmip.PowerShell.SegmentRender]::Short(53170) | Should -Be '53K'
-        [Xmip.PowerShell.SegmentRender]::Short(999950) | Should -Be '1M'
-        [Xmip.PowerShell.SegmentRender]::Short(1234567) | Should -Be '1.2M'
-        [Xmip.PowerShell.SegmentRender]::Short(5000000000) | Should -Be '5G'
-        [Xmip.PowerShell.SegmentRender]::Short([ulong]::MaxValue) | Should -BeLike '*G'
-    }
+    # `Short` was the count formatter and went with the last count on the line
+    # (2026-09-20). `Rate` carries the same K, M and G ladder and is tested
+    # above; a second formatter with no caller is a second answer waiting to
+    # disagree with the first.
 
     It 'paints a short number hotter where it rises and icier where it falls' {
         # The owner, 2026-09-18: 5.3K is 5.3K for a long while, so the color
@@ -400,7 +415,7 @@ value = $Journeys
         $now = [Xmip.Surface.FigureFlow]::new([double] 5400, [double] 60, [double] 60)
         $segment = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $now, $then)
 
-        $segment.Text | Should -BeLike '*R:5.4K/s P:60/s S:60/s*'
+        $segment.Text | Should -BeLike '*R:5.4K P:60 S:60*'
         ($segment.Parts | Where-Object Text -EQ 'R:').Color | Should -Be 'Cyan'
         ($segment.Parts | Where-Object Text -EQ '5.4K').Color | Should -Be 'DarkYellow'
     }
@@ -423,10 +438,10 @@ value = $Journeys
         $flow = [Xmip.Surface.FigureFlow]::new([double] 12, [double] 11, [double] 10)
 
         [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow, $null, 0).Text |
-            Should -Be '[C1 R:12/s P:11/s S:10/s]' -Because 'one cluster says nothing of others'
+            Should -Be '[C1 R:12 P:11 S:10]' -Because 'one cluster says nothing of others'
 
         $ofTwo = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow, $null, 1)
-        $ofTwo.Text | Should -Be '[C1+1 R:12/s P:11/s S:10/s]'
+        $ofTwo.Text | Should -Be '[C1+1 R:12 P:11 S:10]'
         ($ofTwo.Parts | Where-Object Text -EQ 'C1').Color |
             Should -Be 'Red' -Because 'the name still wears the worst stage'
         ($ofTwo.Parts | Where-Object Text -EQ '+1 ').Color |
