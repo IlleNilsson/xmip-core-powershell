@@ -15,9 +15,10 @@
 # below, else XMIP_RUNTIME_LIBRARY, else the library beside the module — and
 # shows nothing while nothing answers, as posh-git outside a repository.
 #
-# As shipped, in a developer's clone: the Playground roll started as cluster
-# C1 (Start-XmipTest -Suite Playground -Cluster C1 ...). A deployment writes
-# its own.
+# As shipped, in a developer's clone: the Playground roll the estate's own
+# walkthrough starts, which names its cluster C1 only because a roll must be
+# given some name. Roll under another name and name that file below, or let
+# Start-XmipTest tell this session. A deployment writes its own.
 Surface = "snapshot"
 
 # The runtime's native library, exporting xmip_operate_v1.
@@ -27,7 +28,8 @@ Surface = "snapshot"
 # shows no segment, never another file's figures. A relative path
 # is from the directory the module is loaded from, bin/Debug/net10.0 under
 # this project: eight levels up is the estate root, where a roll publishes
-# under .local-work/playground.
+# under .local-work/playground. The file is named for the cluster the roll was
+# started as, so this line follows one particular roll and no other.
 Snapshot = "../../../../../../../../.local-work/playground/C1-snapshot.toml"
 
 # The web host to follow when Surface = "remote"; the prompt is told when its
