@@ -210,18 +210,33 @@ public static class SegmentRender
         };
     }
 
-    /// <summary>Cyan, yellow or red for a leaf's mood (ADR-0041): Fine is
-    /// green; Paused, Working and Stressed are yellow; Exhausted and Done are
-    /// red. Gray when no leaf is there.</summary>
+    /// <summary>A leaf's mood in the prompt's colors: the color the shared
+    /// English names for it (<see cref="English.Color"/>, the one mood-to-color
+    /// map, ADR-0041), painted by <see cref="Paint"/>. Gray when no leaf is
+    /// there.</summary>
     public static ConsoleColor Traffic(HealthState? state)
     {
-        return state switch
+        return state is { } mood ? Paint(English.Color(mood)) : ConsoleColor.DarkGray;
+    }
+
+    /// <summary>
+    /// The console color the prompt paints the estate's name for a mood's
+    /// color in. The prompt sits beside posh-git and takes its palette
+    /// (ADR-0052, amendments 2026-09-15): the cyan posh-git gives a branch in
+    /// step for green (Fine); yellow for slate, blue and yellow (Paused,
+    /// Working, Stressed); red for burnt, red and orange (Exhausted, Done,
+    /// Holding); gray for muted, a mood this build does not know. The name
+    /// decides, never the mood itself, so no mood is painted from a table of
+    /// the prompt's own.
+    /// </summary>
+    public static ConsoleColor Paint(string color)
+    {
+        return color switch
         {
-            null => ConsoleColor.DarkGray,
-            HealthState.Fine => ConsoleColor.Cyan,
-            HealthState.Paused or HealthState.Working or HealthState.Stressed
-                => ConsoleColor.Yellow,
-            _ => ConsoleColor.Red,
+            "green" => ConsoleColor.Cyan,
+            "slate" or "blue" or "yellow" => ConsoleColor.Yellow,
+            "burnt" or "red" or "orange" => ConsoleColor.Red,
+            _ => ConsoleColor.DarkGray,
         };
     }
 

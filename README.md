@@ -21,15 +21,30 @@ cmdlets with approved verbs, objects on the pipeline rather than text, and
 
 Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
-`Get-XmipModuleDescriptor` — and four reach a running runtime through the
-operator boundary in `xmip_operate.h` (ADR-0027): `Get-XmipHealth -Library
--Scope`, `Test-XmipNodeConfiguration -Library -Path`, and the two acts the
-boundary carries, `Suspend-XmipScope -Library -Scope [-Who]` and
-`Resume-XmipScope -Library -Scope`, both with `-WhatIf`, both emitting the
-`ScopeOperation` the `xmip` executable renders. There is no Start-, Stop- or
-Restart-XmipScope: the boundary has no such call, because the thing that
-watches must not be able to stop the thing it watches. `tests/` holds the
-Pester tests over them.
+`Get-XmipModuleDescriptor` — and emit what `xmip-cli abi`, `status` and
+`probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
+probe's own `Conforms` and `Complaint`, all from `Xmip.Abi`. Four read a
+running Xmip: `Get-XmipHealth -Scope`, the two acts the boundary carries,
+`Suspend-XmipScope -Scope [-Who]` and `Resume-XmipScope -Scope`, both with
+`-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
+`Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
+`xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
+the boundary has no such call, because the thing that watches must not be able
+to stop the thing it watches. `tests/` holds the Pester tests over them.
+
+**The cmdlets read the surface `xmip-cli` reads** (ADR-0052 clause 1). The
+three that take a `-Scope` take `-Remote`, `-Snapshot` and `-Library` as the
+executable takes `--remote`, `--snapshot` and `--runtime`, in the same order —
+a web host, then one cluster's snapshot, then a runtime library, then
+`xmip.powershell.toml`, then the runtime rule — because both ask
+`SurfaceChoice.Stated` in `Xmip.Surface`. A `-Scope` may be a wildcard over
+the scopes that exist, `Get-XmipHealth -Scope 'xmip:///C1/node/R*'`, selected
+by the executable's own `ScopeSelection`: each topmost scope it names is
+answered in turn and none is rolled up with another, and a pattern that names
+nothing is a non-terminating error that says REFUSED, the pattern and what
+there is. `Test-XmipNodeConfiguration -Library` finds its runtime the same
+way `xmip-cli validate --runtime` does. Until 2026-09-24 every one of them
+demanded `-Library`, loaded the binding itself and took a scope literally.
 
 The public contract is the cmdlet names and the shape of the objects they
 emit. Both are pre-alpha and unstable, like the cli's output — but objects, so
@@ -91,10 +106,10 @@ of its sixteen.
 In a fresh pwsh, nothing imported yet, from the estate root:
 
 ```powershell
-dotnet build module/operation/powershell/src/Xmip.PowerShell
+dotnet build module/core/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
-Import-Module ./module/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
+Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
 Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip `
     -Nodes alpha, beta, gamma `
     -NodeCapability @{ alpha = 'receive'; beta = 'process'; gamma = 'send' }
@@ -157,11 +172,14 @@ the proof the boundary works (ADR-0012 clause 2).
 
 ## Verification
 
-`dotnet build`, then `Invoke-Pester -Path ./tests`. Sixteen tests, all of
+`dotnet build`, then `Invoke-Pester -Path ./tests`. Thirty-six tests, all of
 them the PowerShell shape: the manifest and the exports agree, every verb is
 approved, the two acts carry `-WhatIf` and no start, stop or restart exists,
-the cmdlets emit objects, the configuration document ships beside the module,
-and the prompt paints the color `Xmip.Surface` names for a mood. The binding's
+the cmdlets emit objects and read the surface the line names, the
+configuration document ships beside the module, and the prompt paints the
+color `Xmip.Surface` names for a mood. The rules beneath them — which surface
+wins, what a wildcard selects, what a status means, whether a module
+conforms — are tested once, in `Xmip.Surface.Test` and `Xmip.Abi.Tests`. The binding's
 agreement with `xmip_module.h` — every status the header defines, its name,
 which are retryable and which terminal — is tested once, in `Xmip.Abi.Tests`
 beside the binding (ADR-0014, amendment of 2026-09-09); the copy this

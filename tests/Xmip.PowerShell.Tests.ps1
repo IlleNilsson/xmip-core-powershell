@@ -111,7 +111,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
 
         Test-Path -LiteralPath $document | Should -BeTrue
-        $document | Should -BeLike "*$([Xmip.PowerShell.PromptMonitor]::ConfigurationFile)"
+        $document | Should -BeLike "*$([Xmip.PowerShell.ModuleSurface]::ConfigurationFile)"
     }
 
     It 'chains to the prompt a provider module exported, as posh-git does' {
@@ -122,7 +122,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # The same day: nothing to say is nothing on the line, as posh-git
         # outside a repository, so the segment shows once a snapshot is read.
         [string] $fixture = Join-Path $script:Root `
-            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
         [Xmip.PowerShell.PromptMonitor]::Follow(
             (Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.toml'))
         Start-Sleep -Milliseconds 500
@@ -149,7 +149,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # published snapshot here loads the TOML reader and the configuration
         # abstractions in the session, which is what a prompt does.
         [string] $fixture = Join-Path $script:Root `
-            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
         [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
 
         [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
@@ -164,7 +164,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # the file the shipped document names. Start-XmipTest now says which
         # file its roll publishes, through this.
         [string] $fixture = Join-Path $script:Root `
-            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
 
         [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
 
@@ -450,9 +450,9 @@ value = $Journeys
 
     It 'follows one roll and counts the others the session named beside it' {
         [string] $fixture = Join-Path $script:Root `
-            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
         [string] $beside = Join-Path $script:Root `
-            '../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-c2.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-c2.toml'
 
         # Named by the session, never counted from files on disk: a surface is
         # stated (ADR-0052 clause 3). The followed one among them is not an
@@ -480,17 +480,24 @@ value = $Journeys
     }
 
     It 'paints every mood by the color name the shared English gives it' {
-        # One mood-to-color map, in Xmip.Surface; the console picks its
-        # nearest color from the name (ADR-0041, ADR-0052 clause 1).
+        # One mood-to-color map, in Xmip.Surface; the prompt paints the name
+        # in posh-git's palette (ADR-0041, ADR-0052 amendments 2026-09-15).
+        $expected = @{
+            Fine = 'Cyan'; Paused = 'Yellow'; Working = 'Yellow'; Stressed = 'Yellow'
+            Exhausted = 'Red'; Done = 'Red'; Holding = 'Red'
+        }
+
         foreach ($mood in [System.Enum]::GetValues([Xmip.Abi.Operate.HealthState])) {
             [string] $color = [Xmip.Surface.English]::Color($mood)
 
-            [Xmip.PowerShell.PromptMonitor]::Paint($color) |
-                Should -BeOfType ([System.ConsoleColor]) -Because "$mood is $color"
+            [Xmip.PowerShell.SegmentRender]::Traffic($mood) |
+                Should -Be ([Xmip.PowerShell.SegmentRender]::Paint($color)) -Because "$mood is $color"
+            [Xmip.PowerShell.SegmentRender]::Traffic($mood) |
+                Should -Be $expected["$mood"] -Because "$mood is $color"
         }
 
-        [Xmip.PowerShell.PromptMonitor]::Paint('green') | Should -Be 'Green'
-        [Xmip.PowerShell.PromptMonitor]::Paint('red') | Should -Be 'Red'
+        [Xmip.PowerShell.SegmentRender]::Traffic($null) | Should -Be 'DarkGray'
+        [Xmip.PowerShell.SegmentRender]::Paint('muted') | Should -Be 'DarkGray'
     }
 }
 
@@ -532,7 +539,9 @@ Describe 'ConvertFrom-XmipStatus' {
         # down with it.
         [PSObject] $answer = ConvertFrom-XmipStatus -Code 4711
 
-        $answer.Name | Should -Be 'Unknown'
+        # The one StatusMeaning xmip-cli status renders, so the same word.
+        $answer.Name | Should -Be 'unknown'
+        $answer.Known | Should -BeFalse
         $answer.Code | Should -Be 4711
     }
 
@@ -560,7 +569,7 @@ Describe 'Get-XmipAbi' {
     It 'names the library the way this platform does' {
         # Section 1 of the header. Getting this wrong means the probe looks
         # for a file that is never there, on whichever platform nobody tested.
-        [string] $name = (Get-XmipAbi).ExampleLibraryName
+        [string] $name = (Get-XmipAbi).ModuleLibraryFileName
 
         if ($IsWindows) {
             $name | Should -BeLike '*.dll'
@@ -571,6 +580,101 @@ Describe 'Get-XmipAbi' {
         else {
             $name | Should -BeLike 'lib*.so'
         }
+    }
+}
+
+Describe 'Get-XmipAbi, both boundaries' {
+    It 'says the operator boundary beside the module boundary, as xmip-cli abi does' {
+        # Until 2026-09-24 the cmdlet said only the module boundary.
+        $abi = Get-XmipAbi
+
+        $abi.OperateEntrypoint | Should -Be 'xmip_operate_v1'
+        $abi.ModuleEntrypoint | Should -Be 'xmip_create_module_v1'
+        $abi | Should -BeOfType ([Xmip.Abi.AbiBoundaries])
+    }
+}
+
+Describe 'The cmdlets read the surface xmip-cli reads' {
+    # ADR-0052 clause 1: one precedence (SurfaceChoice.Stated) and one
+    # selection (ScopeSelection) for the executable and this module. Until
+    # 2026-09-24 every cmdlet demanded -Library and took a scope literally.
+    BeforeAll {
+        [string] $script:Fixture = Join-Path $script:Root `
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+    }
+
+    It 'names no library as mandatory, and takes the scope first' {
+        foreach ($name in @('Get-XmipHealth', 'Suspend-XmipScope', 'Resume-XmipScope',
+                'Test-XmipNodeConfiguration')) {
+            $library = $script:Module.ExportedCmdlets[$name].Parameters['Library']
+            $library.Attributes.Where({ $_ -is [Parameter] }).Mandatory |
+                Should -Not -Contain $true -Because "$name finds the runtime by the one rule"
+        }
+
+        foreach ($name in @('Get-XmipHealth', 'Suspend-XmipScope', 'Resume-XmipScope')) {
+            $parameters = $script:Module.ExportedCmdlets[$name].Parameters
+            $parameters.Keys | Should -Contain 'Snapshot'
+            $parameters.Keys | Should -Contain 'Remote'
+        }
+    }
+
+    It 'reads a snapshot the line names, worst first' {
+        [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///')
+
+        $records.Count | Should -Be 5
+        $records[0] | Should -BeOfType ([Xmip.Abi.Operate.HealthRecord])
+        "$($records[0].State)" | Should -Be 'Done'
+    }
+
+    It 'answers a wildcard for every scope it names' {
+        [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///edge-0*')
+
+        $records.Count | Should -Be 5
+    }
+
+    It 'refuses a pattern that names nothing, naming what there is' {
+        Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///edge-9*' `
+            -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
+
+        $failure.Count | Should -Be 1
+        $failure[0].FullyQualifiedErrorId | Should -BeLike 'XmipScopePatternUnmatched*'
+        $failure[0].Exception.Message | Should -BeLike 'REFUSED*xmip:///edge-9*'
+    }
+
+    It 'says nothing at a scope in the words xmip-cli uses' {
+        Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///nowhere' `
+            -ErrorAction SilentlyContinue -ErrorVariable failure | Out-Null
+
+        $failure[0].Exception.Message | Should -BeLike 'Nothing at xmip:///nowhere (SNAPSHOT*'
+    }
+
+    It 'ends with the reason when the surface named does not answer' {
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.toml'
+
+        { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage '*no file at*'
+    }
+
+    It 'refuses to pause a snapshot, as the surface does for xmip-cli pause' {
+        Suspend-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///edge-01' `
+            -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
+
+        $failure[0].FullyQualifiedErrorId | Should -BeLike 'XmipScopeOperationRefused*'
+        $failure[0].Exception.Message | Should -BeLike '*cannot be paused*'
+    }
+
+    It 'asks before each scope a wildcard names' {
+        Resume-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///edge-0*' -WhatIf `
+            -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
+
+        $failure.Count | Should -Be 0 -Because '-WhatIf applies nothing, so nothing is refused'
+    }
+
+    It 'ends with the reason when the runtime to validate against does not load' {
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-runtime.dll'
+
+        { Test-XmipNodeConfiguration -Library $missing -Path $script:Fixture -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage '*no runtime library at*'
     }
 }
 
