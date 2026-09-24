@@ -98,8 +98,10 @@ and shows nothing while nothing answers, as posh-git shows nothing outside a
 repository: that Xmip is connected is obvious where the figures show (the
 owner, 2026-09-18). Only a document that names a surface this build does not
 know says a word, `[Xmip misconfigured]`. The mood's color is
-the one `Xmip.Surface` names for it (ADR-0041); the console paints the nearest
-of its sixteen.
+the one the runtime names for it (`observe::Health::color`, ADR-0041, asked
+through `Xmip.Surface`); the console paints the nearest of its sixteen, and the
+name takes the color of the worst stage by the runtime's own worst-first
+order.
 
 ## Seeing it
 
@@ -160,8 +162,11 @@ the proof the boundary works (ADR-0012 clause 2).
 ## Not this repository's
 
 - Not the estate tooling. `Xmip/Xmip.psd1` in the platform repository lands
-  commits and reconciles repositories; this operates a running Xmip. They
-  share a prefix and nothing else, and their commands must not collide.
+  commits and reconciles repositories; this operates a running Xmip. Their
+  commands must not collide. The estate tooling uses this module and keeps no
+  rule of its own: where it reads a node's declared capability or a published
+  snapshot it builds this module into a directory of its own session and
+  calls `Xmip.Surface` through it (ADR-0052, amendment 2026-09-24).
 - Not a runtime, and holds no execution state.
 - Not a competing prompt framework: it preserves and invokes the prompt that
   was installed before it.
@@ -177,9 +182,12 @@ them the PowerShell shape: the manifest and the exports agree, every verb is
 approved, the two acts carry `-WhatIf` and no start, stop or restart exists,
 the cmdlets emit objects and read the surface the line names, the
 configuration document ships beside the module, and the prompt paints the
-color `Xmip.Surface` names for a mood. The rules beneath them — which surface
+color the runtime names for a mood. The rules beneath them — which surface
 wins, what a wildcard selects, what a status means, whether a module
-conforms — are tested once, in `Xmip.Surface.Test` and `Xmip.Abi.Tests`. The binding's
+conforms — are tested once, in `Xmip.Surface.Test` and `Xmip.Abi.Tests`, and
+the runtime's own — containment, the stage words, a mood's word, color and
+order — once in Rust, where they are written; the module's build carries the
+runtime library the rules are called in. The binding's
 agreement with `xmip_module.h` — every status the header defines, its name,
 which are retryable and which terminal — is tested once, in `Xmip.Abi.Tests`
 beside the binding (ADR-0014, amendment of 2026-09-09); the copy this

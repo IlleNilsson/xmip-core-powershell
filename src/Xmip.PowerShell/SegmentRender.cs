@@ -73,12 +73,13 @@ public static class SegmentRender
         ArgumentNullException.ThrowIfNull(figures);
         ArgumentNullException.ThrowIfNull(flow);
 
-        HealthState?[] stages =
+        HealthRecord?[] worstAt =
         [
-            index.WorstAtStage("receive")?.State,
-            index.WorstAtStage("process")?.State,
-            index.WorstAtStage("send")?.State,
+            index.WorstAtStage("receive"),
+            index.WorstAtStage("process"),
+            index.WorstAtStage("send"),
         ];
+        HealthState?[] stages = [.. worstAt.Select(record => record?.State)];
         bool square = stages.Any(stage => stage is not null)
             && stages.All(stage => stage is null or HealthState.Fine)
             && figures.Retrying is null or 0
@@ -94,7 +95,9 @@ public static class SegmentRender
 
         if (name.Length > 0)
         {
-            ConsoleColor worst = stages.Select(Traffic).MaxBy(Rank);
+            // The worst stage by the runtime's worst-first order, then painted:
+            // the prompt ranks moods, never the colors it paints them in.
+            ConsoleColor worst = Traffic(ScopeTree.Worst(worstAt.OfType<HealthRecord>())?.State);
             parts.Add(new XmipPromptPart(beside > 0 ? name : name + " ", worst));
         }
 
@@ -196,18 +199,6 @@ public static class SegmentRender
 
         return value.ToString(format, CultureInfo.InvariantCulture)
             + (unit < 0 ? string.Empty : units[unit]);
-    }
-
-    // Trouble outranks calm when the name takes the worst stage's color.
-    private static int Rank(ConsoleColor color)
-    {
-        return color switch
-        {
-            ConsoleColor.Red => 3,
-            ConsoleColor.Yellow => 2,
-            ConsoleColor.Cyan => 1,
-            _ => 0,
-        };
     }
 
     /// <summary>A leaf's mood in the prompt's colors: the color the shared
