@@ -36,7 +36,7 @@
          headers for every surface — this module, the cli and the GUI — so
          nothing here crosses the boundary on its own (ADR-0014, amendment of
          2026-08-26). A sibling in the estate, not vendored: the path is the
-         estate's layout, four levels up from this project. -->
+         estate's layout, five levels up from this project. -->
     <ProjectReference Include="..\..\..\..\..\foundation\abi\dotnet\Xmip.Abi\Xmip.Abi.csproj" />
     <ProjectReference Include="..\..\..\..\..\foundation\abi\dotnet\Xmip.Surface\Xmip.Surface.csproj" />
   </ItemGroup>

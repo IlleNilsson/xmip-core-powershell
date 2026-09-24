@@ -1,4 +1,5 @@
 using System.Management.Automation;
+using Xmip.Abi;
 using Xmip.Abi.Module;
 
 namespace Xmip.PowerShell;
@@ -8,7 +9,9 @@ namespace Xmip.PowerShell;
 // must stay so: two surfaces disagreeing over one boundary is the BizTalk
 // console-versus-provider drift ADR-0014 exists to prevent. Since 2026-09-09
 // that is held by construction rather than by care: both call Xmip.Abi in
-// xmip-core-abi, the one binding over the header.
+// xmip-core-abi, the one binding over the header; since 2026-09-24 both take
+// the answer itself from there too — AbiBoundaries, StatusMeaning and the
+// probe's own judgement — and render or emit it.
 //
 // Objects out, never text. The cli renders for a human; a cmdlet's caller
 // pipes, filters and compares, and a rendered string can do none of that.
@@ -16,21 +19,21 @@ namespace Xmip.PowerShell;
 /// <summary>
 /// <para type="synopsis">The module boundary this build speaks.</para>
 /// </summary>
+/// <remarks>
+/// Both boundaries, versioned apart (ADR-0027 clause 2): the module boundary
+/// a Module plugs into and the operator boundary a surface drives from — the
+/// same <see cref="AbiBoundaries"/> <c>xmip-cli abi</c> prints.
+/// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipAbi")]
-[OutputType(typeof(AbiInfo))]
+[OutputType(typeof(AbiBoundaries))]
 public sealed class GetXmipAbiCommand : Cmdlet
 {
+    /// <inheritdoc />
     protected override void ProcessRecord()
     {
-        WriteObject(new AbiInfo(
-            ModuleAbi.AbiVersion,
-            ModuleAbi.Entrypoint,
-            ModuleAbi.LibraryFileName("xmip_core_transport_file")));
+        WriteObject(AbiBoundaries.Current);
     }
 }
-
-/// <summary>What <see cref="GetXmipAbiCommand"/> answers.</summary>
-public sealed record AbiInfo(uint AbiVersion, string Entrypoint, string ExampleLibraryName);
 
 /// <summary>
 /// <para type="synopsis">What a status code from the boundary means.</para>
@@ -42,7 +45,7 @@ public sealed record AbiInfo(uint AbiVersion, string Entrypoint, string ExampleL
 /// worth a retry.
 /// </remarks>
 [Cmdlet(VerbsData.ConvertFrom, "XmipStatus")]
-[OutputType(typeof(StatusInfo))]
+[OutputType(typeof(StatusMeaning))]
 public sealed class ConvertFromXmipStatusCommand : Cmdlet
 {
     /// <summary>
@@ -55,21 +58,10 @@ public sealed class ConvertFromXmipStatusCommand : Cmdlet
     {
         foreach (var code in Code)
         {
-            var status = (XmipStatus)code;
-
-            WriteObject(new StatusInfo(
-                code,
-                Enum.IsDefined(status) ? status.ToString() : "Unknown",
-                status.Explain(),
-                status.IsRetryable(),
-                status.IsTerminal()));
+            WriteObject(StatusMeaning.Of(code));
         }
     }
 }
-
-/// <summary>What <see cref="ConvertFromXmipStatusCommand"/> answers.</summary>
-public sealed record StatusInfo(
-    int Code, string Name, string Meaning, bool Retryable, bool Terminal);
 
 /// <summary>
 /// <para type="synopsis">Load a module library and report what it says it
@@ -82,6 +74,8 @@ public sealed record StatusInfo(
 /// deliberately so. The one difference is earned rather than drift — the cli
 /// writes module log lines to stderr as they arrive, while a cmdlet has a
 /// verbose stream, so here they are collected and emitted after the probe.
+/// Whether the module conforms is the probe's own judgement
+/// (<see cref="ModuleProbe.Result.Complaint"/>), the one the cli exits on.
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipModuleDescriptor")]
 [OutputType(typeof(ModuleDescriptorInfo))]
@@ -132,7 +126,9 @@ public sealed class GetXmipModuleDescriptorCommand : PSCmdlet
                 answer.AbiVersion,
                 answer.TraitVersion,
                 answer.ModuleVersion,
-                answer.LastError));
+                answer.LastError,
+                answer.Conforms,
+                answer.Complaint));
         }
     }
 }
@@ -148,4 +144,6 @@ public sealed record ModuleDescriptorInfo(
     uint AbiVersion,
     string TraitVersion,
     string ModuleVersion,
-    string LastError);
+    string LastError,
+    bool Conforms,
+    string Complaint);

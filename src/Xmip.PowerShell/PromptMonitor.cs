@@ -1,5 +1,4 @@
 using System.Globalization;
-using Microsoft.Extensions.Configuration;
 using Xmip.Abi.Operate;
 using Xmip.Surface;
 
@@ -40,9 +39,6 @@ public sealed record XmipPromptSegment(XmipPromptPart[] Parts)
 /// </remarks>
 public static class PromptMonitor
 {
-    /// <summary>The module's configuration document, beside it.</summary>
-    public const string ConfigurationFile = "xmip.powershell.toml";
-
     private static readonly object Gate = new();
     private static CancellationTokenSource? _stop;
     private static Task? _worker;
@@ -161,24 +157,6 @@ public static class PromptMonitor
         }
     }
 
-    /// <summary>The console's nearest color to the estate's name for a mood's
-    /// color (<see cref="English.Color"/>): sixteen colors stand in for the
-    /// stylesheet's tokens, and the word decides which.</summary>
-    public static ConsoleColor Paint(string color)
-    {
-        return color switch
-        {
-            "green" => ConsoleColor.Green,
-            "slate" => ConsoleColor.DarkGray,
-            "blue" => ConsoleColor.Blue,
-            "yellow" => ConsoleColor.Yellow,
-            "burnt" => ConsoleColor.DarkRed,
-            "orange" => ConsoleColor.DarkYellow,
-            "red" => ConsoleColor.Red,
-            _ => ConsoleColor.DarkGray,
-        };
-    }
-
     /// <summary>
     /// Nothing at all, the way posh-git says nothing outside a repository.
     /// The owner, 2026-09-18: that Xmip is connected is obvious where the
@@ -198,13 +176,13 @@ public static class PromptMonitor
 
         try
         {
-            surface = OpenSurface(out bool configured);
+            surface = OpenSurface();
 
             await foreach (SurfaceChange _ in surface.WatchAsync(stop).ConfigureAwait(false))
             {
                 try
                 {
-                    Publish(generation, surface, configured);
+                    Publish(generation, surface);
                 }
                 catch (Exception failure) when (failure is not OperationCanceledException)
                 {
@@ -238,44 +216,22 @@ public static class PromptMonitor
         }
     }
 
-    private static IOperatorSurface OpenSurface(out bool configured)
+    // The snapshot the session named, stated over the document, by the one
+    // precedence the executable and every cmdlet share: the document's
+    // choice and the first cluster where it names several — the prompt is
+    // one line (ADR-0052, amendment 2026-09-20) — else the runtime rule, with
+    // "beside the executable" read as beside the module.
+    private static IOperatorSurface OpenSurface()
     {
-        if (Volatile.Read(ref _followed) is { } followed)
-        {
-            configured = true;
-            return new SnapshotOperator(followed);
-        }
-
-        string moduleDirectory = Path.GetDirectoryName(typeof(PromptMonitor).Assembly.Location)
-            ?? AppContext.BaseDirectory;
-        IConfigurationRoot document =
-            TomlDocument.Read(Path.Combine(moduleDirectory, ConfigurationFile));
-
-        configured = SurfaceChoice.IsChosen(document);
-
-        if (configured)
-        {
-            // One publication, and the first where the document names several
-            // (ADR-0052, amendment 2026-09-20): the prompt is one line.
-            return SurfaceChoice.OpenFirst(document, moduleDirectory);
-        }
-
-        // Nothing named: the one rule, with "beside the executable" read as
-        // beside the module, since the executable is pwsh itself.
-        return new NativeOperator(RuntimeLibrary.Choose(
-            document[RuntimeLibrary.ConfigurationKey],
-            Environment.GetEnvironmentVariable(RuntimeLibrary.EnvironmentVariable),
-            moduleDirectory,
-            moduleDirectory));
+        return ModuleSurface.Stated(new SurfaceLine(Snapshot: Volatile.Read(ref _followed)));
     }
 
-    private static void Publish(int generation, IOperatorSurface surface, bool configured)
+    private static void Publish(int generation, IOperatorSurface surface)
     {
         ScopeIndex index = surface.Index();
 
         if (index.Leaves == 0)
         {
-            _ = configured;
             Say(generation, Nothing);
 
             return;
