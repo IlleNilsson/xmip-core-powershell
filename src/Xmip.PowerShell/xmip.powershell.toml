@@ -35,3 +35,9 @@ Snapshot = "../../../../../../../../../.local-work/playground/C1-snapshot.toml"
 # The web host to follow when Surface = "remote"; the prompt is told when its
 # surface changes and shows nothing while it does not answer.
 # Url = "http://another-host:5087"
+
+# Where this module's audit records go (ADR-0062): every cmdlet failure, each
+# pause and resume, and the prompt's failures, as <AuditDirectory>/audit.toml.
+# Unset, the audit capability decides — XMIP_AUDIT_DIRECTORY, else the
+# operating system's log.
+# AuditDirectory = "../../../../../../../../../.local-work/audit"

@@ -11,7 +11,8 @@ namespace Xmip.PowerShell;
 // boundary has no such call, and the thing that watches must not be able to
 // stop the thing it watches.
 
-/// <summary>What the two scope cmdlets share: the surface, the scopes, the act.</summary>
+/// <summary>What the two scope cmdlets share: the surface, the scopes, the act —
+/// each scope's act audited as it begins and as it ends (ADR-0062).</summary>
 public abstract class XmipScopeCommand : XmipSurfaceCommand
 {
     /// <summary>
@@ -31,7 +32,7 @@ public abstract class XmipScopeCommand : XmipSurfaceCommand
     protected virtual string Actor => Environment.UserName;
 
     /// <inheritdoc />
-    protected override void ProcessRecord()
+    protected override void Process()
     {
         foreach (string argument in Scope)
         {
@@ -47,11 +48,12 @@ public abstract class XmipScopeCommand : XmipSurfaceCommand
                     continue;
                 }
 
+                Acting(scope);
                 ScopeOperation operation = Surface.Control(scope, Action, Actor);
 
                 if (!operation.Applied)
                 {
-                    WriteError(new ErrorRecord(
+                    Refuse(new ErrorRecord(
                         new InvalidOperationException(operation.Result),
                         "XmipScopeOperationRefused",
                         ErrorCategory.InvalidOperation,
@@ -60,6 +62,7 @@ public abstract class XmipScopeCommand : XmipSurfaceCommand
                     continue;
                 }
 
+                Acted(scope, operation.Result);
                 WriteObject(operation);
             }
         }

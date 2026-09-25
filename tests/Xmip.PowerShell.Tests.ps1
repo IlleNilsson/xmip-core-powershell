@@ -39,6 +39,11 @@
 BeforeAll {
     [string] $script:Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
+    # Every failure a test provokes is audited (ADR-0062), into this run's own
+    # drive and never the operating system's log or .local-work/audit.
+    $script:AuditBefore = $env:XMIP_AUDIT_DIRECTORY
+    $env:XMIP_AUDIT_DIRECTORY = Join-Path -Path $TestDrive -ChildPath 'audit'
+
     $script:Project = Join-Path $script:Root 'src/Xmip.PowerShell/Xmip.PowerShell.csproj'
     $script:Manifest = Join-Path $script:Root 'src/Xmip.PowerShell/Xmip.PowerShell.psd1'
 
@@ -65,6 +70,7 @@ BeforeAll {
 }
 
 AfterAll {
+    $env:XMIP_AUDIT_DIRECTORY = $script:AuditBefore
     Remove-Module -Name Xmip.PowerShell -Force -ErrorAction SilentlyContinue
     Remove-Module -Name FakePromptProvider -Force -ErrorAction SilentlyContinue
 }
@@ -696,5 +702,63 @@ Describe 'Get-XmipModuleDescriptor' {
 
         $failure.Count | Should -BeGreaterThan 0
         $failure[0].TargetObject | Should -BeLike '*no-such-xmip-module.dll'
+    }
+}
+
+Describe 'Every failure and every act is audited' {
+    # ADR-0062: the module records as Xmip.PowerShell through the audit
+    # capability in the runtime's library, which the build puts beside it.
+    # The module's document names no AuditDirectory, so the capability reads
+    # XMIP_AUDIT_DIRECTORY, set here for this process alone.
+    BeforeAll {
+        [string] $script:Fixture = Join-Path $script:Root `
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+        $script:WasAuditing = $env:XMIP_AUDIT_DIRECTORY
+    }
+
+    BeforeEach {
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        $script:Audit = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-powershell-audit-$stamp"
+        $env:XMIP_AUDIT_DIRECTORY = $script:Audit
+    }
+
+    AfterEach {
+        $env:XMIP_AUDIT_DIRECTORY = $script:WasAuditing
+        Remove-Item -LiteralPath $script:Audit -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'records a non-terminating error as a failure of the cmdlet' {
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
+
+        Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue | Out-Null
+
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
+        $text | Should -BeLike '*`[`[record`]`]*'
+        $text | Should -BeLike '*program = "Xmip.PowerShell"*'
+        $text | Should -BeLike '*action = "Get-XmipModuleDescriptor"*'
+        $text | Should -BeLike '*phase = "failure"*'
+        $text | Should -BeLike '*XmipModuleUnloadable*'
+    }
+
+    It 'records a terminating error once' {
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-snapshot.toml'
+
+        { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } | Should -Throw
+
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
+        $text | Should -BeLike '*action = "Get-XmipHealth"*'
+        $text | Should -BeLike '*phase = "failure"*'
+        ([regex]::Matches($text, '\[\[record\]\]')).Count | Should -Be 1
+    }
+
+    It 'records an act as it begins, and its refusal as a failure' {
+        Suspend-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///edge-01' `
+            -ErrorAction SilentlyContinue | Out-Null
+
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
+        $text | Should -BeLike '*action = "Suspend-XmipScope"*'
+        $text | Should -BeLike '*phase = "begin"*'
+        $text | Should -BeLike '*phase = "failure"*'
+        $text | Should -BeLike '*xmip:///edge-01*'
     }
 }
