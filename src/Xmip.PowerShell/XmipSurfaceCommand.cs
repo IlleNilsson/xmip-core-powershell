@@ -14,7 +14,7 @@ namespace Xmip.PowerShell;
 /// Until 2026-09-24 every cmdlet demanded a library path, loaded the binding
 /// itself and took a scope literally; the executable did none of that.
 /// </summary>
-public abstract class XmipSurfaceCommand : PSCmdlet
+public abstract class XmipSurfaceCommand : XmipCommand
 {
     private IOperatorSurface? _surface;
 
@@ -57,7 +57,7 @@ public abstract class XmipSurfaceCommand : PSCmdlet
 
         if (chosen is null)
         {
-            WriteError(new ErrorRecord(
+            Refuse(new ErrorRecord(
                 new ItemNotFoundException(refusal),
                 "XmipScopePatternUnmatched",
                 ErrorCategory.ObjectNotFound,
@@ -68,13 +68,13 @@ public abstract class XmipSurfaceCommand : PSCmdlet
     }
 
     /// <inheritdoc />
-    protected override void BeginProcessing()
+    protected override void Begin()
     {
         SurfaceLine line = new(Remote, Resolved(Snapshot), Resolved(Library));
 
         if (!string.IsNullOrWhiteSpace(Remote) && !RemoteOperator.IsWebHost(Remote))
         {
-            ThrowTerminatingError(new ErrorRecord(
+            Stop(new ErrorRecord(
                 new ArgumentException(
                     $"-Remote needs a web host, like http://host:5087; not {Remote}."),
                 "XmipRemoteNotAWebHost",
@@ -86,7 +86,7 @@ public abstract class XmipSurfaceCommand : PSCmdlet
 
         if (_surface is null)
         {
-            ThrowTerminatingError(new ErrorRecord(
+            Stop(new ErrorRecord(
                 new InvalidOperationException(reason),
                 "XmipSurfaceUnavailable",
                 ErrorCategory.ResourceUnavailable,
@@ -95,7 +95,7 @@ public abstract class XmipSurfaceCommand : PSCmdlet
     }
 
     /// <inheritdoc />
-    protected override void EndProcessing()
+    protected override void End()
     {
         Release();
     }

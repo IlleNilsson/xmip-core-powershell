@@ -103,6 +103,26 @@ through `Xmip.Surface`); the console paints the nearest of its sixteen, and the
 name takes the color of the worst stage by the runtime's own worst-first
 order.
 
+## What it audits
+
+The module audits as program `Xmip.PowerShell` through the audit capability,
+reached through the runtime's library (ADR-0062; `ModuleAudit` over
+`ProgramAudit` in `Xmip.Surface`). Every cmdlet derives from `XmipCommand`,
+which records, once for all of them: every error a cmdlet writes or ends
+on, and every exception that leaves it, as a `failure` whose action is the
+cmdlet's name, with its bound parameters, the user, the error's identifier,
+category and target as properties; and, for the two acts that change the
+estate, `Suspend-XmipScope` and `Resume-XmipScope`, each scope's `begin` and
+`finished`. The prompt records what it used to swallow as action `prompt`: a
+publication it could not read (once until a tick reads again), a document
+that names a surface this build does not know, and whatever else ended its
+observer. Anything the module leaves unhandled in the session is recorded as
+`unhandled` from the import on. Records go to `<AuditDirectory>/audit.toml`,
+`AuditDirectory` in `xmip.powershell.toml`'s `[Xmip]` table resolved from
+beside the module; unset, the capability decides — `XMIP_AUDIT_DIRECTORY`,
+else the operating system's log, which also takes a record the directory
+cannot.
+
 ## Seeing it
 
 In a fresh pwsh, nothing imported yet, from the estate root:
@@ -177,11 +197,12 @@ the proof the boundary works (ADR-0012 clause 2).
 
 ## Verification
 
-`dotnet build`, then `Invoke-Pester -Path ./tests`. Thirty-six tests, all of
-them the PowerShell shape: the manifest and the exports agree, every verb is
+`dotnet build`, then `Invoke-Pester -Path ./tests`. Thirty-nine tests, all
+of them the PowerShell shape: the manifest and the exports agree, every verb is
 approved, the two acts carry `-WhatIf` and no start, stop or restart exists,
-the cmdlets emit objects and read the surface the line names, the
-configuration document ships beside the module, and the prompt paints the
+the cmdlets emit objects and read the surface the line names, a failure
+and an act land as audit records, the configuration document ships beside
+the module, and the prompt paints the
 color the runtime names for a mood. The rules beneath them — which surface
 wins, what a wildcard selects, what a status means, whether a module
 conforms — are tested once, in `Xmip.Surface.Test` and `Xmip.Abi.Tests`, and

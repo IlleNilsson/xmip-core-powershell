@@ -35,7 +35,7 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
     public string[] Scope { get; set; } = [];
 
     /// <inheritdoc />
-    protected override void ProcessRecord()
+    protected override void Process()
     {
         foreach (string argument in Scope)
         {
@@ -50,7 +50,7 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 
                 if (records.Count == 0)
                 {
-                    WriteError(new ErrorRecord(
+                    Refuse(new ErrorRecord(
                         new ItemNotFoundException(English.NothingAt(scope, Surface.Source)),
                         "XmipScopeNotFound",
                         ErrorCategory.ObjectNotFound,
@@ -81,7 +81,7 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// </remarks>
 [Cmdlet(VerbsDiagnostic.Test, "XmipNodeConfiguration")]
 [OutputType(typeof(ConfigurationVerdict))]
-public sealed class TestXmipNodeConfigurationCommand : PSCmdlet
+public sealed class TestXmipNodeConfigurationCommand : XmipCommand
 {
     private NativeOperator? _runtime;
 
@@ -101,7 +101,7 @@ public sealed class TestXmipNodeConfigurationCommand : PSCmdlet
     public string? Library { get; set; }
 
     /// <inheritdoc />
-    protected override void BeginProcessing()
+    protected override void Begin()
     {
         string? library = string.IsNullOrWhiteSpace(Library)
             ? null
@@ -112,7 +112,7 @@ public sealed class TestXmipNodeConfigurationCommand : PSCmdlet
         {
             // A runtime that cannot be loaded is a terminating condition:
             // there is no next document it could judge.
-            ThrowTerminatingError(new ErrorRecord(
+            Stop(new ErrorRecord(
                 new InvalidOperationException(_runtime.Reason),
                 "XmipRuntimeUnloadable",
                 ErrorCategory.ResourceUnavailable,
@@ -121,7 +121,7 @@ public sealed class TestXmipNodeConfigurationCommand : PSCmdlet
     }
 
     /// <inheritdoc />
-    protected override void ProcessRecord()
+    protected override void Process()
     {
         foreach (string configuration in Path)
         {
@@ -130,7 +130,7 @@ public sealed class TestXmipNodeConfigurationCommand : PSCmdlet
 
             if (!File.Exists(path))
             {
-                WriteError(new ErrorRecord(
+                Refuse(new ErrorRecord(
                     new FileNotFoundException(verdict.Said, path),
                     "XmipNodeConfigurationMissing",
                     ErrorCategory.ObjectNotFound,
@@ -144,7 +144,7 @@ public sealed class TestXmipNodeConfigurationCommand : PSCmdlet
     }
 
     /// <inheritdoc />
-    protected override void EndProcessing()
+    protected override void End()
     {
         _runtime?.Dispose();
     }

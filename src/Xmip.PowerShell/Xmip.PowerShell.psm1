@@ -12,6 +12,10 @@ if ($null -eq $script:PreviousPrompt) {
     $script:PreviousPrompt = { "PS $($executionContext.SessionState.Path.CurrentLocation)> " }
 }
 
+# Whatever this module leaves unhandled in the session is audited before the
+# session sees it (ADR-0062); the cmdlets and the prompt record their own
+# failures through the same audit.
+[Xmip.PowerShell.ModuleAudit]::Watch()
 [Xmip.PowerShell.PromptMonitor]::Start()
 
 # Where posh-git puts a repository's state: after the path and before the

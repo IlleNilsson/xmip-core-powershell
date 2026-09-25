@@ -26,10 +26,10 @@ namespace Xmip.PowerShell;
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipAbi")]
 [OutputType(typeof(AbiBoundaries))]
-public sealed class GetXmipAbiCommand : Cmdlet
+public sealed class GetXmipAbiCommand : XmipCommand
 {
     /// <inheritdoc />
-    protected override void ProcessRecord()
+    protected override void Process()
     {
         WriteObject(AbiBoundaries.Current);
     }
@@ -46,7 +46,7 @@ public sealed class GetXmipAbiCommand : Cmdlet
 /// </remarks>
 [Cmdlet(VerbsData.ConvertFrom, "XmipStatus")]
 [OutputType(typeof(StatusMeaning))]
-public sealed class ConvertFromXmipStatusCommand : Cmdlet
+public sealed class ConvertFromXmipStatusCommand : XmipCommand
 {
     /// <summary>
     /// <para type="description">The code as the boundary returned it.</para>
@@ -54,7 +54,8 @@ public sealed class ConvertFromXmipStatusCommand : Cmdlet
     [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true)]
     public int[] Code { get; set; } = [];
 
-    protected override void ProcessRecord()
+    /// <inheritdoc />
+    protected override void Process()
     {
         foreach (var code in Code)
         {
@@ -79,7 +80,7 @@ public sealed class ConvertFromXmipStatusCommand : Cmdlet
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipModuleDescriptor")]
 [OutputType(typeof(ModuleDescriptorInfo))]
-public sealed class GetXmipModuleDescriptorCommand : PSCmdlet
+public sealed class GetXmipModuleDescriptorCommand : XmipCommand
 {
     /// <summary>
     /// <para type="description">Path to the loadable library.</para>
@@ -87,7 +88,8 @@ public sealed class GetXmipModuleDescriptorCommand : PSCmdlet
     [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true)]
     public string[] Library { get; set; } = [];
 
-    protected override void ProcessRecord()
+    /// <inheritdoc />
+    protected override void Process()
     {
         foreach (var library in Library)
         {
@@ -105,7 +107,7 @@ public sealed class GetXmipModuleDescriptorCommand : PSCmdlet
                     or EntryPointNotFoundException
                     or BadImageFormatException)
             {
-                WriteError(new ErrorRecord(
+                Refuse(new ErrorRecord(
                     failure, "XmipModuleUnloadable", ErrorCategory.InvalidData, path));
 
                 continue;

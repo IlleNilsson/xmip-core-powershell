@@ -39,6 +39,9 @@ public sealed record XmipPromptSegment(XmipPromptPart[] Parts)
 /// </remarks>
 public static class PromptMonitor
 {
+    /// <summary>The action the prompt's failures are audited as.</summary>
+    public const string PromptAction = "prompt";
+
     private static readonly object Gate = new();
     private static CancellationTokenSource? _stop;
     private static Task? _worker;
@@ -174,6 +177,9 @@ public static class PromptMonitor
     {
         IOperatorSurface? surface = null;
 
+        // The last tick's failure, recorded once however many ticks repeat it.
+        string? missed = null;
+
         try
         {
             surface = OpenSurface();
@@ -183,13 +189,20 @@ public static class PromptMonitor
                 try
                 {
                     Publish(generation, surface);
+                    missed = null;
                 }
                 catch (Exception failure) when (failure is not OperationCanceledException)
                 {
                     // One publication that could not be read is one missed
                     // tick, and the segment keeps what it said. It used to
                     // end the observer: the prompt went blank and stayed so
-                    // (2026-09-18, three rolls writing one file).
+                    // (2026-09-18, three rolls writing one file). It is
+                    // audited, once until a tick reads again (ADR-0062).
+                    if (failure.Message != missed)
+                    {
+                        ModuleAudit.Open().Failed(PromptAction, failure);
+                        missed = failure.Message;
+                    }
                 }
             }
         }
@@ -197,14 +210,18 @@ public static class PromptMonitor
         {
             // Remove-Module is the normal end.
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException misconfigured)
         {
             // The document names a surface this build does not know, or a
             // snapshot with no path: SurfaceChoice refused it, as it should.
+            ModuleAudit.Open().Failed(PromptAction, misconfigured);
             Say(generation, XmipPromptSegment.Plain("[Xmip misconfigured]", ConsoleColor.DarkRed));
         }
-        catch (Exception)
+        catch (Exception failure)
         {
+            // Nothing on the line, as posh-git says nothing; the why is in
+            // the audit, never only absent from a screen (ADR-0062).
+            ModuleAudit.Open().Failed(PromptAction, failure);
             Say(generation, Nothing);
         }
         finally
