@@ -142,9 +142,10 @@ public static class SegmentRender
     /// <summary>
     /// What the prompt is at, from what every published scope shares: the
     /// node where they share one, else the cluster, the first name. Nothing
-    /// shared is no name. A segment that is only a kind, such as the
-    /// Playground's <c>node</c>, names nothing; and what lies below the node
-    /// or the cluster, a scenario or a stage, is never where the prompt is.
+    /// shared is no name. The node is <see cref="ScopeTree.Node"/>'s, which is
+    /// <c>observe::Scope::node</c> in the runtime, so the Playground's
+    /// <c>node</c> marker names nothing; and what lies below the node or the
+    /// cluster, a scenario or a stage, is never where the prompt is.
     /// </summary>
     public static string At(ScopeIndex index)
     {
@@ -168,13 +169,12 @@ public static class SegmentRender
 
         // A node where one node is shared, else the cluster: the first name.
         // Never what lies deeper. A roll of one test shares its scenario too,
-        // and the prompt is at the cluster then, not at round-trip.
+        // and the prompt is at the cluster then, not at round-trip. Which
+        // segment is the node is observe's to say, not the prompt's.
         string[] common = [.. scopes[0].Take(shared)];
-        int node = Array.IndexOf(common, "node");
+        string node = ScopeTree.Node(ScopeTree.Join(common));
 
-        return node >= 0 && node + 1 < common.Length
-            ? common[node + 1]
-            : common.FirstOrDefault(part => part != "node") ?? string.Empty;
+        return node.Length > 0 ? node : common.FirstOrDefault() ?? string.Empty;
     }
 
     /// <summary>

@@ -37,7 +37,10 @@ public abstract class XmipSurfaceCommand : XmipCommand
 
     /// <summary>
     /// <para type="description">A web host on another machine to follow, such
-    /// as http://host:5087, over everything else.</para>
+    /// as https://host:5443, over everything else: TLS, presenting and trusting
+    /// what xmip.powershell.toml or XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and
+    /// XMIP_TRUST_ANCHOR name; plain http only to this machine (ADR-0063
+    /// clause 1).</para>
     /// </summary>
     [Parameter]
     public string? Remote { get; set; }
@@ -76,7 +79,7 @@ public abstract class XmipSurfaceCommand : XmipCommand
         {
             Stop(new ErrorRecord(
                 new ArgumentException(
-                    $"-Remote needs a web host, like http://host:5087; not {Remote}."),
+                    $"-Remote needs a web host, like https://host:5443; not {Remote}."),
                 "XmipRemoteNotAWebHost",
                 ErrorCategory.InvalidArgument,
                 Remote));

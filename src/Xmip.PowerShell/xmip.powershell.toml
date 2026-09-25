@@ -33,8 +33,16 @@ Surface = "snapshot"
 Snapshot = "../../../../../../../../../.local-work/playground/C1-snapshot.toml"
 
 # The web host to follow when Surface = "remote"; the prompt is told when its
-# surface changes and shows nothing while it does not answer.
-# Url = "http://another-host:5087"
+# surface changes and shows nothing while it does not answer. The same keys
+# serve -Remote.
+# HTTPS, presenting Certificate and checking the host's certificate against
+# TrustAnchor (PEM files; unset, nothing presented and the operating system's
+# trust store), each else XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and
+# XMIP_TRUST_ANCHOR. Plain http only to this machine (ADR-0063 clause 1).
+# Url = "https://another-host:5443"
+# Certificate = "surface.pem"
+# PrivateKey = "surface.key"
+# TrustAnchor = "anchor.pem"
 
 # Where this module's audit records go (ADR-0062): every cmdlet failure, each
 # pause and resume, and the prompt's failures, as <AuditDirectory>/audit.toml.
