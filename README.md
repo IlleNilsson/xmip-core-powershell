@@ -69,7 +69,7 @@ owner, 2026-09-18). It wears posh-git's clothes, by the owner's word the same
 evening: yellow brackets, the cyan posh-git gives a branch in step with its
 remote for a stage that is fine, and posh-git's own `≡` when every stage is
 fine and nothing is retrying or failed. It keeps posh-git's order too,
-`[main ≡ +0 ~1 -0]` there and `[orders ≡ R:12 P:11 S:10]` here: first what the
+`[main ≡ +0 ~1 -0]` there and `[C1 ≡ R:12 P:11 S:10]` here: first what the
 prompt is at — the node's name where it follows one node, the cluster's
 where it follows a cluster, in the color of the worst stage — then `≡` when
 square, then the counts. R, P and S are the stage letters; a cluster or a
@@ -137,12 +137,14 @@ Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
 Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
 Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip `
-    -Nodes alpha, beta, gamma `
-    -NodeCapability @{ alpha = 'receive'; beta = 'process'; gamma = 'send' }
+    -Nodes R1, P1, S1 `
+    -NodeCapability @{ R1 = 'receive'; P1 = 'process'; S1 = 'send' }
 ```
 
 `C1` and the three node names are arguments, nothing more: name them anything
-a file can be called. `C1` is written here only because the shipped
+a file can be called. `R1`, `P1` and `S1` are how the owner names nodes when
+he tests (2026-09-25), a reminder to the person; what each does is the
+`-NodeCapability` beside it, and Xmip never reads the name. `C1` is written here only because the shipped
 `xmip.powershell.toml` follows that roll's snapshot.
 
 Press Enter after the import and the prompt is as it was, with no segment,
@@ -159,7 +161,7 @@ segment to sit beside a repository's state; a console started with
 
 A roll started under another name is followed too: `Start-XmipTest` tells
 the prompt in its session which snapshot its roll publishes, so `-Cluster
-CC1` shows CC1 and not the C1 the shipped document names (ADR-0052,
+C2` shows C2 and not the C1 the shipped document names (ADR-0052,
 amendment 2026-09-18). A roll started in another session is followed by
 writing its file into `xmip.powershell.toml`.
 
