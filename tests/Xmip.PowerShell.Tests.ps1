@@ -255,9 +255,9 @@ value = $Journeys
         # say stalled.
         $seen = [DateTimeOffset]::UtcNow
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/orders', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///P1/process/ok', 'Stressed', 55, 'x', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///S1/send/bill', 'Done', 95, 'x', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///alpha/receive/orders', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///beta/process/ok', 'Stressed', 55, 'x', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///gamma/send/bill', 'Done', 95, 'x', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
@@ -284,9 +284,9 @@ value = $Journeys
         # The owner, 2026-09-18: posh-git's look. Every stage fine and nothing
         # retrying or failed is square, and says so with posh-git's own sign.
         [Xmip.Abi.Operate.HealthRecord[]] $fine = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/orders', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///P1/process/ok', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///S1/send/bill', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///alpha/receive/orders', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///beta/process/ok', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///gamma/send/bill', 'Fine', 0, '', $seen)
         )
         $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
         $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
@@ -298,13 +298,13 @@ value = $Journeys
         # when square, then the counts. At one node it is the node's name; at
         # a cluster, the cluster's; the Playground's `node` segment names nothing.
         [Xmip.Abi.Operate.HealthRecord[]] $oneNode = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/receive/a', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/send/b', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/alpha/receive/a', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/alpha/send/b', 'Fine', 0, '', $seen)
         )
         $atNode = [Xmip.Surface.ScopeIndex]::Build($oneNode, $counts, 3, 'test')
-        [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be 'R1'
+        [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be 'alpha'
         [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm, $flow).Text |
-            Should -Be '[R1 ≡ R:12 P:11 S:10]'
+            Should -Be '[alpha ≡ R:12 P:11 S:10]'
 
         # A roll of one test shares its scenario too; the prompt is at the
         # cluster still, never at round-trip (the owner's RoundTrip, 2026-09-19).
@@ -316,8 +316,8 @@ value = $Journeys
         [Xmip.PowerShell.SegmentRender]::At($atOneTest) | Should -Be 'C1'
 
         [Xmip.Abi.Operate.HealthRecord[]] $twoNodes = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/R1/receive/a', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/S1/send/b', 'Done', 95, 'x', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/alpha/receive/a', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/gamma/send/b', 'Done', 95, 'x', $seen)
         )
         $atCluster = [Xmip.Surface.ScopeIndex]::Build($twoNodes, $counts, 4, 'test')
         $troubled = [Xmip.PowerShell.SegmentRender]::Render($atCluster, $calm, $flow)
@@ -412,7 +412,7 @@ value = $Journeys
 
         $seen = [DateTimeOffset]::UtcNow
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///R1/receive/a', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///alpha/receive/a', 'Fine', 0, '', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
@@ -435,8 +435,8 @@ value = $Journeys
         $seen = [DateTimeOffset]::UtcNow
         $leaf = [Xmip.Abi.Operate.HealthRecord]
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            $leaf::new('xmip:///C1/node/R1/receive/a', 'Fine', 0, '', $seen)
-            $leaf::new('xmip:///C1/node/S1/send/b', 'Done', 95, 'x', $seen)
+            $leaf::new('xmip:///C1/node/alpha/receive/a', 'Fine', 0, '', $seen)
+            $leaf::new('xmip:///C1/node/gamma/send/b', 'Done', 95, 'x', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
