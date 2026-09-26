@@ -69,6 +69,89 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 }
 
 /// <summary>
+/// <para type="synopsis">One scope as a row of the tree: its mood, the leaf that
+/// explains it and that leaf's evidence, and its six figures.</para>
+/// </summary>
+/// <remarks>
+/// The drill, in PowerShell: the same <see cref="ScopeItem"/> <c>xmip-cli
+/// show</c> and <c>list</c> render and the web views draw (ADR-0052). With no
+/// scope it is the cluster; a wildcard names several, so
+/// <c>-Scope xmip:///C1/*</c> is every scope directly beneath the cluster,
+/// worst first — the topmost matches — and a row's <c>Worst</c> is the next
+/// scope to ask about on the way to the cause. Until 2026-09-26 the module
+/// had no row and no figure: <c>Get-XmipHealth</c> answered with every leaf
+/// beneath a scope, thousands for one node.
+/// </remarks>
+[Cmdlet(VerbsCommon.Get, "XmipScope")]
+[OutputType(typeof(ScopeItem))]
+public sealed class GetXmipScopeCommand : XmipSurfaceCommand
+{
+    /// <summary>
+    /// <para type="description">The Xmip URI to describe, such as xmip:///C1,
+    /// or a wildcard over the scopes that exist, such as xmip:///C1/node/*.
+    /// Omitted, the cluster the surface publishes.</para>
+    /// </summary>
+    [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
+    [SupportsWildcards]
+    public string[] Scope { get; set; } = [];
+
+    /// <inheritdoc />
+    protected override void Process()
+    {
+        foreach (string argument in Scope.Length == 0 ? [string.Empty] : Scope)
+        {
+            if (Select(argument) is not { } chosen)
+            {
+                continue;
+            }
+
+            IEnumerable<ScopeItem> rows = chosen.Scopes
+                .Select(Surface.Describe)
+                .Where(row => row.Health is not null || row.Figures.HasValues);
+
+            // A pattern names each topmost scope it matched, worst first, as a
+            // level of the tree reads; a literal scope is the one row.
+            ScopeIndex index = Surface.Index();
+            rows = chosen.Patterned
+                ? ScopeTree.WorstFirst([.. rows], row => Standing(index, row))
+                : rows;
+
+            int written = 0;
+
+            foreach (ScopeItem row in rows)
+            {
+                WriteObject(row);
+                written++;
+            }
+
+            if (written == 0)
+            {
+                Refuse(new ErrorRecord(
+                    new ItemNotFoundException(
+                        English.NothingAt(chosen.Argument, Surface.Source)),
+                    "XmipScopeNotFound",
+                    ErrorCategory.ObjectNotFound,
+                    chosen.Argument));
+            }
+        }
+    }
+
+    // A row as it stands in the worst-first order: its worst leaf's mood and
+    // severity under its own scope, as a branch of the tree stands.
+    private static HealthRecord Standing(ScopeIndex index, ScopeItem row)
+    {
+        HealthRecord? worst = index.Worst(row.Scope);
+
+        return new HealthRecord(
+            row.Scope,
+            worst?.State ?? HealthState.Fine,
+            worst?.Severity ?? 0,
+            string.Empty,
+            default);
+    }
+}
+
+/// <summary>
 /// <para type="synopsis">Whether a node configuration file would start, judged
 /// by the runtime that would start it.</para>
 /// </summary>

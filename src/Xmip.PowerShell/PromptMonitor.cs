@@ -254,7 +254,10 @@ public static class PromptMonitor
             return;
         }
 
-        Figures figures = surface.Figures(ScopeTree.Root);
+        // The letters count the message path, each stage its own figure, and
+        // never the cluster's sum: until 2026-09-26 R counted every Stream
+        // beneath the root, the daily backlog's drain among them.
+        Figures figures = surface.MessagePath();
         DateTimeOffset now = DateTimeOffset.UtcNow;
         FigureFlow flow = FigureFlow.Between(
             figures, _published, _published is null ? TimeSpan.Zero : now - _readAt);

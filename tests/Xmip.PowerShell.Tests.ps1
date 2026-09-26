@@ -204,14 +204,17 @@ state = "fine"
 severity = 0
 evidence = ""
 observed_unix_nanos = 1789111688000000000
+# Each count at the stage that took it: the letters read the stages.
 
 [[counts]]
 counted = "streams"
 value = $Streams
+scope = "xmip:///W9/receive"
 
 [[counts]]
 counted = "journeys"
 value = $Journeys
+scope = "xmip:///W9/process"
 "@ | Set-Content -LiteralPath $moving -Encoding utf8
         }
 
@@ -636,6 +639,36 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
         [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///edge-0*')
 
         $records.Count | Should -Be 5
+    }
+
+    It 'drills from the cluster to the leaf that explains it, one level at a time' {
+        # 2026-09-26: the module had no row and no figure, and Get-XmipHealth
+        # answered with every leaf beneath a scope. Get-XmipScope is the row
+        # xmip-cli show and list render; a row's Worst is the next step.
+        [string] $cluster = Join-Path $script:Root `
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
+        [string] $leaf = 'xmip:///C1/node/gamma/send/tcp/json'
+
+        $top = Get-XmipScope -Snapshot $cluster
+        $top | Should -BeOfType ([Xmip.Surface.ScopeItem])
+        $top.Scope | Should -Be 'xmip:///C1' -Because 'the drill starts at the cluster'
+        $top.Worst | Should -Be $leaf
+        $top.Figures.Streams | Should -Be 6
+
+        [string] $at = $top.Scope
+        foreach ($step in 1..8) {
+            [object[]] $beneath = @(Get-XmipScope -Snapshot $cluster -Scope "$at/*" `
+                    -ErrorAction SilentlyContinue)
+            if ($beneath.Count -eq 0) { break }
+            $beneath[0].Worst | Should -Be $leaf -Because 'the worst row leads to the cause'
+            $at = $beneath[0].Scope
+        }
+
+        $at | Should -Be $leaf
+        (Get-XmipScope -Snapshot $cluster -Scope $at).Evidence |
+            Should -Be '2/3 rounds passed, 1 failed'
+        (Get-XmipScope -Snapshot $cluster -Scope 'xmip:///C1/node/alpha').Figures.Streams |
+            Should -Be 6 -Because 'a node has figures of its own'
     }
 
     It 'refuses a pattern that names nothing, naming what there is' {
