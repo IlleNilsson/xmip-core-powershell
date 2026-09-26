@@ -22,6 +22,7 @@
         'ConvertFrom-XmipStatus'
         'Get-XmipModuleDescriptor'
         'Get-XmipHealth'
+        'Get-XmipScope'
         'Test-XmipNodeConfiguration'
         'Suspend-XmipScope'
         'Resume-XmipScope'

@@ -23,8 +23,12 @@ Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
 `Get-XmipModuleDescriptor` — and emit what `xmip-cli abi`, `status` and
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
-probe's own `Conforms` and `Complaint`, all from `Xmip.Abi`. Four read a
-running Xmip: `Get-XmipHealth -Scope`, the two acts the boundary carries,
+probe's own `Conforms` and `Complaint`, all from `Xmip.Abi`. Five read a
+running Xmip: `Get-XmipHealth -Scope`; `Get-XmipScope [-Scope]`, the drill —
+the `ScopeItem` `xmip-cli show` and `list` render, the cluster when no scope
+is named, `-Scope xmip:///C1/*` the level beneath it worst first, and each
+row's `Worst` the next scope on the way to the cause; the two acts the
+boundary carries,
 `Suspend-XmipScope -Scope [-Who]` and `Resume-XmipScope -Scope`, both with
 `-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
@@ -33,7 +37,7 @@ the boundary has no such call, because the thing that watches must not be able
 to stop the thing it watches. `tests/` holds the Pester tests over them.
 
 **The cmdlets read the surface `xmip-cli` reads** (ADR-0052 clause 1). The
-three that take a `-Scope` take `-Remote`, `-Snapshot` and `-Library` as the
+four that take a `-Scope` take `-Remote`, `-Snapshot` and `-Library` as the
 executable takes `--remote`, `--snapshot` and `--runtime`, in the same order —
 a web host, then one cluster's snapshot, then a runtime library, then
 `xmip.powershell.toml`, then the runtime rule — because both ask
@@ -58,7 +62,8 @@ installed, where posh-git puts a repository's state — after the path and
 before the closing `>`, as in `D:\Repos\Xmip [main] [R:12 P:11 S:10]>`
 (the owner, 2026-09-18) — and says it the same way and no wider: five
 figures with their letters — R, P and S for what the three stages count
-(Streams received, Journeys in process, Messages sent), T for Retrying and F
+(Streams received, Journeys in process, Messages sent — each counted on its
+own stage, `IOperatorSurface.MessagePath`), T for Retrying and F
 for Failed. No mood is spelled out; the color carries it: a stage letter is
 green, yellow or red by the worst leaf on that stage, T is yellow and F is
 red (the owner, 2026-09-15; ADR-0052). T and F are there only when something
@@ -203,7 +208,7 @@ the proof the boundary works (ADR-0012 clause 2).
 
 ## Verification
 
-`dotnet build`, then `Invoke-Pester -Path ./tests`. Thirty-nine tests, all
+`dotnet build`, then `Invoke-Pester -Path ./tests`. Forty tests, all
 of them the PowerShell shape: the manifest and the exports agree, every verb is
 approved, the two acts carry `-WhatIf` and no start, stop or restart exists,
 the cmdlets emit objects and read the surface the line names, a failure
