@@ -7,6 +7,7 @@
     RootModule           = 'Xmip.PowerShell.psm1'
     RequiredAssemblies    = @('Xmip.PowerShell.dll')
     NestedModules         = @('Xmip.PowerShell.dll')
+    FormatsToProcess      = @('Xmip.PowerShell.Format.ps1xml')
     ModuleVersion        = '0.3.0'
     GUID                 = '7c3d9f81-2e46-4b0a-9d15-8f6a1c24e7b3'
     Author               = 'Ilian Nilsson'

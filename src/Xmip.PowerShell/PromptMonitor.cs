@@ -59,17 +59,10 @@ public static class PromptMonitor
     // estate when it is half of it (ADR-0052, amendment 2026-09-20).
     private static int _beside;
 
-    // What was last published and when this observer read it, so the next
-    // rendering has an interval to divide by, and the rate it gave, so the
-    // next one can say whether the rate is climbing (ADR-0052, amendment
-    // 2026-09-20). One observer writes these, so they need no guard beyond
-    // the generation's. The clock is the reader's: a published snapshot
-    // carries no observation time for its counts, and the prompt asks at
-    // every notice, so the interval between two reads is the interval
-    // between two publications.
-    private static Figures? _published;
-    private static DateTimeOffset _readAt;
-    private static FigureFlow? _flow;
+    // What this observer has seen the message path move: the one watch every
+    // surface keeps between two reads (ADR-0052, amendment 2026-09-20). One
+    // observer writes it, so it needs no guard beyond the generation's.
+    private static FigureWatch _watch = new();
 
     /// <summary>The latest cached segment; reading it cannot block.</summary>
     public static XmipPromptSegment Current => Volatile.Read(ref _current);
@@ -135,9 +128,7 @@ public static class PromptMonitor
         _stop?.Dispose();
         _stop = new CancellationTokenSource();
         int generation = Interlocked.Increment(ref _generation);
-        _published = null;
-        _flow = null;
-        _readAt = default;
+        _watch = new FigureWatch();
         CancellationToken stop = _stop.Token;
         Volatile.Write(ref _current, Connecting());
         _worker = Task.Run(() => ObserveAsync(generation, stop));
@@ -258,16 +249,8 @@ public static class PromptMonitor
         // never the cluster's sum: until 2026-09-26 R counted every Stream
         // beneath the root, the daily backlog's drain among them.
         Figures figures = surface.MessagePath();
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        FigureFlow flow = FigureFlow.Between(
-            figures, _published, _published is null ? TimeSpan.Zero : now - _readAt);
+        FigureFlow flow = _watch.See(figures, DateTimeOffset.UtcNow, index.Revision);
         int beside = Volatile.Read(ref _beside);
-        Say(generation, SegmentRender.Render(index, figures, flow, _flow, beside));
-        _published = figures;
-        _readAt = now;
-
-        // A publication that moved nothing leaves the rate as it was rather
-        // than as unknown: the observer read twice, so the interval is real.
-        _flow = flow.Known ? flow : _flow;
+        Say(generation, SegmentRender.Render(index, figures, flow, _watch.Before, beside));
     }
 }

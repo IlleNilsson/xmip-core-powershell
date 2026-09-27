@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default table views for every object a cmdlet of this module hands an
+  operator (ADR-0014: every operator object is typed and has a table view),
+  so the console reads at a glance and Format-List still shows everything.
+
+  A word in a column is Xmip.Surface English's, the words xmip-cli and the
+  web views say: a mood by English.Mood, an age by English.Age, the figures
+  by English.Figures. Nothing here writes a word of its own. An outcome is a
+  word, OK or REFUSED, never a color alone. A long free-text or path field
+  is last, where truncation costs least, and a path is its file name here and
+  whole under Format-List. Every view fits a 120-column console.
+-->
+<Configuration>
+  <ViewDefinitions>
+    <View>
+      <Name>Xmip.Abi.Operate.HealthRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.HealthRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Mood</Label><Width>9</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Sev</Label><Width>3</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Observed</Label><Width>10</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Scope</Label><Width>48</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Evidence</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Mood($_.State)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Severity</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Age($_.Observed)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Scope</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Evidence</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.ScopeItem</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ScopeItem</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Mood</Label><Width>9</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Scope</Label><Width>34</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Figures</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Mood($_.Health)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Scope</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Figures($_.Figures)</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.ScopeOperation</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ScopeOperation</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Action</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Scope</Label><Width>44</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Result</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Action</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Scope</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.ConfigurationVerdict</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ConfigurationVerdict</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Problems</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>File</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Said</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>$_.Problems.Count</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[System.IO.Path]::GetFileName("$($_.Path)")</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Said</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Abi.Module.ModuleProbe+Result</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Module.ModuleProbe+Result</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Provider</Label><Width>10</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Module</Label><Width>18</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Standard</Label><Width>12</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Version</Label><Width>9</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Library</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Said</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Conforms) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Provider</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Module</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Standard</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>ModuleVersion</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[System.IO.Path]::GetFileName("$($_.Library)")</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if (-not $_.Loaded) { $_.Unloadable } elseif ($_.Complaint) { $_.Complaint } else { $_.Meaning }</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Abi.Module.StatusMeaning</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Module.StatusMeaning</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Code</Label><Width>5</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Retryable</Label><Width>9</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Terminal</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Meaning</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Code</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Retryable</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Terminal</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Meaning</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Abi.AbiBoundaries</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.AbiBoundaries</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Module</Label><Width>6</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>ModuleEntrypoint</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Operate</Label><Width>7</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>OperateEntrypoint</Label><Width>18</Width></TableColumnHeader>
+          <TableColumnHeader><Label>ModuleLibraryFileName</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>ModuleVersion</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>ModuleEntrypoint</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>OperateVersion</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>OperateEntrypoint</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>ModuleLibraryFileName</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>

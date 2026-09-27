@@ -34,6 +34,15 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
     [SupportsWildcards]
     public string[] Scope { get; set; } = [];
 
+    /// <summary>
+    /// <para type="description">Keep answering: the records now, then again
+    /// each time the publication advances and they changed, until Ctrl+C —
+    /// what xmip-cli health --follow does. A wildcard is matched again at
+    /// every change. Follows the first scope named.</para>
+    /// </summary>
+    [Parameter]
+    public SwitchParameter Follow { get; set; }
+
     /// <inheritdoc />
     protected override void Process()
     {
@@ -42,6 +51,14 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
             if (Select(argument) is not { } chosen)
             {
                 continue;
+            }
+
+            if (Follow)
+            {
+                Following(chosen, (surface, now) =>
+                    (IReadOnlyList<HealthRecord>)[.. now.Scopes.SelectMany(surface.Health)]);
+
+                return;
             }
 
             foreach (string scope in chosen.Scopes)
@@ -95,6 +112,15 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     [SupportsWildcards]
     public string[] Scope { get; set; } = [];
 
+    /// <summary>
+    /// <para type="description">Keep answering: the rows now, then again each
+    /// time the publication advances and they changed, until Ctrl+C — what
+    /// xmip-cli --follow does. A wildcard is matched again at every change.
+    /// Follows the first scope named.</para>
+    /// </summary>
+    [Parameter]
+    public SwitchParameter Follow { get; set; }
+
     /// <inheritdoc />
     protected override void Process()
     {
@@ -105,26 +131,23 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                 continue;
             }
 
-            IEnumerable<ScopeItem> rows = chosen.Scopes
-                .Select(Surface.Describe)
-                .Where(row => row.Health is not null || row.Figures.HasValues);
+            if (Follow)
+            {
+                Following(chosen, ScopeItem.Selected);
+
+                return;
+            }
 
             // A pattern names each topmost scope it matched, worst first, as a
             // level of the tree reads; a literal scope is the one row.
-            ScopeIndex index = Surface.Index();
-            rows = chosen.Patterned
-                ? ScopeTree.WorstFirst([.. rows], row => Standing(index, row))
-                : rows;
-
-            int written = 0;
+            IReadOnlyList<ScopeItem> rows = ScopeItem.Selected(Surface, chosen);
 
             foreach (ScopeItem row in rows)
             {
                 WriteObject(row);
-                written++;
             }
 
-            if (written == 0)
+            if (rows.Count == 0)
             {
                 Refuse(new ErrorRecord(
                     new ItemNotFoundException(
@@ -134,20 +157,6 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                     chosen.Argument));
             }
         }
-    }
-
-    // A row as it stands in the worst-first order: its worst leaf's mood and
-    // severity under its own scope, as a branch of the tree stands.
-    private static HealthRecord Standing(ScopeIndex index, ScopeItem row)
-    {
-        HealthRecord? worst = index.Worst(row.Scope);
-
-        return new HealthRecord(
-            row.Scope,
-            worst?.State ?? HealthState.Fine,
-            worst?.Severity ?? 0,
-            string.Empty,
-            default);
     }
 }
 

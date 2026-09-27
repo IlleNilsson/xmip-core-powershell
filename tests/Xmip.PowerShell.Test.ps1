@@ -13,7 +13,7 @@
     It was, until 2026-09-14: this file parsed `include/xmip_module.h` and
     compared it with what the assembly exposed. Since ADR-0014's amendment of
     2026-09-09 the binding is one project in xmip-core-abi, and
-    `Xmip.Abi.Tests` (Header.cs, XmipStatusTests.cs) compares that one
+    `Xmip.Abi.Test` (Header.cs, XmipStatusTest.cs) compares that one
     binding with the header. A second copy of the comparison here tested the
     same assembly against the same header, and would have drifted from the
     first — which is the failure a shared binding exists to prevent.
@@ -98,6 +98,19 @@ Describe 'The module loads and exports what it says' {
 
         foreach ($name in $script:Module.ExportedCmdlets.Keys) {
             $approved | Should -Contain ($name -split '-')[0] -Because "$name"
+        }
+    }
+
+    It 'has a table view for every object a cmdlet hands the operator' {
+        # ADR-0014: every operator object is typed and has a table view. An
+        # object with more than four properties and none is a vertical list.
+        $script:Declared.FormatsToProcess | Should -Contain 'Xmip.PowerShell.Format.ps1xml'
+
+        foreach ($cmdlet in $script:Module.ExportedCmdlets.Values) {
+            foreach ($type in @($cmdlet.OutputType.Type)) {
+                Get-FormatData -TypeName $type.FullName |
+                    Should -Not -BeNullOrEmpty -Because "$($cmdlet.Name) writes $($type.FullName)"
+            }
         }
     }
 
@@ -385,20 +398,6 @@ scope = "xmip:///W9/process"
             Should -Be '[R– P– S– T– F–]' -Because 'not known yet is not none'
     }
 
-    It 'keeps a rate on the same ladder as a count and never writes a trickle as zero' {
-        [Xmip.PowerShell.SegmentRender]::Rate(0) | Should -Be '0'
-        [Xmip.PowerShell.SegmentRender]::Rate(0.3) | Should -Be '0.3'
-        [Xmip.PowerShell.SegmentRender]::Rate(9.94) | Should -Be '9.9'
-        [Xmip.PowerShell.SegmentRender]::Rate(240) | Should -Be '240'
-        [Xmip.PowerShell.SegmentRender]::Rate(1234) | Should -Be '1.2K'
-        [Xmip.PowerShell.SegmentRender]::Rate(1234567) | Should -Be '1.2M'
-    }
-
-    # `Short` was the count formatter and went with the last count on the line
-    # (2026-09-20). `Rate` carries the same K, M and G ladder and is tested
-    # above; a second formatter with no caller is a second answer waiting to
-    # disagree with the first.
-
     It 'paints a short number hotter where it rises and icier where it falls' {
         # The owner, 2026-09-18: 5.3K is 5.3K for a long while, so the color
         # of the number says which way it is going; the letter keeps the mood.
@@ -669,6 +668,62 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
             Should -Be '2/3 rounds passed, 1 failed'
         (Get-XmipScope -Snapshot $cluster -Scope 'xmip:///C1/node/alpha').Figures.Streams |
             Should -Be 6 -Because 'a node has figures of its own'
+    }
+
+    It 'follows, as xmip-cli --follow does, until the pipeline is stopped' {
+        # 2026-09-27: the command line followed health and measure and the
+        # module could not. One follow (Xmip.Surface SurfaceFollow) for both.
+        foreach ($name in @('Get-XmipHealth', 'Get-XmipScope')) {
+            $script:Module.ExportedCmdlets[$name].Parameters.Keys | Should -Contain 'Follow'
+        }
+
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-follow-$stamp.toml"
+        Copy-Item -LiteralPath $script:Fixture -Destination $moving
+        [string] $manifest = Join-Path $script:Output 'Xmip.PowerShell.psd1'
+
+        $shell = [PowerShell]::Create()
+        $said = [System.Management.Automation.PSDataCollection[psobject]]::new()
+
+        try {
+            $null = $shell.AddScript(
+                "Import-Module '$manifest'; " +
+                "Get-XmipHealth -Snapshot '$moving' -Scope 'xmip:///' -Follow")
+            $null = $shell.BeginInvoke(
+                [System.Management.Automation.PSDataCollection[psobject]]::new(), $said)
+
+            foreach ($attempt in 1..100) {
+                if ($said.Count -ge 5) { break }
+                Start-Sleep -Milliseconds 100
+            }
+
+            $said.Count | Should -Be 5 -Because 'the answer now comes first'
+
+            @'
+node = "xmip:///edge-01"
+
+[[records]]
+scope = "xmip:///edge-01/receive/a"
+state = "fine"
+severity = 0
+evidence = ""
+observed_unix_nanos = 1789111688000000000
+'@ | Set-Content -LiteralPath $moving -Encoding utf8
+            (Get-Item -LiteralPath $moving).LastWriteTimeUtc = [DateTime]::UtcNow.AddSeconds(5)
+
+            foreach ($attempt in 1..100) {
+                if ($said.Count -ge 6) { break }
+                Start-Sleep -Milliseconds 100
+            }
+
+            $said.Count | Should -Be 6 -Because 'a changed answer follows'
+            $said[5].Scope | Should -Be 'xmip:///edge-01/receive/a'
+        }
+        finally {
+            $shell.Stop()
+            $shell.Dispose()
+            Remove-Item -LiteralPath $moving -Force -ErrorAction SilentlyContinue
+        }
     }
 
     It 'refuses a pattern that names nothing, naming what there is' {

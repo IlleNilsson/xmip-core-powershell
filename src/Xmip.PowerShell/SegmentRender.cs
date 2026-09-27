@@ -34,7 +34,7 @@ public static class SegmentRender
     /// prompt is not following. The prompt reads one publication — a mood or a
     /// sum over two clusters would be at a scope in neither tree — so where
     /// there are more it says so rather than reading as the whole estate:
-    /// <c>[orders+1 ≡ R:5.3K P:60 S:60]</c>, the number in gray, the color this
+    /// <c>[C1+1 ≡ R:5.3K P:60 S:60]</c>, the number in gray, the color this
     /// segment already gives what it is not showing (ADR-0052, amendment
     /// 2026-09-20). None beside is nothing on the line, as everything else here.
     /// </para>
@@ -73,12 +73,10 @@ public static class SegmentRender
         ArgumentNullException.ThrowIfNull(figures);
         ArgumentNullException.ThrowIfNull(flow);
 
-        HealthRecord?[] worstAt =
-        [
-            index.WorstAtStage("receive"),
-            index.WorstAtStage("process"),
-            index.WorstAtStage("send"),
-        ];
+        // The stages and what each counts are the runtime's: the letter is the
+        // stage's name's first, the figure the one it counts.
+        IReadOnlyList<string> path = ScopeTree.Stages;
+        HealthRecord?[] worstAt = [.. path.Select(index.WorstAtStage)];
         HealthState?[] stages = [.. worstAt.Select(record => record?.State)];
         bool square = stages.Any(stage => stage is not null)
             && stages.All(stage => stage is null or HealthState.Fine)
@@ -86,7 +84,7 @@ public static class SegmentRender
             && figures.Failed is null or 0;
 
         // posh-git's order: what the prompt is at, its sign when square,
-        // then the counts — [main ≡ +0 ~1 -0] there, [orders ≡ R:12 P:11 S:10]
+        // then the counts — [main ≡ +0 ~1 -0] there, [C1 ≡ R:12 P:11 S:10]
         // here (the owner, 2026-09-18). The name wears the worst stage's color.
         // R, P and S are the stage letters and never a name's first letter:
         // what a cluster or a node is called says nothing about what it does.
@@ -115,9 +113,14 @@ public static class SegmentRender
             parts.Add(new XmipPromptPart("≡ ", ConsoleColor.Cyan));
         }
 
-        parts.AddRange(Moving("R", flow.Streams, before?.Streams, Traffic(stages[0])));
-        parts.AddRange(Moving(" P", flow.Journeys, before?.Journeys, Traffic(stages[1])));
-        parts.AddRange(Moving(" S", flow.Messages, before?.Messages, Traffic(stages[2])));
+        for (int at = 0; at < path.Count; at++)
+        {
+            Counted counted = ScopeTree.CountedAt(path[at]);
+            string letter = (at == 0 ? string.Empty : " ") + English.Stage(path[at])[..1];
+
+            parts.AddRange(Moving(
+                letter, flow.Of(counted), before?.Of(counted), Traffic(stages[at])));
+        }
 
         // Gated on the total, drawn as the rate. A run that has retried once is
         // a run with trouble in it and says so for as long as it rolls; the
@@ -175,30 +178,6 @@ public static class SegmentRender
         string node = ScopeTree.Node(ScopeTree.Join(common));
 
         return node.Length > 0 ? node : common.FirstOrDefault() ?? string.Empty;
-    }
-
-    /// <summary>
-    /// A rate short enough for a prompt: the same K, M and G ladder as a count
-    /// and the same one decimal below ten of a unit, carried down to the unit
-    /// itself — 0.3, 9.9, 240, 1.2K. A trickle is written 0.3 and never 0,
-    /// because on this line <c>0</c> means stalled and nothing else may.
-    /// </summary>
-    public static string Rate(double perSecond)
-    {
-        string[] units = ["K", "M", "G"];
-        double value = perSecond;
-        int unit = -1;
-
-        while (unit < units.Length - 1 && value >= 999.5)
-        {
-            value /= 1000;
-            unit++;
-        }
-
-        string format = value < 9.95 ? "0.#" : "0";
-
-        return value.ToString(format, CultureInfo.InvariantCulture)
-            + (unit < 0 ? string.Empty : units[unit]);
     }
 
     /// <summary>A leaf's mood in the prompt's colors: the color the shared
@@ -287,8 +266,8 @@ public static class SegmentRender
             ?
             [
                 new XmipPromptPart(letter + ":", color),
-                new XmipPromptPart(Rate(rate), going),
+                new XmipPromptPart(English.Moving(rate), going),
             ]
-            : [new XmipPromptPart(letter + ":" + Rate(rate), color)];
+            : [new XmipPromptPart(letter + ":" + English.Moving(rate), color)];
     }
 }

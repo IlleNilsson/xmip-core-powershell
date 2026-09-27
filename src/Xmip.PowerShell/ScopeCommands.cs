@@ -29,7 +29,7 @@ public abstract class XmipScopeCommand : XmipSurfaceCommand
     protected abstract ScopeAction Action { get; }
 
     /// <summary>Who is acting, as the runtime records it.</summary>
-    protected virtual string Actor => Environment.UserName;
+    protected virtual string Actor => ScopeOperation.Who(null);
 
     /// <inheritdoc />
     protected override void Process()
@@ -81,13 +81,13 @@ public sealed class SuspendXmipScopeCommand : XmipScopeCommand
     /// evidence of the Paused mood. The current user when omitted.</para>
     /// </summary>
     [Parameter]
-    public string Who { get; set; } = Environment.UserName;
+    public string? Who { get; set; }
 
     /// <inheritdoc />
     protected override ScopeAction Action => ScopeAction.Pause;
 
     /// <inheritdoc />
-    protected override string Actor => Who;
+    protected override string Actor => ScopeOperation.Who(Who);
 }
 
 /// <summary>

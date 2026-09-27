@@ -76,10 +76,12 @@ public sealed class ConvertFromXmipStatusCommand : XmipCommand
 /// writes module log lines to stderr as they arrive, while a cmdlet has a
 /// verbose stream, so here they are collected and emitted after the probe.
 /// Whether the module conforms is the probe's own judgement
-/// (<see cref="ModuleProbe.Result.Complaint"/>), the one the cli exits on.
+/// (<see cref="ModuleProbe.Result.Complaint"/>), the one the cli exits on, and
+/// so is whether it loaded at all (<see cref="ModuleProbe.Result.Unloadable"/>);
+/// the object written is the probe's own result.
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipModuleDescriptor")]
-[OutputType(typeof(ModuleDescriptorInfo))]
+[OutputType(typeof(ModuleProbe.Result))]
 public sealed class GetXmipModuleDescriptorCommand : XmipCommand
 {
     /// <summary>
@@ -95,20 +97,15 @@ public sealed class GetXmipModuleDescriptorCommand : XmipCommand
         {
             var path = GetUnresolvedProviderPathFromPSPath(library);
             List<string> log = [];
+            ModuleProbe.Result answer = ModuleProbe.Probe(path, log.Add);
 
-            ModuleProbe.Result answer;
-
-            try
-            {
-                answer = ModuleProbe.Probe(path, log.Add);
-            }
-            catch (Exception failure) when
-                (failure is DllNotFoundException
-                    or EntryPointNotFoundException
-                    or BadImageFormatException)
+            if (!answer.Loaded)
             {
                 Refuse(new ErrorRecord(
-                    failure, "XmipModuleUnloadable", ErrorCategory.InvalidData, path));
+                    new InvalidDataException(answer.Unloadable),
+                    "XmipModuleUnloadable",
+                    ErrorCategory.InvalidData,
+                    path));
 
                 continue;
             }
@@ -118,34 +115,7 @@ public sealed class GetXmipModuleDescriptorCommand : XmipCommand
                 WriteVerbose(line);
             }
 
-            WriteObject(new ModuleDescriptorInfo(
-                path,
-                (int)answer.Status,
-                answer.Status.Explain(),
-                answer.Provider,
-                answer.Module,
-                answer.Standard,
-                answer.AbiVersion,
-                answer.TraitVersion,
-                answer.ModuleVersion,
-                answer.LastError,
-                answer.Conforms,
-                answer.Complaint));
+            WriteObject(answer);
         }
     }
 }
-
-/// <summary>What <see cref="GetXmipModuleDescriptorCommand"/> answers.</summary>
-public sealed record ModuleDescriptorInfo(
-    string Library,
-    int Status,
-    string StatusMeaning,
-    string Provider,
-    string Module,
-    string Standard,
-    uint AbiVersion,
-    string TraitVersion,
-    string ModuleVersion,
-    string LastError,
-    bool Conforms,
-    string Complaint);

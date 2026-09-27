@@ -23,18 +23,37 @@ Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
 `Get-XmipModuleDescriptor` — and emit what `xmip-cli abi`, `status` and
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
-probe's own `Conforms` and `Complaint`, all from `Xmip.Abi`. Five read a
+probe's own `ModuleProbe.Result` — a library it cannot load refused with its
+`Unloadable`, else `Conforms` and `Complaint` — all from `Xmip.Abi`. Five read a
 running Xmip: `Get-XmipHealth -Scope`; `Get-XmipScope [-Scope]`, the drill —
 the `ScopeItem` `xmip-cli show` and `list` render, the cluster when no scope
 is named, `-Scope xmip:///C1/*` the level beneath it worst first, and each
 row's `Worst` the next scope on the way to the cause; the two acts the
 boundary carries,
-`Suspend-XmipScope -Scope [-Who]` and `Resume-XmipScope -Scope`, both with
+`Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
+`ScopeOperation.Who`, the rule `xmip-cli pause --who` and the GUI follow) and
+`Resume-XmipScope -Scope`, both with
 `-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
 `xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
 the boundary has no such call, because the thing that watches must not be able
-to stop the thing it watches. `tests/` holds the Pester tests over them.
+to stop the thing it watches. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
+tests over them.
+
+**`-Follow` keeps answering**, as `xmip-cli --follow` does: `Get-XmipHealth
+-Scope <scope> -Follow` and `Get-XmipScope [-Scope <scope>] -Follow` write the
+answer now, then again each time the publication advances and the answer
+changed, until Ctrl+C. The loop, the rematching of a wildcard at every change
+and the "changed" test are `SurfaceFollow` in `Xmip.Surface`, the one the
+executable's `--follow` runs too.
+
+**Every object has a table view** (ADR-0014): `Xmip.PowerShell.Format.ps1xml`
+ships beside the module and is named in the manifest, one view per type a
+cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
+`ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning` and
+`AbiBoundaries`. A mood, an age and the figures in a column are the words
+`English` in `Xmip.Surface` says, the words `xmip-cli` and the web views say;
+an outcome is OK or REFUSED; `Format-List` still shows everything.
 
 **The cmdlets read the surface `xmip-cli` reads** (ADR-0052 clause 1). The
 four that take a `-Scope` take `-Remote`, `-Snapshot` and `-Library` as the
@@ -120,7 +139,9 @@ reached through the runtime's library (ADR-0062; `ModuleAudit` over
 which records, once for all of them: every error a cmdlet writes or ends
 on, and every exception that leaves it, as a `failure` whose action is the
 cmdlet's name, with its bound parameters, the user, the error's identifier,
-category and target as properties; and, for the two acts that change the
+category and target as properties — each value said by
+`ProgramAudit.Properties`, the one flattening the estate's script module
+uses too, a table as its `name=value` pairs and a list joined; and, for the two acts that change the
 estate, `Suspend-XmipScope` and `Resume-XmipScope`, each scope's `begin` and
 `finished`. The prompt records what it used to swallow as action `prompt`: a
 publication it could not read (once until a tick reads again), a document
@@ -208,20 +229,25 @@ the proof the boundary works (ADR-0012 clause 2).
 
 ## Verification
 
-`dotnet build`, then `Invoke-Pester -Path ./tests`. Forty tests, all
+`dotnet build`, then `Invoke-Pester -Path ./tests`. Forty-one tests, all
 of them the PowerShell shape: the manifest and the exports agree, every verb is
-approved, the two acts carry `-WhatIf` and no start, stop or restart exists,
-the cmdlets emit objects and read the surface the line names, a failure
+approved, every object a cmdlet emits has a table view, the two acts carry
+`-WhatIf` and no start, stop or restart exists, the cmdlets emit objects, read
+the surface the line names and follow it until stopped, a failure
 and an act land as audit records, the configuration document ships beside
 the module, and the prompt paints the
-color the runtime names for a mood. The rules beneath them — which surface
+color the runtime names for a mood. The file is singular, `*.Test.ps1`, the
+name `Test-XmipDotnetModule` discovers; until 2026-09-27 it was plural and
+never ran. How a rate is written and what a stage counts are `English` and
+`ScopeTree`'s, and the rate itself `FigureWatch` and `FigureFlow`'s, tested
+once in `Xmip.Surface.Test`. The rules beneath them — which surface
 wins, what a wildcard selects, what a status means, whether a module
-conforms — are tested once, in `Xmip.Surface.Test` and `Xmip.Abi.Tests`, and
+conforms — are tested once, in `Xmip.Surface.Test` and `Xmip.Abi.Test`, and
 the runtime's own — containment, the stage words, a mood's word, color and
 order — once in Rust, where they are written; the module's build carries the
 runtime library the rules are called in. The binding's
 agreement with `xmip_module.h` — every status the header defines, its name,
-which are retryable and which terminal — is tested once, in `Xmip.Abi.Tests`
+which are retryable and which terminal — is tested once, in `Xmip.Abi.Test`
 beside the binding (ADR-0014, amendment of 2026-09-09); the copy this
 repository carried until 2026-09-14 tested the same assembly against the same
 header and is gone.
