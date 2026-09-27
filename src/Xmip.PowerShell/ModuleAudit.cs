@@ -45,26 +45,27 @@ public static class ModuleAudit
     /// <summary>What a cmdlet was invoked with, as properties: every bound
     /// parameter and who ran it. None of this module's parameters is a
     /// secret; the user and password a -Remote address may carry are left
-    /// out of every record by the audit capability.</summary>
+    /// out of every record by the audit capability. Each value is said by
+    /// <see cref="ProgramAudit.Properties"/>, as the script module's are; only
+    /// what is PowerShell's own — a switch, a wrapped object — is unwrapped
+    /// here first.</summary>
     public static Dictionary<string, string> Properties(InvocationInfo? invocation)
     {
-        Dictionary<string, string> said = new(StringComparer.Ordinal)
-        {
-            ["user"] = Environment.UserName,
-        };
+        Hashtable bound = new(StringComparer.Ordinal);
 
         foreach ((string name, object? value) in invocation?.BoundParameters
             ?? new Dictionary<string, object>())
         {
-            said[name] = value switch
+            bound[name] = value switch
             {
-                null => string.Empty,
-                string text => text,
-                SwitchParameter flag => flag.IsPresent ? "yes" : "no",
-                IEnumerable many => string.Join(", ", many.Cast<object?>()),
-                _ => value.ToString() ?? string.Empty,
+                SwitchParameter flag => flag.IsPresent,
+                PSObject wrapped => wrapped.BaseObject,
+                _ => value,
             };
         }
+
+        Dictionary<string, string> said = ProgramAudit.Properties(bound);
+        said["user"] = Environment.UserName;
 
         return said;
     }

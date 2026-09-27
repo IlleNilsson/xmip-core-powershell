@@ -18,6 +18,10 @@ public abstract class XmipSurfaceCommand : XmipCommand
 {
     private IOperatorSurface? _surface;
 
+    // Cancelled when the pipeline stops; how many follows are reading.
+    private readonly CancellationTokenSource _stopping = new();
+    private int _following;
+
     /// <summary>
     /// <para type="description">The runtime's native library to load, the one
     /// exporting xmip_operate_v1, over what the module's document says.
@@ -75,11 +79,10 @@ public abstract class XmipSurfaceCommand : XmipCommand
     {
         SurfaceLine line = new(Remote, Resolved(Snapshot), Resolved(Library));
 
-        if (!string.IsNullOrWhiteSpace(Remote) && !RemoteOperator.IsWebHost(Remote))
+        if (line.Refusal is { } refusal)
         {
             Stop(new ErrorRecord(
-                new ArgumentException(
-                    $"-Remote needs a web host, like https://host:5443; not {Remote}."),
+                new ArgumentException(refusal),
                 "XmipRemoteNotAWebHost",
                 ErrorCategory.InvalidArgument,
                 Remote));
@@ -103,10 +106,58 @@ public abstract class XmipSurfaceCommand : XmipCommand
         Release();
     }
 
+    /// <summary>
+    /// <c>-Follow</c>: the rows <paramref name="read"/> answers for what
+    /// <paramref name="chosen"/> names, now and again each time the
+    /// publication advances and the answer changed, until Ctrl+C — the one
+    /// follow <c>xmip-cli --follow</c> uses (<see cref="SurfaceFollow"/>), so
+    /// a wildcard is matched again at every notice. Ctrl+C is its normal end.
+    /// </summary>
+    protected void Following<T>(
+        ScopeSelection chosen, Func<IOperatorSurface, ScopeSelection, IReadOnlyList<T>> read)
+    {
+        Interlocked.Increment(ref _following);
+        IAsyncEnumerator<IReadOnlyList<T>> answers = SurfaceFollow
+            .Changes(Surface, chosen, read, SurfaceFollow.Rows<T>(), _stopping.Token)
+            .GetAsyncEnumerator(_stopping.Token);
+
+        try
+        {
+            while (answers.MoveNextAsync().AsTask().GetAwaiter().GetResult())
+            {
+                foreach (T row in answers.Current)
+                {
+                    WriteObject(row);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ctrl+C: the pipeline is stopping, and the follow with it.
+        }
+        finally
+        {
+            answers.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            Interlocked.Decrement(ref _following);
+
+            if (_stopping.IsCancellationRequested)
+            {
+                Release();
+            }
+        }
+    }
+
     /// <inheritdoc />
     protected override void StopProcessing()
     {
-        Release();
+        _stopping.Cancel();
+
+        // A follow in flight still reads the surface; it releases it as it
+        // ends, never under its feet.
+        if (Volatile.Read(ref _following) == 0)
+        {
+            Release();
+        }
     }
 
     // A path as PowerShell reads one, from the current location and through
