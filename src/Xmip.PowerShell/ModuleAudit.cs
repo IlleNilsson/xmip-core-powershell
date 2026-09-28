@@ -54,7 +54,7 @@ public static class ModuleAudit
         Hashtable bound = new(StringComparer.Ordinal);
 
         foreach ((string name, object? value) in invocation?.BoundParameters
-            ?? new Dictionary<string, object>())
+            ?? [])
         {
             bound[name] = value switch
             {
