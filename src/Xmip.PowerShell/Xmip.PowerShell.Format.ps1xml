@@ -191,5 +191,35 @@
         </TableRowEntries>
       </TableControl>
     </View>
+    <View>
+      <Name>Xmip.Abi.Operate.AuditEntry</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.AuditEntry</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>At</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Program</Label><Width>15</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Action</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Phase</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Severity</Label><Width>11</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Summary</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::ToTheSecond($_.At)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Value($_.Node)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Program</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Action</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Phase</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Severity</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Summary</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
   </ViewDefinitions>
 </Configuration>
