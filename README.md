@@ -38,7 +38,16 @@ boundary carries,
 `xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
 the boundary has no such call, because the thing that watches must not be able
 to stop the thing it watches. One reads what every Xmip program recorded:
-`Get-XmipAudit` (below). `tests/Xmip.PowerShell.Test.ps1` holds the Pester
+`Get-XmipAudit` (below). One lists the Event subscriptions the cluster's
+nodes hold and, with a parameter, acts on one (ADR-0065, amendment
+2026-09-29): `Get-XmipSubscription -Pattern <pattern> -Location <scope>
+-Id <n> -Sort <column> -Descending` emits each `SubscriptionRecord` — its
+number, the subscriber, the cluster, the node, the action, the state and its
+queue's counts — and `Get-XmipSubscription -Location <node scope> -Id <n>
+-Pause|-Resume|-Remove -Who <name>`, with `-WhatIf` and `-Confirm`, emits the
+`SubscriptionOperation`; a listed subscription pipes into an act by its Node
+and Id. One cmdlet for the noun, the act a parameter set, as `xmip-cli
+subscriptions` takes it as an option (ADR-0014, amendment 2026-09-15). `tests/Xmip.PowerShell.Test.ps1` holds the Pester
 tests over them.
 
 **`-Follow` keeps answering**, as `xmip-cli --follow` does: `Get-XmipHealth
