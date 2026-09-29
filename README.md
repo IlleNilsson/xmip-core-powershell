@@ -37,7 +37,8 @@ boundary carries,
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
 `xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
 the boundary has no such call, because the thing that watches must not be able
-to stop the thing it watches. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
+to stop the thing it watches. One reads what every Xmip program recorded:
+`Get-XmipAudit` (below). `tests/Xmip.PowerShell.Test.ps1` holds the Pester
 tests over them.
 
 **`-Follow` keeps answering**, as `xmip-cli --follow` does: `Get-XmipHealth
@@ -50,8 +51,8 @@ executable's `--follow` runs too.
 **Every object has a table view** (ADR-0014): `Xmip.PowerShell.Format.ps1xml`
 ships beside the module and is named in the manifest, one view per type a
 cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
-`ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning` and
-`AbiBoundaries`. A mood, an age and the figures in a column are the words
+`ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning`,
+`AbiBoundaries` and `AuditEntry`. A mood, an age and the figures in a column are the words
 `English` in `Xmip.Surface` says, the words `xmip-cli` and the web views say;
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 
@@ -152,6 +153,38 @@ observer. Anything the module leaves unhandled in the session is recorded as
 beside the module; unset, the capability decides — `XMIP_AUDIT_DIRECTORY`,
 else the operating system's log, which also takes a record the directory
 cannot.
+
+## Reading the audit
+
+`Get-XmipAudit` reads that file back — every program's records in it, not
+only this module's — through the audit capability's one reader
+(`ProgramAudit.Read` in `Xmip.Surface`, over `xmip_audit_read_v1`; ADR-0062,
+amendment 2026-09-29), the reader `xmip-cli audit` and the web's Audit view
+call. It emits each `AuditEntry` whole, newest first:
+
+```powershell
+Get-XmipAudit -Pattern <pattern> -Location <scope> -ComputerName <name>
+    -Program <name> -AuditId <id> -Severity <word> -Action <word>
+    -From <datetime> -To <datetime> -Sort <column> -Ascending
+    -First <n> -Skip <n> -IncludeTotalCount
+```
+
+Each parameter is a word of the query and means what the capability says:
+`-Pattern` is `*` and `?` over the location each record's process declared
+(a record with none is at the root, which only `*` names), `-Location` a scope
+and everything beneath it, `-ComputerName` the query's `host` — the records
+of programs that declared no location on that machine — and `-AuditId` one
+record, which also binds from the pipeline. `-From` and `-To` are
+`[datetime]`: Get-Date's local time is converted to UTC, and a time with no
+kind, `[datetime]'2026-09-29'`, is UTC, as the capability reads a time with
+no zone and as `xmip-cli audit --from 2026-09-29` means it. Paging is
+PowerShell's own: `-First` is the page (the capability's 100 when omitted,
+1000 at most), `-Skip` where it starts, `-IncludeTotalCount` how many matched.
+Tab offers `-Severity`, `-Sort` and `-Action` the words the capability
+answers with, so the module keeps no list of them. A query the capability
+does not take ends with its REFUSED sentence (`XmipAuditQueryRefused`); with
+no audit directory stated there is nothing to read, and it ends saying so
+(`XmipAuditDirectoryUnstated`).
 
 ## Seeing it
 

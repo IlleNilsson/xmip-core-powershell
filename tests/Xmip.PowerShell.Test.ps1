@@ -850,3 +850,71 @@ Describe 'Every failure and every act is audited' {
         $text | Should -BeLike '*xmip:///edge-01*'
     }
 }
+
+Describe 'Get-XmipAudit reads the audit the module writes' {
+    # ADR-0062, amendment 2026-09-29: the module reads back, through the audit
+    # capability's one reader, the file its own records go to — here the
+    # directory XMIP_AUDIT_DIRECTORY names for this process alone.
+    BeforeAll {
+        $script:WasReading = $env:XMIP_AUDIT_DIRECTORY
+    }
+
+    BeforeEach {
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        $script:Read = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-powershell-read-$stamp"
+        $env:XMIP_AUDIT_DIRECTORY = $script:Read
+
+        # One failure recorded by a cmdlet, as any operator's would be.
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
+        Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    AfterEach {
+        $env:XMIP_AUDIT_DIRECTORY = $script:WasReading
+        Remove-Item -LiteralPath $script:Read -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'emits each record as the capability read it, with a table view' {
+        $records = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Severity 'error')
+
+        $records.Count | Should -Be 1
+        $records[0] | Should -BeOfType ([Xmip.Abi.Operate.AuditEntry])
+        $records[0].Action | Should -Be 'Get-XmipModuleDescriptor'
+        $records[0].Phase | Should -Be 'failure'
+        $records[0].Properties['errorId'] | Should -BeLike 'XmipModuleUnloadable*'
+        Get-FormatData -TypeName 'Xmip.Abi.Operate.AuditEntry' | Should -Not -BeNullOrEmpty
+    }
+
+    It 'takes one record by its identifier from the pipeline' {
+        $record = Get-XmipAudit -First 1
+
+        ($record | Get-XmipAudit).AuditId | Should -Be $record.AuditId
+    }
+
+    It 'pages with -First and -Skip and counts with -IncludeTotalCount' {
+        Get-XmipModuleDescriptor -Library 'no-such-xmip-module.dll' `
+            -ErrorAction SilentlyContinue | Out-Null
+
+        $page = @(Get-XmipAudit -First 1 -IncludeTotalCount)
+
+        $page.Count | Should -Be 2
+        $page[0].ToString() | Should -BeLike '*2*'
+        @(Get-XmipAudit -Skip 1).Count | Should -Be 1
+    }
+
+    It 'reads a [datetime] as the query''s time, and one with no kind as UTC' {
+        @(Get-XmipAudit -From (Get-Date).AddHours(1)).Count | Should -Be 0
+        @(Get-XmipAudit -From ([datetime] '2026-01-01')).Count | Should -Be 1
+        [Xmip.PowerShell.GetXmipAuditCommand]::Moment([datetime] '2026-09-29') |
+            Should -Be '2026-09-29T00:00:00.0000000'
+    }
+
+    It 'ends with the capability''s REFUSED sentence on a query it does not take' {
+        $refusal = { Get-XmipAudit -Severity 'loud' -ErrorAction Stop } |
+            Should -Throw -PassThru
+
+        $refusal.FullyQualifiedErrorId | Should -BeLike 'XmipAuditQueryRefused*'
+        $refusal.Exception.Message | Should -BeLike 'REFUSED*'
+        $refusal.Exception.Message | Should -Not -BeLike '*(Parameter*'
+    }
+}
