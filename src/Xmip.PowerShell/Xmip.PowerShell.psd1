@@ -28,6 +28,7 @@
         'Suspend-XmipScope'
         'Resume-XmipScope'
         'Get-XmipAudit'
+        'Get-XmipSubscription'
     )
     FunctionsToExport    = @()
     VariablesToExport    = @()

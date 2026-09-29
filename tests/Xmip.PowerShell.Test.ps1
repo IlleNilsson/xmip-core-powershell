@@ -918,3 +918,82 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         $refusal.Exception.Message | Should -Not -BeLike '*(Parameter*'
     }
 }
+
+Describe 'Get-XmipSubscription lists and acts on the Event subscriptions' {
+    # ADR-0065, amendment 2026-09-29: one cmdlet for the noun, the act a
+    # parameter on it, over the surface xmip-cli reads. A snapshot of cluster
+    # CT whose publisher takes orders: an act is left there for the node.
+    BeforeAll {
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-subs-$stamp"
+        $script:Orders = Join-Path $script:Place 'orders'
+        $script:Published = Join-Path $script:Place 'CT-snapshot.toml'
+        New-Item -ItemType Directory -Path $script:Place | Out-Null
+        Set-Content -LiteralPath $script:Published -Value @(
+            'node = "xmip:///CT"'
+            "orders = '$script:Orders'"
+            '[[subscriptions]]'
+            'node = "xmip:///CT/node/R1"'
+            'id = 1'
+            'subscriber = "operations"'
+            'party = "0199a0a0-0000-7000-8000-000000000001"'
+            'action = "every Event"'
+            'state = "active"'
+            'queued = 2'
+            '[[subscriptions]]'
+            'node = "xmip:///CT/node/S1"'
+            'id = 2'
+            'subscriber = "on-call"'
+            'party = "0199a0a0-0000-7000-8000-000000000002"'
+            'action = "every Event ending failure"'
+            'state = "paused"'
+            'queued = 7'
+        )
+    }
+
+    AfterAll {
+        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'lists each subscription as the record, with a table view' {
+        [object[]] $listed = @(Get-XmipSubscription -Snapshot $script:Published)
+
+        $listed.Count | Should -Be 2
+        $listed[0] | Should -BeOfType ([Xmip.Abi.Operate.SubscriptionRecord])
+        # By who the subscriber is: its declared name, on-call before operations.
+        [Xmip.Surface.SubscriptionQuery]::NodeName($listed[1]) | Should -Be 'R1'
+        [Xmip.Surface.SubscriptionQuery]::Who($listed[1]) | Should -Be 'operations'
+        $listed[1].Party | Should -Be '0199a0a0-0000-7000-8000-000000000001'
+        @(Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/S1' |
+                Where-Object -Property Paused).Count | Should -Be 1
+        (Get-XmipSubscription -Snapshot $script:Published -Sort 'queued' -Descending)[0].Id |
+            Should -Be 2
+        Get-FormatData -TypeName 'Xmip.Abi.Operate.SubscriptionRecord' |
+            Should -Not -BeNullOrEmpty
+    }
+
+    It 'takes an act as a parameter, honors -WhatIf, and takes a listed one from the pipeline' {
+        Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/R1' `
+            -Id 1 -Pause -WhatIf
+        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+
+        $done = Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/S1' |
+            Get-XmipSubscription -Snapshot $script:Published -Resume -Who 'ilian' -Confirm:$false
+
+        $done | Should -BeOfType ([Xmip.Surface.SubscriptionOperation])
+        $done.Applied | Should -BeTrue
+        $done.Result | Should -BeLike '*left for S1*'
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders 'S1') -Filter '*-2-resume.toml').
+            Count | Should -Be 1
+    }
+
+    It 'refuses an act on a subscription that is not listed, in words' {
+        $refusal = {
+            Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/R1' `
+                -Id 9 -Remove -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+
+        $refusal.FullyQualifiedErrorId | Should -BeLike 'XmipSubscriptionNotFound*'
+        $refusal.Exception.Message | Should -BeLike 'REFUSED*'
+    }
+}

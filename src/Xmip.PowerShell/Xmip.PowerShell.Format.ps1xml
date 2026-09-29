@@ -221,5 +221,67 @@
         </TableRowEntries>
       </TableControl>
     </View>
+    <View>
+      <Name>Xmip.Abi.Operate.SubscriptionRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.SubscriptionRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Id</Label><Width>4</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Subscriber</Label><Width>14</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Cluster</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Action</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>State</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Queued</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Delivered</Label><Width>9</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Missed</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Since</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::Who($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::Cluster($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::NodeName($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Action</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Queued</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Delivered</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Missed</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Age($_.Since)</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.SubscriptionOperation</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.SubscriptionOperation</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Act</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Id</Label><Width>4</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Result</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
   </ViewDefinitions>
 </Configuration>
