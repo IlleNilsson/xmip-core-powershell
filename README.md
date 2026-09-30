@@ -38,16 +38,43 @@ boundary carries,
 `xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
 the boundary has no such call, because the thing that watches must not be able
 to stop the thing it watches. One reads what every Xmip program recorded:
-`Get-XmipAudit` (below). One lists the Event subscriptions the cluster's
-nodes hold and, with a parameter, acts on one (ADR-0065, amendment
-2026-09-29): `Get-XmipSubscription -Pattern <pattern> -Location <scope>
--Id <n> -Sort <column> -Descending` emits each `SubscriptionRecord` — its
+`Get-XmipAudit` (below). Two list what a node publishes for an operator to
+act on, and with a parameter act on one — one cmdlet for each noun, the act
+a parameter set, as `xmip-cli subscriptions` and `xmip-cli
+event-subscriptions` take it as an option (ADR-0014, amendment 2026-09-15;
+ADR-0052).
+
+`Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
+(ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
+and opens a Journey, drawn in an Xmip Application and bound in a node's TOML.
+`Get-XmipSubscription -Pattern <pattern> -Location <scope> -Name
+<subscription> -Sort <column> -Descending` emits each `SubscriptionRecord` —
+its name, the node, the Application, its filter, where it leads, its state,
+who paused it, what it picked up and what it holds — and
+`Get-XmipSubscription -Location <node scope> -Name <subscription>
+-Pause|-Resume -Who <name>`, with `-WhatIf` and `-Confirm`, emits the
+`SubscriptionOperation`; a listed Subscription pipes into an act by its Node
+and Name. Paused, the Messages it matches are held — kept in the node's
+runtime store, counted, not picked up — and a pause survives a restart of the
+node; resumed, it picks up what it held, oldest first. There is no `-Remove`:
+a Subscription is added and removed in the TOML configuration of the Xmip
+Application that draws it. The node audits an act as `subscription.pause` or
+`subscription.resume`.
+
+`Get-XmipEventSubscription` lists the Event subscriptions the cluster's nodes
+hold (ADR-0065, amendment 2026-09-29) — not Subscriptions: an Event
+subscription hands Events to a Party and picks no Message up.
+`Get-XmipEventSubscription -Pattern <pattern> -Location <scope> -Id <n>
+-Sort <column> -Descending` emits each `EventSubscriptionRecord` — its
 number, the subscriber, the cluster, the node, the action, the state and its
-queue's counts — and `Get-XmipSubscription -Location <node scope> -Id <n>
--Pause|-Resume|-Remove -Who <name>`, with `-WhatIf` and `-Confirm`, emits the
-`SubscriptionOperation`; a listed subscription pipes into an act by its Node
-and Id. One cmdlet for the noun, the act a parameter set, as `xmip-cli
-subscriptions` takes it as an option (ADR-0014, amendment 2026-09-15). `tests/Xmip.PowerShell.Test.ps1` holds the Pester
+queue's counts — and `Get-XmipEventSubscription -Location <node scope> -Id
+<n> -Pause|-Resume|-Remove -Who <name>`, with `-WhatIf` and `-Confirm`, emits
+the `EventSubscriptionOperation`; a listed Event subscription pipes into an
+act by its Node and Id. The node audits an act as `event.pause`,
+`event.resume` or `event.remove`.
+
+Each act is also recorded in this module's own audit, as every act of a
+cmdlet is. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
 tests over them.
 
 **`-Follow` keeps answering**, as `xmip-cli --follow` does: `Get-XmipHealth

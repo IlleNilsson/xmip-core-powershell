@@ -5,38 +5,41 @@ using Xmip.Surface;
 namespace Xmip.PowerShell;
 
 /// <summary>
-/// <para type="synopsis">The Event subscriptions the cluster's nodes hold,
-/// and pause, resume or remove on one of them.</para>
+/// <para type="synopsis">The Subscriptions the cluster's nodes route by, and
+/// pause or resume on one of them.</para>
 /// </summary>
 /// <remarks>
 /// One cmdlet for the noun, the act a parameter on it (ADR-0014, amendment
-/// 2026-09-15; ADR-0065, amendment 2026-09-29), as <c>xmip-cli
-/// subscriptions</c> takes it as an option. Which subscriptions a call
-/// selects and in what order is <see cref="SubscriptionQuery"/>'s, the one
-/// every surface asks, and how an act reaches the node that holds the
-/// subscription is the surface's. Listing, objects out:
-/// <see cref="SubscriptionRecord"/>. Acting, with -WhatIf and -Confirm:
-/// <see cref="SubscriptionOperation"/>, one per subscription, and a
-/// subscription listed by an earlier call pipes into an act by its Node and
-/// Id.
+/// 2026-09-15; ADR-0013, amendment 2026-09-30), as <c>xmip-cli
+/// subscriptions</c> takes it as an option. A Subscription picks a
+/// published Message up and opens a Journey; it is configuration, so there
+/// is no remove: <see cref="SubscriptionOperation.Configured"/>. Not an
+/// Event subscription (<c>Get-XmipEventSubscription</c>). Which
+/// Subscriptions a call selects and in what order is
+/// <see cref="SubscriptionQuery"/>'s, the one every surface asks, and how an
+/// act reaches the node that routes by the Subscription is the surface's.
+/// Listing, objects out: <see cref="SubscriptionRecord"/>. Acting, with
+/// -WhatIf and -Confirm: <see cref="SubscriptionOperation"/>, one per
+/// Subscription, and a Subscription listed by an earlier call pipes into an
+/// act by its Node and Name.
 /// </remarks>
 [Cmdlet(
     VerbsCommon.Get, "XmipSubscription",
     DefaultParameterSetName = ListSet,
     SupportsShouldProcess = true)]
 [OutputType(typeof(SubscriptionRecord), ParameterSetName = [ListSet])]
-[OutputType(typeof(SubscriptionOperation), ParameterSetName = [PauseSet, ResumeSet, RemoveSet])]
+[OutputType(typeof(SubscriptionOperation), ParameterSetName = [PauseSet, ResumeSet])]
 public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
 {
     private const string ListSet = "List";
     private const string PauseSet = "Pause";
     private const string ResumeSet = "Resume";
-    private const string RemoveSet = "Remove";
 
     /// <summary>
     /// <para type="description">A scope pattern, * and ?, over each
-    /// subscription's node and the scope its filter reaches — */R1 is
-    /// everything node R1 holds.</para>
+    /// Subscription's node, or its node and name as one scope —
+    /// */alpha is everything node alpha routes by, */subscription/edi* every
+    /// Subscription whose name begins edi.</para>
     /// </summary>
     [Parameter(Position = 0, ParameterSetName = ListSet)]
     [SupportsWildcards]
@@ -44,30 +47,32 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
 
     /// <summary>
     /// <para type="description">Where the drill stands: a cluster, such as
-    /// xmip:///C1, or a node, such as xmip:///C1/node/R1, and every
-    /// subscription held there. An act names the node.</para>
+    /// xmip:///C1, or a node, such as xmip:///C1/node/alpha, and every
+    /// Subscription routed by there. An act names the node.</para>
     /// </summary>
     [Parameter(ParameterSetName = ListSet)]
-    [Parameter(Mandatory = true, ParameterSetName = PauseSet, ValueFromPipelineByPropertyName = true)]
-    [Parameter(Mandatory = true, ParameterSetName = ResumeSet, ValueFromPipelineByPropertyName = true)]
-    [Parameter(Mandatory = true, ParameterSetName = RemoveSet, ValueFromPipelineByPropertyName = true)]
+    [Parameter(
+        Mandatory = true, ParameterSetName = PauseSet, ValueFromPipelineByPropertyName = true)]
+    [Parameter(
+        Mandatory = true, ParameterSetName = ResumeSet, ValueFromPipelineByPropertyName = true)]
     [Alias("Node")]
     public string? Location { get; set; }
 
     /// <summary>
-    /// <para type="description">One subscription, by its number on its
-    /// node.</para>
+    /// <para type="description">One Subscription, by its configured name on
+    /// its node.</para>
     /// </summary>
     [Parameter(ParameterSetName = ListSet)]
-    [Parameter(Mandatory = true, ParameterSetName = PauseSet, ValueFromPipelineByPropertyName = true)]
-    [Parameter(Mandatory = true, ParameterSetName = ResumeSet, ValueFromPipelineByPropertyName = true)]
-    [Parameter(Mandatory = true, ParameterSetName = RemoveSet, ValueFromPipelineByPropertyName = true)]
-    public ulong? Id { get; set; }
+    [Parameter(
+        Mandatory = true, ParameterSetName = PauseSet, ValueFromPipelineByPropertyName = true)]
+    [Parameter(
+        Mandatory = true, ParameterSetName = ResumeSet, ValueFromPipelineByPropertyName = true)]
+    public string? Name { get; set; }
 
     /// <summary>
-    /// <para type="description">The column to sort by: subscriber, cluster,
-    /// node, action, state, queued, delivered, missed or since. Omitted,
-    /// subscriber.</para>
+    /// <para type="description">The column to sort by: subscription, cluster,
+    /// node, filter, destination, state, picked-up, held or since. Omitted,
+    /// subscription.</para>
     /// </summary>
     [Parameter(ParameterSetName = ListSet)]
     [ArgumentCompleter(typeof(SubscriptionColumns))]
@@ -80,24 +85,19 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
     public SwitchParameter Descending { get; set; }
 
     /// <summary>
-    /// <para type="description">Hold the subscription's delivery; its queue
-    /// keeps filling up to its capacity, and what a full queue refuses is
-    /// counted as missed.</para>
+    /// <para type="description">Hold what the Subscription matches: each
+    /// Message is kept in the node's runtime store and counted as held, not
+    /// picked up. A pause survives a restart of the node.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = PauseSet)]
     public SwitchParameter Pause { get; set; }
 
     /// <summary>
-    /// <para type="description">Deliver again, what queued first.</para>
+    /// <para type="description">Pick up what it held, oldest first, and what
+    /// it matches from then on.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = ResumeSet)]
     public SwitchParameter Resume { get; set; }
-
-    /// <summary>
-    /// <para type="description">Unsubscribe it.</para>
-    /// </summary>
-    [Parameter(Mandatory = true, ParameterSetName = RemoveSet)]
-    public SwitchParameter Remove { get; set; }
 
     /// <summary>
     /// <para type="description">Who acts, as the node's audit records it. The
@@ -105,7 +105,6 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
     /// </summary>
     [Parameter(ParameterSetName = PauseSet)]
     [Parameter(ParameterSetName = ResumeSet)]
-    [Parameter(ParameterSetName = RemoveSet)]
     public string? Who { get; set; }
 
     /// <summary>What this invocation asks, in the query's words.</summary>
@@ -115,7 +114,7 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
         {
             Pattern = Pattern,
             Location = Location,
-            Id = Id,
+            Name = Name,
             Sort = Sort,
             Order = Descending ? "descending" : null,
         };
@@ -156,13 +155,10 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
 
     private void Act(IReadOnlyList<SubscriptionRecord> chosen)
     {
-        SubscriptionAct act = ParameterSetName switch
-        {
-            PauseSet => SubscriptionAct.Pause,
-            ResumeSet => SubscriptionAct.Resume,
-            _ => SubscriptionAct.Remove,
-        };
-        string target = $"subscription {Id} on {Location}";
+        SubscriptionAct act = ParameterSetName == PauseSet
+            ? SubscriptionAct.Pause
+            : SubscriptionAct.Resume;
+        string target = $"Subscription '{Name}' on {Location}";
 
         if (Location is null || ScopeTree.Node(Location).Length == 0
             || chosen.SingleOrDefault(entry => ScopeTree.Beneath(Location, entry.Node))
@@ -170,7 +166,7 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
         {
             Refuse(new ErrorRecord(
                 new ItemNotFoundException(
-                    $"REFUSED: no {target} is listed; it was removed, or never made."),
+                    $"REFUSED: no {target} is listed; its Application does not draw it there."),
                 "XmipSubscriptionNotFound",
                 ErrorCategory.ObjectNotFound,
                 target));

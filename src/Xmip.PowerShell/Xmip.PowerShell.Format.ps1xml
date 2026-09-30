@@ -222,9 +222,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.SubscriptionRecord</Name>
+      <Name>Xmip.Abi.Operate.EventSubscriptionRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.SubscriptionRecord</TypeName>
+        <TypeName>Xmip.Abi.Operate.EventSubscriptionRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -243,9 +243,9 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem>
-              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::Who($_)</ScriptBlock></TableColumnItem>
-              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::Cluster($_)</ScriptBlock></TableColumnItem>
-              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::NodeName($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.EventSubscriptionQuery]::Who($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.EventSubscriptionQuery]::Cluster($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.EventSubscriptionQuery]::NodeName($_)</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Action</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Queued</PropertyName></TableColumnItem>
@@ -258,9 +258,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Surface.SubscriptionOperation</Name>
+      <Name>Xmip.Surface.EventSubscriptionOperation</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Surface.SubscriptionOperation</TypeName>
+        <TypeName>Xmip.Surface.EventSubscriptionOperation</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -277,6 +277,66 @@
               <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Abi.Operate.SubscriptionRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.SubscriptionRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Subscription</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Cluster</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Filter</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Destination</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>State</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>PickedUp</Label><Width>9</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Held</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Since</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::Cluster($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::NodeName($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Filter</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Destination</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>PickedUp</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Held</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Age($_.Since)</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.SubscriptionOperation</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.SubscriptionOperation</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Act</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Result</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
