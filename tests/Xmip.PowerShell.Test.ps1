@@ -909,6 +909,22 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
             Should -Be '2026-09-29T00:00:00.0000000'
     }
 
+    It 'leaves out what a hidden run recorded until -IncludeHidden' {
+        # ADR-0028, amendment 2026-09-30: a record says its run declared itself
+        # hidden, and the one rule leaves it out unless it is asked for.
+        [string] $hidden = "[[record]]`naudit_id = `"h1`"`nat = `"2026-09-30T10:00:00Z`"`n" +
+            "program = `"probe`"`nhost = `"edge-01`"`nprocess = `"7`"`n" +
+            "location = `"xmip:///CT`"`nhidden = `"true`"`naction = `"start`"`n" +
+            "phase = `"begin`"`nseverity = `"information`"`n`n"
+        Add-Content -LiteralPath (Join-Path $script:Read 'audit.toml') -Value $hidden -NoNewline
+
+        @(Get-XmipAudit -Location 'xmip:///CT').Count | Should -Be 0
+        $shown = @(Get-XmipAudit -Location 'xmip:///CT' -IncludeHidden)
+        $shown.Count | Should -Be 1
+        $shown[0].Hidden | Should -BeTrue
+        @(Get-XmipAudit -IncludeHidden).Count | Should -Be (@(Get-XmipAudit).Count + 1)
+    }
+
     It 'ends with the capability''s REFUSED sentence on a query it does not take' {
         $refusal = { Get-XmipAudit -Severity 'loud' -ErrorAction Stop } |
             Should -Throw -PassThru

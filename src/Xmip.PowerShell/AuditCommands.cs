@@ -108,6 +108,15 @@ public sealed class GetXmipAuditCommand : XmipCommand
     [Parameter]
     public SwitchParameter Ascending { get; set; }
 
+    /// <summary>
+    /// <para type="description">The records of a run that declared itself
+    /// hidden too — an assistant's test run, started with Start-XmipTest
+    /// -Hidden — which are left out unless this is given (ADR-0028,
+    /// amendment 2026-09-30). Hidden says which a record is.</para>
+    /// </summary>
+    [Parameter]
+    public SwitchParameter IncludeHidden { get; set; }
+
     /// <summary>What this invocation asks, in the query's words. -First is the
     /// page's length, the capability's 100 when omitted and 1000 at most;
     /// -Skip where it starts.</summary>
@@ -126,6 +135,7 @@ public sealed class GetXmipAuditCommand : XmipCommand
             To = Moment(To),
             Sort = Sort,
             Order = Ascending ? "ascending" : null,
+            IncludeHidden = IncludeHidden,
             Offset = (int)Math.Min(PagingParameters.Skip, int.MaxValue),
             Limit = PagingParameters.First == ulong.MaxValue
                 ? 0
