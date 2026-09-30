@@ -202,7 +202,7 @@ call. It emits each `AuditEntry` whole, newest first:
 Get-XmipAudit -Pattern <pattern> -Location <scope> -ComputerName <name>
     -Program <name> -AuditId <id> -Severity <word> -Action <word>
     -From <datetime> -To <datetime> -Sort <column> -Ascending
-    -First <n> -Skip <n> -IncludeTotalCount
+    -First <n> -Skip <n> -IncludeTotalCount -IncludeHidden
 ```
 
 Each parameter is a word of the query and means what the capability says:
@@ -220,7 +220,11 @@ Tab offers `-Severity`, `-Sort` and `-Action` the words the capability
 answers with, so the module keeps no list of them. A query the capability
 does not take ends with its REFUSED sentence (`XmipAuditQueryRefused`); with
 no audit directory stated there is nothing to read, and it ends saying so
-(`XmipAuditDirectoryUnstated`).
+(`XmipAuditDirectoryUnstated`). What a run that declared itself hidden
+recorded — an assistant's test run, `Start-XmipTest -Hidden` — is left out
+unless `-IncludeHidden` is given, and then each such `AuditEntry` says
+`Hidden` (ADR-0028, amendment 2026-09-30); `xmip-cli audit
+--include-hidden` and the views' "show test clusters" box ask the same.
 
 ## Seeing it
 
