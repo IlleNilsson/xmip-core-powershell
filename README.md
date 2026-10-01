@@ -237,13 +237,13 @@ Import-Module ./Xmip/Xmip.psd1
 Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
 Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip `
     -Nodes R1, P1, S1 `
-    -NodeCapability @{ R1 = 'receive'; P1 = 'process'; S1 = 'send' }
+    -NodeRole @{ R1 = 'receiving'; P1 = 'processing'; S1 = 'sending' }
 ```
 
 `C1` and the three node names are arguments, nothing more: name them anything
 a file can be called. `R1`, `P1` and `S1` are how the owner names nodes when
 he tests (2026-09-25), a reminder to the person; what each does is the
-`-NodeCapability` beside it, and Xmip never reads the name. `C1` is written here only because the shipped
+`-NodeRole` beside it, and Xmip never reads the name. `C1` is written here only because the shipped
 `xmip.powershell.toml` follows that roll's snapshot.
 
 Press Enter after the import and the prompt is as it was, with no segment,
