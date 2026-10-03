@@ -38,7 +38,7 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
     /// <summary>
     /// <para type="description">A scope pattern, * and ?, over each
     /// Subscription's node, or its node and name as one scope —
-    /// */alpha is everything node alpha routes by, */subscription/edi* every
+    /// */&lt;node&gt; is everything that node routes by, */subscription/edi* every
     /// Subscription whose name begins edi.</para>
     /// </summary>
     [Parameter(Position = 0, ParameterSetName = ListSet)]
@@ -47,7 +47,8 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
 
     /// <summary>
     /// <para type="description">Where the drill stands: a cluster, such as
-    /// xmip:///C1, or a node, such as xmip:///C1/node/alpha, and every
+    /// xmip:///&lt;cluster&gt;, or a node, such as
+    /// xmip:///&lt;cluster&gt;/node/&lt;node&gt;, and every
     /// Subscription routed by there. An act names the node.</para>
     /// </summary>
     [Parameter(ParameterSetName = ListSet)]

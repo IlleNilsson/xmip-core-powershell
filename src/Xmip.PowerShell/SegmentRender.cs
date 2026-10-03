@@ -34,7 +34,7 @@ public static class SegmentRender
     /// prompt is not following. The prompt reads one publication — a mood or a
     /// sum over two clusters would be at a scope in neither tree — so where
     /// there are more it says so rather than reading as the whole estate:
-    /// <c>[C1+1 ≡ R:5.3K P:60 S:60]</c>, the number in gray, the color this
+    /// <c>[&lt;cluster&gt;+1 ≡ R:5.3K P:60 S:60]</c>, the number in gray, the color this
     /// segment already gives what it is not showing (ADR-0052, amendment
     /// 2026-09-20). None beside is nothing on the line, as everything else here.
     /// </para>
@@ -84,7 +84,7 @@ public static class SegmentRender
             && figures.Failed is null or 0;
 
         // posh-git's order: what the prompt is at, its sign when square,
-        // then the counts — [main ≡ +0 ~1 -0] there, [C1 ≡ R:12 P:11 S:10]
+        // then the counts — [main ≡ +0 ~1 -0] there, [<cluster> ≡ R:12 P:11 S:10]
         // here (the owner, 2026-09-18). The name wears the worst stage's color.
         // R, P and S are the stage letters and never a name's first letter:
         // what a cluster or a node is called says nothing about what it does.

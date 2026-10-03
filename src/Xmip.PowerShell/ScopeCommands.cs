@@ -17,7 +17,7 @@ public abstract class XmipScopeCommand : XmipSurfaceCommand
 {
     /// <summary>
     /// <para type="description">The Xmip URI to act on, such as
-    /// xmip:///edge-01, or a wildcard over the scopes that exist. Everything
+    /// xmip:///&lt;cluster&gt;, or a wildcard over the scopes that exist. Everything
     /// beneath each is included; a wildcard names several subtrees and opens
     /// no wider one.</para>
     /// </summary>
