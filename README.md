@@ -31,18 +31,21 @@ is named, `-Scope xmip:///C1/*` the level beneath it worst first, and each
 row's `Worst` the next scope on the way to the cause; the two acts the
 boundary carries,
 `Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
-`ScopeOperation.Who`, the rule `xmip-cli pause --who` and the GUI follow) and
+`ScopeOperation.Who`, the rule `xmip-cli pause --who` and the GUI follow;
+over `-Remote` the web host takes every act as the subject of the client
+certificate presented, only where its role may act — ADR-0009, amendment
+2026-10-03) and
 `Resume-XmipScope -Scope`, both with
 `-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
 `xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
 the boundary has no such call, because the thing that watches must not be able
 to stop the thing it watches. One reads what every Xmip program recorded:
-`Get-XmipAudit` (below). Two list what a node publishes for an operator to
+`Get-XmipAudit` (below). Three list what a node publishes for an operator to
 act on, and with a parameter act on one — one cmdlet for each noun, the act
-a parameter set, as `xmip-cli subscriptions` and `xmip-cli
-event-subscriptions` take it as an option (ADR-0014, amendment 2026-09-15;
-ADR-0052).
+a parameter set, as `xmip-cli subscriptions`, `xmip-cli
+event-subscriptions` and `xmip-cli dead-messages` take it as an option
+(ADR-0014, amendment 2026-09-15; ADR-0052).
 
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
@@ -63,7 +66,13 @@ Application that draws it. The node audits an act as `subscription.pause` or
 
 `Get-XmipEventSubscription` lists the Event subscriptions the cluster's nodes
 hold (ADR-0065, amendment 2026-09-29) — not Subscriptions: an Event
-subscription hands Events to a Party and picks no Message up.
+subscription hands Events to a Party and picks no Message up. Its node is
+the one its subscriber connected to, not the one it hears: it hears the
+matching Events of every node of the cluster (amendment 2026-10-02), and the
+links that carry them between nodes are the cluster's and never listed; a
+member a node there does not hear is written as a warning beside the
+records, one line each — `R1: not hearing <node> since <time>: <why>` —
+so no Event is missing silently.
 `Get-XmipEventSubscription -Pattern <pattern> -Location <scope> -Id <n>
 -Sort <column> -Descending` emits each `EventSubscriptionRecord` — its
 number, the subscriber, the cluster, the node, the action, the state and its
@@ -72,6 +81,24 @@ queue's counts — and `Get-XmipEventSubscription -Location <node scope> -Id
 the `EventSubscriptionOperation`; a listed Event subscription pipes into an
 act by its Node and Id. The node audits an act as `event.pause`,
 `event.resume` or `event.remove`.
+
+`Get-XmipDeadMessage` lists what each node's Dead Message Queue keeps
+(ADR-0052, amendment 2026-10-01): every accepted Message that no
+Subscription matched, kept in the Ledger with its receive context. It is not
+a dead letter queue: a failed Journey never goes there.
+`Get-XmipDeadMessage -Pattern <pattern> -Location <scope> -Message <id>
+-Sort <column> -Descending` emits each `DeadMessageRecord` — its node, the
+Message's identifier, its place in the queue, the Receive Location it arrived
+at, when, and its gate verdicts, promoted properties and every
+Subscription's decline as name and value pairs — the oldest first; a table
+lists them and `Format-List` opens one with every pair. `Get-XmipDeadMessage
+-Location <node scope> -Message <id> -Replay -Who <name>`, with `-WhatIf`
+and `-Confirm`, emits the `DeadMessageOperation`; a listed entry pipes into a
+Replay by its Node and Message. Replay, once a Subscription is added or
+fixed, routes the Message again against the node's Subscriptions of now,
+opens a Journey for each match and takes it out of the queue, once; a
+Message that still matches nothing stays, and the Replay is refused in
+words. The node audits it as `dead-message.replay`.
 
 Each act is also recorded in this module's own audit, as every act of a
 cmdlet is. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
@@ -88,7 +115,9 @@ executable's `--follow` runs too.
 ships beside the module and is named in the manifest, one view per type a
 cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
 `ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning`,
-`AbiBoundaries` and `AuditEntry`. A mood, an age and the figures in a column are the words
+`AbiBoundaries`, `AuditEntry`, `SubscriptionRecord`, `EventSubscriptionRecord`,
+`DeadMessageRecord` (and a list view that opens one) and each noun's
+operation. A mood, an age and the figures in a column are the words
 `English` in `Xmip.Surface` says, the words `xmip-cli` and the web views say;
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 

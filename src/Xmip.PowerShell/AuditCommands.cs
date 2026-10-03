@@ -28,8 +28,8 @@ public sealed class GetXmipAuditCommand : XmipCommand
 {
     /// <summary>
     /// <para type="description">A scope pattern over the location each
-    /// record's process declared, * and ? — xmip:///C1/* is everything in
-    /// cluster C1. A record with no location is at the root, which only *
+    /// record's process declared, * and ? — xmip:///&lt;cluster&gt;/* is
+    /// everything in that cluster. A record with no location is at the root, which only *
     /// names.</para>
     /// </summary>
     [Parameter(Position = 0)]
@@ -38,7 +38,7 @@ public sealed class GetXmipAuditCommand : XmipCommand
 
     /// <summary>
     /// <para type="description">The records whose process declared this
-    /// scope, or one beneath it, such as xmip:///C1.</para>
+    /// scope, or one beneath it, such as xmip:///&lt;cluster&gt;.</para>
     /// </summary>
     [Parameter]
     public string? Location { get; set; }

@@ -83,9 +83,10 @@ public static class PromptMonitor
 
     /// <summary>
     /// Follow this snapshot from now on, in place of what the document names.
-    /// The shipped document follows the roll started as cluster C1; a roll
-    /// the operator starts under another name publishes elsewhere, and on
-    /// 2026-09-18 the prompt sat frozen on C1 while CC1 rolled. The command
+    /// The shipped document follows the roll started under the cluster name
+    /// it states; a roll the operator starts under another name publishes
+    /// elsewhere, and on 2026-09-18 the prompt sat frozen on the one cluster
+    /// while another rolled. The command
     /// that starts a roll knows the file and says so here: stated by the
     /// operator in the session, not guessed (ADR-0052 clause 3).
     /// </summary>

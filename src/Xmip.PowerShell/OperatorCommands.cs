@@ -27,8 +27,8 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 {
     /// <summary>
     /// <para type="description">The Xmip URI to ask about, such as
-    /// xmip:///edge-01, or a wildcard over the scopes that exist, such as
-    /// xmip:///C1/node/R*. Everything beneath each is included.</para>
+    /// xmip:///&lt;cluster&gt;, or a wildcard over the scopes that exist, such
+    /// as xmip:///&lt;cluster&gt;/node/*. Everything beneath each is included.</para>
     /// </summary>
     [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true)]
     [SupportsWildcards]
@@ -93,7 +93,7 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// The drill, in PowerShell: the same <see cref="ScopeItem"/> <c>xmip-cli
 /// show</c> and <c>list</c> render and the web views draw (ADR-0052). With no
 /// scope it is the cluster; a wildcard names several, so
-/// <c>-Scope xmip:///C1/*</c> is every scope directly beneath the cluster,
+/// <c>-Scope xmip:///&lt;cluster&gt;/*</c> is every scope directly beneath the cluster,
 /// worst first — the topmost matches — and a row's <c>Worst</c> is the next
 /// scope to ask about on the way to the cause. Until 2026-09-26 the module
 /// had no row and no figure: <c>Get-XmipHealth</c> answered with every leaf
@@ -104,8 +104,9 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 {
     /// <summary>
-    /// <para type="description">The Xmip URI to describe, such as xmip:///C1,
-    /// or a wildcard over the scopes that exist, such as xmip:///C1/node/*.
+    /// <para type="description">The Xmip URI to describe, such as
+    /// xmip:///&lt;cluster&gt;, or a wildcard over the scopes that exist, such
+    /// as xmip:///&lt;cluster&gt;/node/*.
     /// Omitted, the cluster the surface publishes.</para>
     /// </summary>
     [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]

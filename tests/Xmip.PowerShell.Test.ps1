@@ -37,6 +37,22 @@
 #>
 
 BeforeAll {
+    # The test cluster's names, from the estate's one reader (ADR-0056,
+    # amendment 2026-10-03). It sets $script:Root to the estate's root, so it
+    # is read first and the module's own root set after.
+    . (Join-Path $PSScriptRoot '../../../../../test/Initialize-XmipTest.ps1')
+    $script:Cluster = Get-XmipTestCluster
+    # A node is found by what it declares, the first in the names' order.
+    [string] $script:Receiver = @($script:Cluster.Nodes |
+            Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'receiving' })[0]
+    [string] $script:Sender = @($script:Cluster.Nodes |
+            Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'sending' })[0]
+    # Each node's scope, by its place in the names' order.
+    [string[]] $script:At = @($script:Cluster.Nodes |
+            ForEach-Object { "$($script:Cluster.Scope)/node/$_" })
+    # Two node names run together: no scope is named so.
+    [string] $script:Nowhere = "xmip:///$($script:Cluster.Nodes[0])$($script:Cluster.Nodes[1])"
+
     [string] $script:Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
     # Every failure a test provokes is audited (ADR-0062), into this run's own
@@ -174,12 +190,12 @@ Describe 'The prompt reads its surface from the document beside the module' {
         [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
         $shipped = [Xmip.Surface.TomlDocument]::Read($document)
         [Xmip.Surface.SurfaceChoice]::IsChosen($shipped) |
-            Should -BeTrue -Because 'the shipped document follows the roll started as C1'
-        $shipped['Xmip:Snapshot'] | Should -BeLike '*C1-snapshot.toml'
+            Should -BeTrue -Because 'the shipped document follows a roll'
+        $shipped['Xmip:Snapshot'] | Should -BeLike '*?-snapshot.toml'
     }
 
     It 'follows the snapshot the session names, over the one the document ships' {
-        # 2026-09-18: the owner rolled cluster CC1 and the prompt sat on C1,
+        # 2026-09-18: the owner rolled one cluster and the prompt sat on another,
         # the file the shipped document names. Start-XmipTest now says which
         # file its roll publishes, through this.
         [string] $fixture = Join-Path $script:Root `
@@ -203,16 +219,18 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # saw, because a published snapshot carries no clock for its counts.
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-rate-$stamp.toml"
+        [string] $name = $script:Cluster.Name
+        [string] $scope = $script:Cluster.Scope
 
         function Write-Publication {
             param([int] $Streams, [int] $Journeys)
 
             @"
 source = "rate test"
-node = "xmip:///W9"
+node = "$scope"
 
 [[records]]
-scope = "xmip:///W9/receive/a"
+scope = "$scope/receive/a"
 state = "fine"
 severity = 0
 evidence = ""
@@ -222,12 +240,12 @@ observed_unix_nanos = 1789111688000000000
 [[counts]]
 counted = "streams"
 value = $Streams
-scope = "xmip:///W9/receive"
+scope = "$scope/receive"
 
 [[counts]]
 counted = "journeys"
 value = $Journeys
-scope = "xmip:///W9/process"
+scope = "$scope/process"
 "@ | Set-Content -LiteralPath $moving -Encoding utf8
         }
 
@@ -238,11 +256,11 @@ scope = "xmip:///W9/process"
             [string] $first = ''
             foreach ($attempt in 1..40) {
                 $first = [Xmip.PowerShell.PromptMonitor]::Current.Text
-                if ($first -like '`[W9*') { break }
+                if ($first -like "``[$name*") { break }
                 Start-Sleep -Milliseconds 100
             }
 
-            $first | Should -Be '[W9 ≡ R– P– S–]' -Because 'one publication is no interval'
+            $first | Should -Be "[$name ≡ R– P– S–]" -Because 'one publication is no interval'
 
             Start-Sleep -Seconds 1
             Write-Publication -Streams 3000 -Journeys 400
@@ -254,7 +272,7 @@ scope = "xmip:///W9/process"
                 Start-Sleep -Milliseconds 100
             }
 
-            $second | Should -BeLike '`[W9 ≡ R:* P:* S–]'
+            $second | Should -BeLike "``[$name ≡ R:* P:* S–]"
         }
         finally {
             [Xmip.PowerShell.PromptMonitor]::Stop()
@@ -270,10 +288,14 @@ scope = "xmip:///W9/process"
         # and means nothing over time; a rate is bounded by throughput and can
         # say stalled.
         $seen = [DateTimeOffset]::UtcNow
+        $leaf = [Xmip.Abi.Operate.HealthRecord]
+        # Three scopes at the root that share no name, named as the test
+        # cluster's first three nodes are.
+        [string[]] $top = @($script:Cluster.Nodes[0..2] | ForEach-Object { "xmip:///$_" })
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///alpha/receive/orders', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///beta/process/ok', 'Stressed', 55, 'x', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///gamma/send/bill', 'Done', 95, 'x', $seen)
+            $leaf::new("$($top[0])/receive/orders", 'Fine', 0, '', $seen)
+            $leaf::new("$($top[1])/process/ok", 'Stressed', 55, 'x', $seen)
+            $leaf::new("$($top[2])/send/bill", 'Done', 95, 'x', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
@@ -300,9 +322,9 @@ scope = "xmip:///W9/process"
         # The owner, 2026-09-18: posh-git's look. Every stage fine and nothing
         # retrying or failed is square, and says so with posh-git's own sign.
         [Xmip.Abi.Operate.HealthRecord[]] $fine = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///alpha/receive/orders', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///beta/process/ok', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///gamma/send/bill', 'Fine', 0, '', $seen)
+            $leaf::new("$($top[0])/receive/orders", 'Fine', 0, '', $seen)
+            $leaf::new("$($top[1])/process/ok", 'Fine', 0, '', $seen)
+            $leaf::new("$($top[2])/send/bill", 'Fine', 0, '', $seen)
         )
         $allFine = [Xmip.Surface.ScopeIndex]::Build($fine, $counts, 2, 'test')
         $calm = [Xmip.Surface.Figures]::new('xmip:///', 12, 10, 11, 4096, 0, 0, $null)
@@ -313,31 +335,36 @@ scope = "xmip:///W9/process"
         # posh-git's order, [main ≡ +0 ~1 -0]: what the prompt is at, its sign
         # when square, then the counts. At one node it is the node's name; at
         # a cluster, the cluster's; the Playground's `node` segment names nothing.
+        [string] $cluster = $script:Cluster.Name
+        [string] $node = $script:Cluster.Nodes[0]
+        [string] $here = "$($script:Cluster.Scope)/node/$node"
         [Xmip.Abi.Operate.HealthRecord[]] $oneNode = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/alpha/receive/a', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/alpha/send/b', 'Fine', 0, '', $seen)
+            $leaf::new("$here/receive/a", 'Fine', 0, '', $seen)
+            $leaf::new("$here/send/b", 'Fine', 0, '', $seen)
         )
         $atNode = [Xmip.Surface.ScopeIndex]::Build($oneNode, $counts, 3, 'test')
-        [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be 'alpha'
+        [Xmip.PowerShell.SegmentRender]::At($atNode) | Should -Be $node
         [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm, $flow).Text |
-            Should -Be '[alpha ≡ R:12 P:11 S:10]'
+            Should -Be "[$node ≡ R:12 P:11 S:10]"
 
         # A roll of one test shares its scenario too; the prompt is at the
         # cluster still, never at round-trip (the owner's RoundTrip, 2026-09-19).
+        [string] $test = "$($script:Cluster.Scope)/round-trip/process"
         [Xmip.Abi.Operate.HealthRecord[]] $oneTest = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/round-trip/process/tcp/json', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/round-trip/process/udp/xml', 'Fine', 0, '', $seen)
+            $leaf::new("$test/tcp/json", 'Fine', 0, '', $seen)
+            $leaf::new("$test/udp/xml", 'Fine', 0, '', $seen)
         )
         $atOneTest = [Xmip.Surface.ScopeIndex]::Build($oneTest, $counts, 5, 'test')
-        [Xmip.PowerShell.SegmentRender]::At($atOneTest) | Should -Be 'C1'
+        [Xmip.PowerShell.SegmentRender]::At($atOneTest) | Should -Be $cluster
 
         [Xmip.Abi.Operate.HealthRecord[]] $twoNodes = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/alpha/receive/a', 'Fine', 0, '', $seen)
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///C1/node/gamma/send/b', 'Done', 95, 'x', $seen)
+            $leaf::new("$here/receive/a", 'Fine', 0, '', $seen)
+            $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[2])/send/b",
+                'Done', 95, 'x', $seen)
         )
         $atCluster = [Xmip.Surface.ScopeIndex]::Build($twoNodes, $counts, 4, 'test')
         $troubled = [Xmip.PowerShell.SegmentRender]::Render($atCluster, $calm, $flow)
-        $troubled.Text | Should -Be '[C1 R:12 P:11 S:10]' -Because 'not square, no sign'
+        $troubled.Text | Should -Be "[$cluster R:12 P:11 S:10]" -Because 'not square, no sign'
         $troubled.Parts[1].Color | Should -Be 'Red' -Because 'the name wears the worst stage'
         [Xmip.PowerShell.SegmentRender]::Render($allFine, $failing, $flow).Text |
             Should -Be '[R:12 P:11 S:10 F:2]' -Because 'a failure is not square'
@@ -414,7 +441,8 @@ scope = "xmip:///W9/process"
 
         $seen = [DateTimeOffset]::UtcNow
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            [Xmip.Abi.Operate.HealthRecord]::new('xmip:///alpha/receive/a', 'Fine', 0, '', $seen)
+            [Xmip.Abi.Operate.HealthRecord]::new(
+                "$($script:Cluster.Scope)/receive/a", 'Fine', 0, '', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
@@ -436,9 +464,12 @@ scope = "xmip:///W9/process"
         # not showing. Nothing beside is nothing on the line.
         $seen = [DateTimeOffset]::UtcNow
         $leaf = [Xmip.Abi.Operate.HealthRecord]
+        [string] $cluster = $script:Cluster.Name
         [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            $leaf::new('xmip:///C1/node/alpha/receive/a', 'Fine', 0, '', $seen)
-            $leaf::new('xmip:///C1/node/gamma/send/b', 'Done', 95, 'x', $seen)
+            $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[0])/receive/a",
+                'Fine', 0, '', $seen)
+            $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[2])/send/b",
+                'Done', 95, 'x', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
         $index = [Xmip.Surface.ScopeIndex]::Build($records, $counts, 1, 'test')
@@ -446,11 +477,11 @@ scope = "xmip:///W9/process"
         $flow = [Xmip.Surface.FigureFlow]::new([double] 12, [double] 11, [double] 10)
 
         [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow, $null, 0).Text |
-            Should -Be '[C1 R:12 P:11 S:10]' -Because 'one cluster says nothing of others'
+            Should -Be "[$cluster R:12 P:11 S:10]" -Because 'one cluster says nothing of others'
 
         $ofTwo = [Xmip.PowerShell.SegmentRender]::Render($index, $figures, $flow, $null, 1)
-        $ofTwo.Text | Should -Be '[C1+1 R:12 P:11 S:10]'
-        ($ofTwo.Parts | Where-Object Text -EQ 'C1').Color |
+        $ofTwo.Text | Should -Be "[$cluster+1 R:12 P:11 S:10]"
+        ($ofTwo.Parts | Where-Object Text -EQ $cluster).Color |
             Should -Be 'Red' -Because 'the name still wears the worst stage'
         ($ofTwo.Parts | Where-Object Text -EQ '+1 ').Color |
             Should -Be 'DarkGray' -Because 'what is not shown is gray, as an unpublished figure is'
@@ -467,24 +498,26 @@ scope = "xmip:///W9/process"
         # "other", however the caller lists them.
         [Xmip.PowerShell.PromptMonitor]::Follow($fixture, @($fixture, $beside))
 
+        # The fixture followed is the test cluster's.
+        [string] $cluster = $script:Cluster.Name
         [string] $said = ''
         foreach ($attempt in 1..40) {
             $said = [Xmip.PowerShell.PromptMonitor]::Current.Text
-            if ($said -like '`[C1+1*') { break }
+            if ($said -like "``[$cluster+1*") { break }
             Start-Sleep -Milliseconds 100
         }
 
-        $said | Should -BeLike '`[C1+1 *]'
+        $said | Should -BeLike "``[$cluster+1 *]"
 
         [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
 
         foreach ($attempt in 1..40) {
             $said = [Xmip.PowerShell.PromptMonitor]::Current.Text
-            if ($said -like '`[C1 *') { break }
+            if ($said -like "``[$cluster *") { break }
             Start-Sleep -Milliseconds 100
         }
 
-        $said | Should -BeLike '`[C1 *]' -Because 'one roll alone says nothing of others'
+        $said | Should -BeLike "``[$cluster *]" -Because 'one roll alone says nothing of others'
     }
 
     It 'paints every mood by the color name the shared English gives it' {
@@ -635,7 +668,7 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
     }
 
     It 'answers a wildcard for every scope it names' {
-        [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///edge-0*')
+        [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///*')
 
         $records.Count | Should -Be 5
     }
@@ -646,11 +679,12 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
         # xmip-cli show and list render; a row's Worst is the next step.
         [string] $cluster = Join-Path $script:Root `
             '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
-        [string] $leaf = 'xmip:///C1/node/gamma/send/tcp/json'
+        # The fixture is the test cluster's; its sending node holds the cause.
+        [string] $leaf = "$($script:Cluster.Scope)/node/$script:Sender/send/tcp/json"
 
         $top = Get-XmipScope -Snapshot $cluster
         $top | Should -BeOfType ([Xmip.Surface.ScopeItem])
-        $top.Scope | Should -Be 'xmip:///C1' -Because 'the drill starts at the cluster'
+        $top.Scope | Should -Be $script:Cluster.Scope -Because 'the drill starts at the cluster'
         $top.Worst | Should -Be $leaf
         $top.Figures.Streams | Should -Be 6
 
@@ -666,7 +700,8 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
         $at | Should -Be $leaf
         (Get-XmipScope -Snapshot $cluster -Scope $at).Evidence |
             Should -Be '2/3 rounds passed, 1 failed'
-        (Get-XmipScope -Snapshot $cluster -Scope 'xmip:///C1/node/alpha').Figures.Streams |
+        (Get-XmipScope -Snapshot $cluster `
+                -Scope "$($script:Cluster.Scope)/node/$script:Receiver").Figures.Streams |
             Should -Be 6 -Because 'a node has figures of its own'
     }
 
@@ -699,16 +734,16 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
 
             $said.Count | Should -Be 5 -Because 'the answer now comes first'
 
-            @'
-node = "xmip:///edge-01"
+            @"
+node = "$($script:Cluster.Scope)"
 
 [[records]]
-scope = "xmip:///edge-01/receive/a"
+scope = "$($script:Cluster.Scope)/receive/a"
 state = "fine"
 severity = 0
 evidence = ""
 observed_unix_nanos = 1789111688000000000
-'@ | Set-Content -LiteralPath $moving -Encoding utf8
+"@ | Set-Content -LiteralPath $moving -Encoding utf8
             (Get-Item -LiteralPath $moving).LastWriteTimeUtc = [DateTime]::UtcNow.AddSeconds(5)
 
             foreach ($attempt in 1..100) {
@@ -717,7 +752,7 @@ observed_unix_nanos = 1789111688000000000
             }
 
             $said.Count | Should -Be 6 -Because 'a changed answer follows'
-            $said[5].Scope | Should -Be 'xmip:///edge-01/receive/a'
+            $said[5].Scope | Should -Be "$($script:Cluster.Scope)/receive/a"
         }
         finally {
             $shell.Stop()
@@ -727,19 +762,19 @@ observed_unix_nanos = 1789111688000000000
     }
 
     It 'refuses a pattern that names nothing, naming what there is' {
-        Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///edge-9*' `
+        Get-XmipHealth -Snapshot $script:Fixture -Scope "$script:Nowhere*" `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
 
         $failure.Count | Should -Be 1
         $failure[0].FullyQualifiedErrorId | Should -BeLike 'XmipScopePatternUnmatched*'
-        $failure[0].Exception.Message | Should -BeLike 'REFUSED*xmip:///edge-9*'
+        $failure[0].Exception.Message | Should -BeLike "REFUSED*$script:Nowhere*"
     }
 
     It 'says nothing at a scope in the words xmip-cli uses' {
-        Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///nowhere' `
+        Get-XmipHealth -Snapshot $script:Fixture -Scope $script:Nowhere `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Out-Null
 
-        $failure[0].Exception.Message | Should -BeLike 'Nothing at xmip:///nowhere (SNAPSHOT*'
+        $failure[0].Exception.Message | Should -BeLike "Nothing at $script:Nowhere (SNAPSHOT*"
     }
 
     It 'ends with the reason when the surface named does not answer' {
@@ -750,7 +785,7 @@ observed_unix_nanos = 1789111688000000000
     }
 
     It 'refuses to pause a snapshot, as the surface does for xmip-cli pause' {
-        Suspend-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///edge-01' `
+        Suspend-XmipScope -Snapshot $script:Fixture -Scope "xmip:///$script:Receiver" `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
 
         $failure[0].FullyQualifiedErrorId | Should -BeLike 'XmipScopeOperationRefused*'
@@ -758,7 +793,7 @@ observed_unix_nanos = 1789111688000000000
     }
 
     It 'asks before each scope a wildcard names' {
-        Resume-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///edge-0*' -WhatIf `
+        Resume-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///*' -WhatIf `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
 
         $failure.Count | Should -Be 0 -Because '-WhatIf applies nothing, so nothing is refused'
@@ -840,14 +875,14 @@ Describe 'Every failure and every act is audited' {
     }
 
     It 'records an act as it begins, and its refusal as a failure' {
-        Suspend-XmipScope -Snapshot $script:Fixture -Scope 'xmip:///edge-01' `
+        Suspend-XmipScope -Snapshot $script:Fixture -Scope "xmip:///$script:Receiver" `
             -ErrorAction SilentlyContinue | Out-Null
 
         [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
         $text | Should -BeLike '*action = "Suspend-XmipScope"*'
         $text | Should -BeLike '*phase = "begin"*'
         $text | Should -BeLike '*phase = "failure"*'
-        $text | Should -BeLike '*xmip:///edge-01*'
+        $text | Should -BeLike "*xmip:///$script:Receiver*"
     }
 }
 
@@ -913,13 +948,13 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         # ADR-0028, amendment 2026-09-30: a record says its run declared itself
         # hidden, and the one rule leaves it out unless it is asked for.
         [string] $hidden = "[[record]]`naudit_id = `"h1`"`nat = `"2026-09-30T10:00:00Z`"`n" +
-            "program = `"probe`"`nhost = `"edge-01`"`nprocess = `"7`"`n" +
-            "location = `"xmip:///CT`"`nhidden = `"true`"`naction = `"start`"`n" +
+            "program = `"probe`"`nhost = `"H1`"`nprocess = `"7`"`n" +
+            "location = `"$($script:Cluster.Scope)`"`nhidden = `"true`"`naction = `"start`"`n" +
             "phase = `"begin`"`nseverity = `"information`"`n`n"
         Add-Content -LiteralPath (Join-Path $script:Read 'audit.toml') -Value $hidden -NoNewline
 
-        @(Get-XmipAudit -Location 'xmip:///CT').Count | Should -Be 0
-        $shown = @(Get-XmipAudit -Location 'xmip:///CT' -IncludeHidden)
+        @(Get-XmipAudit -Location $script:Cluster.Scope).Count | Should -Be 0
+        $shown = @(Get-XmipAudit -Location $script:Cluster.Scope -IncludeHidden)
         $shown.Count | Should -Be 1
         $shown[0].Hidden | Should -BeTrue
         @(Get-XmipAudit -IncludeHidden).Count | Should -Be (@(Get-XmipAudit).Count + 1)
@@ -937,19 +972,20 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
 
 Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
     # ADR-0065, amendment 2026-09-29: one cmdlet for the noun, the act a
-    # parameter on it, over the surface xmip-cli reads. A snapshot of cluster
-    # CT whose publisher takes orders: an act is left there for the node.
+    # parameter on it, over the surface xmip-cli reads. A snapshot of the
+    # test cluster whose publisher takes orders: an act is left there for the
+    # node. Its first two nodes hold one each; the first does not hear the third.
     BeforeAll {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-event-subs-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
-        $script:Published = Join-Path $script:Place 'CT-snapshot.toml'
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
         Set-Content -LiteralPath $script:Published -Value @(
-            'node = "xmip:///CT"'
+            "node = `"$($script:Cluster.Scope)`""
             "orders = '$script:Orders'"
             '[[event_subscriptions]]'
-            'node = "xmip:///CT/node/alpha"'
+            "node = `"$($script:At[0])`""
             'id = 1'
             'subscriber = "operations"'
             'party = "0199a0a0-0000-7000-8000-000000000001"'
@@ -957,13 +993,18 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
             'state = "active"'
             'queued = 2'
             '[[event_subscriptions]]'
-            'node = "xmip:///CT/node/beta"'
+            "node = `"$($script:At[1])`""
             'id = 2'
             'subscriber = "on-call"'
             'party = "0199a0a0-0000-7000-8000-000000000002"'
             'action = "every Event ending failure"'
             'state = "paused"'
             'queued = 7'
+            '[[unheard]]'
+            "by = `"$($script:At[0])`""
+            "node = `"$($script:At[2])`""
+            'since_unix_nanos = 1790000000000000000'
+            'why = "connection refused"'
         )
     }
 
@@ -977,10 +1018,11 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
         $listed.Count | Should -Be 2
         $listed[0] | Should -BeOfType ([Xmip.Abi.Operate.EventSubscriptionRecord])
         # By who the subscriber is: its declared name, on-call before operations.
-        [Xmip.Surface.EventSubscriptionQuery]::NodeName($listed[1]) | Should -Be 'alpha'
+        [Xmip.Surface.EventSubscriptionQuery]::NodeName($listed[1]) |
+            Should -Be $script:Cluster.Nodes[0]
         [Xmip.Surface.EventSubscriptionQuery]::Who($listed[1]) | Should -Be 'operations'
         $listed[1].Party | Should -Be '0199a0a0-0000-7000-8000-000000000001'
-        @(Get-XmipEventSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/beta' |
+        @(Get-XmipEventSubscription -Snapshot $script:Published -Location $script:At[1] |
                 Where-Object -Property Paused).Count | Should -Be 1
         (Get-XmipEventSubscription -Snapshot $script:Published -Sort 'queued' -Descending)[0].Id |
             Should -Be 2
@@ -988,27 +1030,42 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
             Should -Not -BeNullOrEmpty
     }
 
+    It 'says a member a node does not hear as a warning, one line, and no record' {
+        [object[]] $listed = @(Get-XmipEventSubscription -Snapshot $script:Published `
+                -WarningVariable 'unheard' -WarningAction 'SilentlyContinue')
+
+        $listed.Count | Should -Be 2
+        @($unheard).Count | Should -Be 1
+        "$($unheard[0])" |
+            Should -Be ("$($script:Cluster.Nodes[0]): not hearing $($script:At[2]) since " +
+                '2026-09-21T14:13:20Z: connection refused')
+        @(Get-XmipEventSubscription -Snapshot $script:Published -Location $script:At[1] `
+                -WarningVariable 'elsewhere' -WarningAction 'SilentlyContinue') | Out-Null
+        @($elsewhere).Count | Should -Be 0
+    }
+
     It 'takes an act as a parameter, honors -WhatIf, and takes a listed one from the pipeline' {
-        Get-XmipEventSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/alpha' `
+        Get-XmipEventSubscription -Snapshot $script:Published -Location $script:At[0] `
             -Id 1 -Pause -WhatIf
         Test-Path -LiteralPath $script:Orders | Should -BeFalse
 
+        [string] $second = $script:Cluster.Nodes[1]
         $done = Get-XmipEventSubscription -Snapshot $script:Published `
-            -Location 'xmip:///CT/node/beta' |
+            -Location $script:At[1] |
             Get-XmipEventSubscription -Snapshot $script:Published -Resume -Who 'ilian' `
                 -Confirm:$false
 
         $done | Should -BeOfType ([Xmip.Surface.EventSubscriptionOperation])
         $done.Applied | Should -BeTrue
-        $done.Result | Should -BeLike '*left for beta*'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders 'beta') -Filter '*-resume.toml').
+        $done.Result | Should -BeLike "*left for $second*"
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
             Count | Should -Be 1
     }
 
     It 'refuses an act on an Event subscription that is not listed, in words' {
         $refusal = {
             Get-XmipEventSubscription -Snapshot $script:Published `
-                -Location 'xmip:///CT/node/alpha' -Id 9 -Remove -Confirm:$false -ErrorAction Stop
+                -Location $script:At[0] -Id 9 -Remove -Confirm:$false -ErrorAction Stop
         } | Should -Throw -PassThru
 
         $refusal.FullyQualifiedErrorId | Should -BeLike 'XmipEventSubscriptionNotFound*'
@@ -1024,7 +1081,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-subs-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
-        $script:Published = Join-Path $script:Place 'CT-snapshot.toml'
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
 
         function Get-Entry {
@@ -1033,7 +1090,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
             )
 
             '[[subscriptions]]'
-            "node = ""xmip:///CT/node/$Node"""
+            "node = ""$Node"""
             "name = ""$Name"""
             'application = "RoundTrip"'
             "filter = ""MessageType = '$Name'"""
@@ -1048,11 +1105,12 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         }
 
         Set-Content -LiteralPath $script:Published -Value @(
-            'node = "xmip:///CT"'
+            "node = `"$($script:Cluster.Scope)`""
             "orders = '$script:Orders'"
-            Get-Entry -Node 'alpha' -Name 'structured' -State 'active' -PickedUp 12 -Held 0
-            Get-Entry -Node 'alpha' -Name 'edi' -State 'paused' -PickedUp 3 -Held 9
-            Get-Entry -Node 'beta' -Name 'flat' -State 'active' -PickedUp 40 -Held 0
+            # The first node routes by two Subscriptions, the second by one.
+            Get-Entry -Node $script:At[0] -Name 'structured' -State 'active' -PickedUp 12 -Held 0
+            Get-Entry -Node $script:At[0] -Name 'edi' -State 'paused' -PickedUp 3 -Held 9
+            Get-Entry -Node $script:At[1] -Name 'flat' -State 'active' -PickedUp 40 -Held 0
         )
     }
 
@@ -1069,8 +1127,9 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         $listed.Name | Should -Be @('edi', 'flat', 'structured')
         $listed[0].Held | Should -Be 9
         $listed[0].By | Should -Be 'ilian'
-        [Xmip.Surface.SubscriptionQuery]::NodeName($listed[1]) | Should -Be 'beta'
-        @(Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/alpha').
+        [Xmip.Surface.SubscriptionQuery]::NodeName($listed[1]) |
+            Should -Be $script:Cluster.Nodes[1]
+        @(Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0]).
             Count | Should -Be 2
         (Get-XmipSubscription -Snapshot $script:Published -Pattern '*/subscription/fl*').Name |
             Should -Be 'flat'
@@ -1087,36 +1146,149 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
     }
 
     It 'takes an act as a parameter, honors -WhatIf, and leaves a pause as an order file' {
-        Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/alpha' `
+        Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0] `
             -Name 'structured' -Pause -WhatIf
         Test-Path -LiteralPath $script:Orders | Should -BeFalse
 
-        $done = Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/alpha' `
+        [string] $first = $script:Cluster.Nodes[0]
+        $done = Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0] `
             -Name 'structured' -Pause -Who 'ilian' -Confirm:$false
 
         $done | Should -BeOfType ([Xmip.Surface.SubscriptionOperation])
         $done.Applied | Should -BeTrue
-        $done.Result | Should -BeLike '*left for alpha*'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders 'alpha') -Filter '*.toml').Count |
+        $done.Result | Should -BeLike "*left for $first*"
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*.toml').Count |
             Should -Be 1
     }
 
     It 'takes a listed Subscription from the pipeline by its Node and Name' {
-        $done = Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/beta' |
+        [string] $second = $script:Cluster.Nodes[1]
+        $done = Get-XmipSubscription -Snapshot $script:Published -Location $script:At[1] |
             Get-XmipSubscription -Snapshot $script:Published -Resume -Confirm:$false
 
         $done.Name | Should -Be 'flat'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders 'beta') -Filter '*-resume.toml').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
             Count | Should -Be 1
     }
 
     It 'refuses an act on a Subscription that is not listed, in words' {
         $refusal = {
-            Get-XmipSubscription -Snapshot $script:Published -Location 'xmip:///CT/node/beta' `
+            Get-XmipSubscription -Snapshot $script:Published -Location $script:At[1] `
                 -Name 'edi' -Pause -Confirm:$false -ErrorAction Stop
         } | Should -Throw -PassThru
 
         $refusal.FullyQualifiedErrorId | Should -BeLike 'XmipSubscriptionNotFound*'
+        $refusal.Exception.Message | Should -BeLike 'REFUSED*'
+    }
+}
+
+Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' {
+    # ADR-0052, amendment 2026-10-01: an accepted Message no Subscription
+    # matched; one cmdlet for the noun, Replay a parameter on it.
+    BeforeAll {
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-dead-$stamp"
+        $script:Orders = Join-Path $script:Place 'orders'
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
+        New-Item -ItemType Directory -Path $script:Place | Out-Null
+
+        function Get-Entry {
+            param ([string] $Node, [string] $Message, [int] $Sequence, [string[]] $Rest)
+
+            '[[dead_messages]]'
+            "node = ""$Node"""
+            "message = ""$Message"""
+            "sequence = $Sequence"
+            'location = "orders"'
+            "received_unix_nanos = $($Sequence * 1000000000)"
+            $Rest
+        }
+
+        Set-Content -LiteralPath $script:Published -Value @(
+            "node = `"$($script:Cluster.Scope)`""
+            "orders = '$script:Orders'"
+            # The first node's queue keeps two Messages, the second's one.
+            Get-Entry -Node $script:At[0] -Message 'm-1' -Sequence 1 -Rest @(
+                'declines = [["structured", "no MessageType"]]')
+            Get-Entry -Node $script:At[0] -Message 'm-2' -Sequence 2 -Rest @(
+                'validation = [["schema", "valid"]]'
+                'promoted = [["MessageType", "Invoice"]]'
+                'declines = [["structured", "MessageType is Invoice"], ["edi", "paused"]]')
+            Get-Entry -Node $script:At[1] -Message 'm-3' -Sequence 1 -Rest @()
+        )
+    }
+
+    AfterAll {
+        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'lists each entry as the record, drilled and sorted, with a table and a list view' {
+        [object[]] $listed = @(Get-XmipDeadMessage -Snapshot $script:Published)
+
+        $listed.Count | Should -Be 3
+        $listed[0] | Should -BeOfType ([Xmip.Abi.Operate.DeadMessageRecord])
+        # The oldest first when no column is named.
+        $listed.Message | Should -Be @('m-1', 'm-3', 'm-2')
+        [Xmip.Surface.DeadMessageQuery]::NodeName($listed[1]) |
+            Should -Be $script:Cluster.Nodes[1]
+        @(Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0]).
+            Count | Should -Be 2
+        (Get-XmipDeadMessage -Snapshot $script:Published -Pattern '*/dead-message/m-3').
+            Message | Should -Be 'm-3'
+        (Get-XmipDeadMessage -Snapshot $script:Published -Sort 'declines' -Descending)[0].
+            Message | Should -Be 'm-2'
+        # A table to list and a list to open one.
+        @((Get-FormatData -TypeName 'Xmip.Abi.Operate.DeadMessageRecord').
+                FormatViewDefinition).Count | Should -Be 2
+        Get-FormatData -TypeName 'Xmip.Surface.DeadMessageOperation' |
+            Should -Not -BeNullOrEmpty
+    }
+
+    It 'opens one Message with its gate verdicts, promoted properties and declines' {
+        $one = Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
+            -Message 'm-2'
+
+        $one.Validation[0].Key | Should -Be 'schema'
+        $one.Promoted[0].Value | Should -Be 'Invoice'
+        $one.Declines.Key | Should -Be @('structured', 'edi')
+        ($one | Format-List | Out-String) | Should -BeLike '*edi: paused*'
+    }
+
+    It 'takes Replay as a parameter, honors -WhatIf, and leaves it as an order file' {
+        (Get-Command -Name Get-XmipDeadMessage).Parameters.Keys |
+            Should -Not -Contain 'Pause'
+        Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
+            -Message 'm-2' -Replay -WhatIf
+        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+
+        [string] $first = $script:Cluster.Nodes[0]
+        $done = Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
+            -Message 'm-2' -Replay -Who 'ilian' -Confirm:$false
+
+        $done | Should -BeOfType ([Xmip.Surface.DeadMessageOperation])
+        $done.Applied | Should -BeTrue
+        $done.Result | Should -BeLike "*left for $first*"
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*-replay.toml').
+            Count | Should -Be 1
+    }
+
+    It 'takes a listed entry from the pipeline by its Node and Message' {
+        [string] $second = $script:Cluster.Nodes[1]
+        $done = Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[1] |
+            Get-XmipDeadMessage -Snapshot $script:Published -Replay -Confirm:$false
+
+        $done.Message | Should -Be 'm-3'
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-replay.toml').
+            Count | Should -Be 1
+    }
+
+    It 'refuses a Replay of a Message its queue does not keep, in words' {
+        $refusal = {
+            Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[1] `
+                -Message 'm-2' -Replay -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+
+        $refusal.FullyQualifiedErrorId | Should -BeLike 'XmipDeadMessageNotFound*'
         $refusal.Exception.Message | Should -BeLike 'REFUSED*'
     }
 }

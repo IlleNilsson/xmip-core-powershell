@@ -7,6 +7,13 @@ namespace Xmip.PowerShell;
 /// <summary>
 /// <para type="synopsis">The Event subscriptions the cluster's nodes hold,
 /// and pause, resume or remove on one of them.</para>
+/// <para type="description">An Event subscription's node is the one its
+/// subscriber connected to, not the one it hears: it hears the matching
+/// Events of every node of the cluster (ADR-0065, amendment 2026-10-02). The
+/// links that carry them between nodes are the cluster's, not Event
+/// subscriptions, and are never listed; a member a node does not hear is
+/// said as a warning, one line each: "&lt;node&gt;: not hearing &lt;other&gt; since
+/// &lt;time&gt;: &lt;why&gt;".</para>
 /// </summary>
 /// <remarks>
 /// One cmdlet for the noun, the act a parameter on it (ADR-0014, amendment
@@ -38,8 +45,8 @@ public sealed class GetXmipEventSubscriptionCommand : XmipSurfaceCommand
 
     /// <summary>
     /// <para type="description">A scope pattern, * and ?, over each
-    /// subscription's node and the scope its filter reaches — */alpha is
-    /// everything node alpha holds.</para>
+    /// subscription's node and the scope its filter reaches — */&lt;node&gt;
+    /// is everything that node holds.</para>
     /// </summary>
     [Parameter(Position = 0, ParameterSetName = ListSet)]
     [SupportsWildcards]
@@ -47,7 +54,8 @@ public sealed class GetXmipEventSubscriptionCommand : XmipSurfaceCommand
 
     /// <summary>
     /// <para type="description">Where the drill stands: a cluster, such as
-    /// xmip:///C1, or a node, such as xmip:///C1/node/alpha, and every
+    /// xmip:///&lt;cluster&gt;, or a node, such as
+    /// xmip:///&lt;cluster&gt;/node/&lt;node&gt;, and every
     /// subscription held there. An act names the node.</para>
     /// </summary>
     [Parameter(ParameterSetName = ListSet)]
@@ -134,10 +142,13 @@ public sealed class GetXmipEventSubscriptionCommand : XmipSurfaceCommand
     protected override void Process()
     {
         IReadOnlyList<EventSubscriptionRecord> chosen;
+        IReadOnlyList<UnheardRecord> unheard;
 
         try
         {
-            chosen = Query().Apply(Surface.EventSubscriptions().EventSubscriptions);
+            EventSubscriptionList listed = Surface.EventSubscriptions();
+            chosen = Query().Apply(listed.EventSubscriptions);
+            unheard = Query().Unheard(listed.Unheard);
         }
         catch (ArgumentException refused)
         {
@@ -155,6 +166,13 @@ public sealed class GetXmipEventSubscriptionCommand : XmipSurfaceCommand
             foreach (EventSubscriptionRecord entry in chosen)
             {
                 WriteObject(entry);
+            }
+
+            // Read-only, on the warning stream beside the records: what the
+            // nodes here do not hear, so no Event is missing silently.
+            foreach (UnheardRecord gone in unheard)
+            {
+                WriteWarning(EventSubscriptionQuery.Line(gone));
             }
 
             return;

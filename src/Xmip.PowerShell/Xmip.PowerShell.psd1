@@ -30,6 +30,7 @@
         'Get-XmipAudit'
         'Get-XmipEventSubscription'
         'Get-XmipSubscription'
+        'Get-XmipDeadMessage'
     )
     FunctionsToExport    = @()
     VariablesToExport    = @()

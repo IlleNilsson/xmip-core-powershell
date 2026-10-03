@@ -343,5 +343,81 @@
         </TableRowEntries>
       </TableControl>
     </View>
+    <View>
+      <Name>Xmip.Abi.Operate.DeadMessageRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.DeadMessageRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Received</Label><Width>12</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Message</Label><Width>38</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Cluster</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>ReceiveLocation</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Declines</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Age($_.Received)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Message</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.DeadMessageQuery]::Cluster($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>[Xmip.Surface.DeadMessageQuery]::NodeName($_)</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>ReceiveLocation</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>$_.Declines.Count</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Abi.Operate.DeadMessageRecord.Opened</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.DeadMessageRecord</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem><PropertyName>Message</PropertyName></ListItem>
+              <ListItem><PropertyName>Node</PropertyName></ListItem>
+              <ListItem><PropertyName>ReceiveLocation</PropertyName></ListItem>
+              <ListItem><PropertyName>Received</PropertyName></ListItem>
+              <ListItem><PropertyName>Sequence</PropertyName></ListItem>
+              <ListItem><Label>GateVerdicts</Label><ScriptBlock>($_.Validation | ForEach-Object { "$($_.Key): $($_.Value)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+              <ListItem><Label>Promoted</Label><ScriptBlock>($_.Promoted | ForEach-Object { "$($_.Key) = $($_.Value)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+              <ListItem><Label>Declines</Label><ScriptBlock>($_.Declines | ForEach-Object { "$($_.Key): $($_.Value)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.DeadMessageOperation</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.DeadMessageOperation</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Act</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Message</Label><Width>38</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Result</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Message</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
   </ViewDefinitions>
 </Configuration>
