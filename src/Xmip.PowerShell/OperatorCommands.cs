@@ -98,16 +98,32 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// scope to ask about on the way to the cause. Until 2026-09-26 the module
 /// had no row and no figure: <c>Get-XmipHealth</c> answered with every leaf
 /// beneath a scope, thousands for one node.
+/// <para>A Send Port's row says, in its evidence, the last Journey that
+/// failed there and why (runtime-model.md section 13), and the acts on that
+/// Journey are parameters here rather than a cmdlet of their own:
+/// <c>-Journey &lt;id&gt; -Retry</c> or <c>-Dismiss</c>, with -WhatIf and
+/// -Confirm, on the Send Port's scope or its node's, emitting the
+/// <see cref="JourneyOperation"/> <c>xmip-cli journey</c> renders.</para>
 /// </remarks>
-[Cmdlet(VerbsCommon.Get, "XmipScope")]
-[OutputType(typeof(ScopeItem))]
+[Cmdlet(
+    VerbsCommon.Get, "XmipScope",
+    DefaultParameterSetName = ReadSet,
+    SupportsShouldProcess = true)]
+[OutputType(typeof(ScopeItem), ParameterSetName = [ReadSet])]
+[OutputType(typeof(JourneyOperation), ParameterSetName = [RetrySet, DismissSet])]
 public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 {
+    private const string ReadSet = "Read";
+    private const string RetrySet = "Retry";
+    private const string DismissSet = "Dismiss";
+
     /// <summary>
     /// <para type="description">The Xmip URI to describe, such as
     /// xmip:///&lt;cluster&gt;, or a wildcard over the scopes that exist, such
     /// as xmip:///&lt;cluster&gt;/node/*.
-    /// Omitted, the cluster the surface publishes.</para>
+    /// Omitted, the cluster the surface publishes. With -Journey, the one
+    /// Send Port's scope where the Journey is said to have failed, such as
+    /// xmip:///&lt;cluster&gt;/node/&lt;node&gt;/send/&lt;Port&gt;, or its node's.</para>
     /// </summary>
     [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
     [SupportsWildcards]
@@ -119,12 +135,51 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// xmip-cli --follow does. A wildcard is matched again at every change.
     /// Follows the first scope named.</para>
     /// </summary>
-    [Parameter]
+    [Parameter(ParameterSetName = ReadSet)]
     public SwitchParameter Follow { get; set; }
+
+    /// <summary>
+    /// <para type="description">A Journey that failed, by its identifier, as
+    /// its Send Port's row says it: the one -Retry or -Dismiss acts on.</para>
+    /// </summary>
+    [Parameter(Mandatory = true, ParameterSetName = RetrySet)]
+    [Parameter(Mandatory = true, ParameterSetName = DismissSet)]
+    public string? Journey { get; set; }
+
+    /// <summary>
+    /// <para type="description">Send the Journey again, its tries begun anew,
+    /// from the end of its Send Port's queue — or from its place, where it
+    /// blocks a Sequential Send Port.</para>
+    /// </summary>
+    [Parameter(Mandatory = true, ParameterSetName = RetrySet)]
+    public SwitchParameter Retry { get; set; }
+
+    /// <summary>
+    /// <para type="description">Give the Journey up: written Dismissed, its
+    /// history, Message and Stream kept, and taken out of its Send Port's
+    /// queue.</para>
+    /// </summary>
+    [Parameter(Mandatory = true, ParameterSetName = DismissSet)]
+    public SwitchParameter Dismiss { get; set; }
+
+    /// <summary>
+    /// <para type="description">Who acts on the Journey, as the node's audit
+    /// records it. The current user when omitted.</para>
+    /// </summary>
+    [Parameter(ParameterSetName = RetrySet)]
+    [Parameter(ParameterSetName = DismissSet)]
+    public string? Who { get; set; }
 
     /// <inheritdoc />
     protected override void Process()
     {
+        if (ParameterSetName != ReadSet)
+        {
+            Act(ParameterSetName == RetrySet ? JourneyAct.Retry : JourneyAct.Dismiss);
+
+            return;
+        }
+
         foreach (string argument in Scope.Length == 0 ? [string.Empty] : Scope)
         {
             if (Select(argument) is not { } chosen)
@@ -158,6 +213,50 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                     chosen.Argument));
             }
         }
+    }
+
+    // An act names one Journey on one scope, no wildcard: the node that sends
+    // its Send Port, or the Port's scope beneath it.
+    private void Act(JourneyAct act)
+    {
+        string journey = Journey ?? string.Empty;
+        string target = $"the Journey {journey} sent at {string.Join(", ", Scope)}";
+
+        if (Scope is not [var scope] || WildcardPattern.ContainsWildcardCharacters(scope))
+        {
+            Refuse(new ErrorRecord(
+                new ArgumentException(
+                    $"REFUSED: to {JourneyOperation.Word(act)} {target}, name one scope: the "
+                    + "Send Port's, such as xmip:///<cluster>/node/<node>/send/<Port>, or its "
+                    + "node's."),
+                "XmipJourneyScopeRefused",
+                ErrorCategory.InvalidArgument,
+                target));
+
+            return;
+        }
+
+        if (!ShouldProcess(target, JourneyOperation.Word(act)))
+        {
+            return;
+        }
+
+        Acting(target);
+        JourneyOperation done = Surface.Act(scope, journey, act, ScopeOperation.Who(Who));
+
+        if (!done.Applied)
+        {
+            Refuse(new ErrorRecord(
+                new InvalidOperationException(done.Result),
+                "XmipJourneyActRefused",
+                ErrorCategory.InvalidOperation,
+                target));
+
+            return;
+        }
+
+        Acted(target, done.Result);
+        WriteObject(done);
     }
 }
 

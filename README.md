@@ -100,6 +100,17 @@ opens a Journey for each match and takes it out of the queue, once; a
 Message that still matches nothing stays, and the Replay is refused in
 words. The node audits it as `dead-message.replay`.
 
+A Journey that failed (runtime-model.md section 13; ADR-0013) is acted on
+through `Get-XmipScope`, where it is seen, rather than a cmdlet of its own: a
+Send Port's row, at `<node>/send/<Port>`, says in its evidence the last
+Journey that failed there and why. `Get-XmipScope -Scope <Send Port or node
+scope> -Journey <id> -Retry|-Dismiss -Who <name>`, with `-WhatIf` and
+`-Confirm`, emits the `JourneyOperation`; a row piped from `Get-XmipScope`
+gives the scope. Retry sends it again, its tries begun anew; Dismiss writes
+it Dismissed and takes it out of its Port's queue. One scope, no wildcard,
+or the act is refused in words. The node audits it as `journey.retry` or
+`journey.dismiss`.
+
 Each act is also recorded in this module's own audit, as every act of a
 cmdlet is. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
 tests over them.
@@ -117,7 +128,7 @@ cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
 `ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning`,
 `AbiBoundaries`, `AuditEntry`, `SubscriptionRecord`, `EventSubscriptionRecord`,
 `DeadMessageRecord` (and a list view that opens one) and each noun's
-operation. A mood, an age and the figures in a column are the words
+operation, `JourneyOperation` among them. A mood, an age and the figures in a column are the words
 `English` in `Xmip.Surface` says, the words `xmip-cli` and the web views say;
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 
