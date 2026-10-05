@@ -420,6 +420,30 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Abi.Operate.FailedJourneyRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.FailedJourneyRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Journey</Label><Width>38</Width></TableColumnHeader>
+          <TableColumnHeader><Label>SendPort</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Place</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Reason</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Journey</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>SendPort</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Sequence</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Reason</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Surface.JourneyOperation</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Surface.JourneyOperation</TypeName>

@@ -1293,7 +1293,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
     }
 }
 
-Describe 'Get-XmipScope retries and dismisses a Journey that failed' {
+Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses one' {
     # runtime-model.md section 13: a Send Port's row says the last Journey
     # that failed there; Retry and Dismiss are parameters on the scope's
     # cmdlet, not a cmdlet of their own.
@@ -1309,11 +1309,42 @@ Describe 'Get-XmipScope retries and dismisses a Journey that failed' {
         Set-Content -LiteralPath $script:Published -Value @(
             "node = `"$($script:Cluster.Scope)`""
             "orders = '$script:Orders'"
+            ''
+            '[[failed_journeys]]'
+            "node = `"$($script:Sending)`""
+            'send_port = "invoices"'
+            'count = 2'
+            ''
+            '[[failed_journeys.journeys]]'
+            'journey = "j-1"'
+            'sequence = 3'
+            'reason = "invoices: the far end refused it"'
+            ''
+            '[[failed_journeys.journeys]]'
+            'journey = "j-2"'
+            'sequence = 7'
+            'reason = "invoices: refused again"'
         )
     }
 
     AfterAll {
         Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'lists every Journey that failed at a scope, paged by -Offset and -Limit' {
+        $failed = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Sending -FailedJourney)
+
+        $failed.Count | Should -Be 2
+        $failed[0] | Should -BeOfType ([Xmip.Abi.Operate.FailedJourneyRecord])
+        $failed[0].Journey | Should -Be 'j-1'
+        $failed[0].SendPort | Should -Be 'invoices'
+        $failed[0].Reason | Should -Be 'invoices: the far end refused it'
+
+        $paged = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Port `
+            -FailedJourney -Offset 4 -Limit 1)
+        $paged.Journey | Should -Be @('j-2')
+        Get-FormatData -TypeName 'Xmip.Abi.Operate.FailedJourneyRecord' |
+            Should -Not -BeNullOrEmpty
     }
 
     It 'takes Retry and Dismiss as parameters, honors -WhatIf, and leaves an order file' {
