@@ -100,11 +100,17 @@ opens a Journey for each match and takes it out of the queue, once; a
 Message that still matches nothing stays, and the Replay is refused in
 words. The node audits it as `dead-message.replay`.
 
-A Journey that failed (runtime-model.md section 13; ADR-0013) is acted on
-through `Get-XmipScope`, where it is seen, rather than a cmdlet of its own: a
-Send Port's row, at `<node>/send/<Port>`, says in its evidence the last
-Journey that failed there and why. `Get-XmipScope -Scope <Send Port or node
-scope> -Journey <id> -Retry|-Dismiss -Who <name>`, with `-WhatIf` and
+The Journeys that failed (runtime-model.md section 13; ADR-0013) are listed
+and acted on through `Get-XmipScope`, where they are seen, rather than
+cmdlets of their own: a Send Port's row, at `<node>/send/<Port>`, says in
+its evidence how many failed wait in its queue and the last that failed and
+why. `Get-XmipScope -Scope <cluster, node or Send Port scope> -FailedJourney
+-Offset <place> -Limit <count>` emits each as a `FailedJourneyRecord` —
+identifier, Send Port, place and why — read from Xmip Storage where the
+node runs in the process, or the oldest hundred its publication carries;
+`-Verbose` says each Port's count and where its next page starts.
+`Get-XmipScope -Scope <Send Port or node scope> -Journey <id>
+-Retry|-Dismiss -Who <name>`, with `-WhatIf` and
 `-Confirm`, emits the `JourneyOperation`; a row piped from `Get-XmipScope`
 gives the scope. Retry sends it again, its tries begun anew; Dismiss writes
 it Dismissed and takes it out of its Port's queue. One scope, no wildcard,

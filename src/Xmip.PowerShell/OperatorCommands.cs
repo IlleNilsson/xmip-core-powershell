@@ -98,12 +98,15 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// scope to ask about on the way to the cause. Until 2026-09-26 the module
 /// had no row and no figure: <c>Get-XmipHealth</c> answered with every leaf
 /// beneath a scope, thousands for one node.
-/// <para>A Send Port's row says, in its evidence, the last Journey that
-/// failed there and why (runtime-model.md section 13), and the acts on that
-/// Journey are parameters here rather than a cmdlet of their own:
-/// <c>-Journey &lt;id&gt; -Retry</c> or <c>-Dismiss</c>, with -WhatIf and
-/// -Confirm, on the Send Port's scope or its node's, emitting the
-/// <see cref="JourneyOperation"/> <c>xmip-cli journey</c> renders.</para>
+/// <para>A Send Port's row says, in its evidence, how many Journeys failed
+/// there and the last with why (runtime-model.md section 13). The Journeys
+/// that failed and the acts on one are parameters here rather than cmdlets
+/// of their own: <c>-FailedJourney</c> lists every one at or beneath the
+/// scope, a page of each Port from <c>-Offset</c>, at most <c>-Limit</c>, as
+/// <c>xmip-cli journey</c> lists them; <c>-Journey &lt;id&gt; -Retry</c> or
+/// <c>-Dismiss</c>, with -WhatIf and -Confirm, on the Send Port's scope or
+/// its node's, emits the <see cref="JourneyOperation"/> <c>xmip-cli
+/// journey</c> renders.</para>
 /// </remarks>
 [Cmdlet(
     VerbsCommon.Get, "XmipScope",
@@ -111,9 +114,11 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
     SupportsShouldProcess = true)]
 [OutputType(typeof(ScopeItem), ParameterSetName = [ReadSet])]
 [OutputType(typeof(JourneyOperation), ParameterSetName = [RetrySet, DismissSet])]
+[OutputType(typeof(FailedJourneyRecord), ParameterSetName = [FailedSet])]
 public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 {
     private const string ReadSet = "Read";
+    private const string FailedSet = "Failed";
     private const string RetrySet = "Retry";
     private const string DismissSet = "Dismiss";
 
@@ -137,6 +142,30 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// </summary>
     [Parameter(ParameterSetName = ReadSet)]
     public SwitchParameter Follow { get; set; }
+
+    /// <summary>
+    /// <para type="description">The Journeys that failed at the Send Ports at
+    /// or beneath the scope, oldest first, each with its Send Port and why:
+    /// read from Xmip Storage where the node runs in this process, or the
+    /// oldest hundred of each Port its publication carries. How many wait at
+    /// each Port, and where its next page starts, are said with -Verbose.</para>
+    /// </summary>
+    [Parameter(Mandatory = true, ParameterSetName = FailedSet)]
+    public SwitchParameter FailedJourney { get; set; }
+
+    /// <summary>
+    /// <para type="description">The place in each Send Port's queue to read
+    /// from, as the last page's next said. The oldest when omitted.</para>
+    /// </summary>
+    [Parameter(ParameterSetName = FailedSet)]
+    public ulong Offset { get; set; }
+
+    /// <summary>
+    /// <para type="description">The most Journeys of each Send Port. A
+    /// hundred when omitted.</para>
+    /// </summary>
+    [Parameter(ParameterSetName = FailedSet)]
+    public uint Limit { get; set; }
 
     /// <summary>
     /// <para type="description">A Journey that failed, by its identifier, as
@@ -173,6 +202,13 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// <inheritdoc />
     protected override void Process()
     {
+        if (ParameterSetName == FailedSet)
+        {
+            Failed();
+
+            return;
+        }
+
         if (ParameterSetName != ReadSet)
         {
             Act(ParameterSetName == RetrySet ? JourneyAct.Retry : JourneyAct.Dismiss);
@@ -211,6 +247,26 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                     "XmipScopeNotFound",
                     ErrorCategory.ObjectNotFound,
                     chosen.Argument));
+            }
+        }
+    }
+
+    // The Journeys that failed at or beneath each scope named — the cluster
+    // the surface publishes where none is — one row each.
+    private void Failed()
+    {
+        foreach (string scope in Scope.Length == 0 ? [Surface.Root()] : Scope)
+        {
+            foreach (FailedJourneyPort port in Surface.FailedJourneys(scope, Offset, Limit).Ports)
+            {
+                WriteVerbose(
+                    $"{port.Node} Send Port {port.SendPort}: {port.Count} failed in its queue"
+                    + (port.Next is { } next ? $"; the next page from -Offset {next}" : string.Empty));
+
+                foreach (FailedJourneyRecord journey in port.Journeys)
+                {
+                    WriteObject(journey);
+                }
             }
         }
     }
