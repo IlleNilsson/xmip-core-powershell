@@ -1292,3 +1292,66 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         $refusal.Exception.Message | Should -BeLike 'REFUSED*'
     }
 }
+
+Describe 'Get-XmipScope retries and dismisses a Journey that failed' {
+    # runtime-model.md section 13: a Send Port's row says the last Journey
+    # that failed there; Retry and Dismiss are parameters on the scope's
+    # cmdlet, not a cmdlet of their own.
+    BeforeAll {
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-journey-$stamp"
+        $script:Orders = Join-Path $script:Place 'orders'
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
+        $script:Sending = "$($script:Cluster.Scope)/node/$($script:Sender)"
+        $script:Port = "$($script:Sending)/send/invoices"
+        New-Item -ItemType Directory -Path $script:Place | Out-Null
+
+        Set-Content -LiteralPath $script:Published -Value @(
+            "node = `"$($script:Cluster.Scope)`""
+            "orders = '$script:Orders'"
+        )
+    }
+
+    AfterAll {
+        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'takes Retry and Dismiss as parameters, honors -WhatIf, and leaves an order file' {
+        (Get-Command -Name Get-XmipScope).Parameters.Keys |
+            Should -Contain 'Journey'
+        Get-XmipScope -Snapshot $script:Published -Scope $script:Port -Journey 'j-1' `
+            -Retry -WhatIf
+        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+
+        $done = Get-XmipScope -Snapshot $script:Published -Scope $script:Port -Journey 'j-1' `
+            -Retry -Who 'ilian' -Confirm:$false
+
+        $done | Should -BeOfType ([Xmip.Surface.JourneyOperation])
+        $done.Applied | Should -BeTrue
+        $done.Node | Should -Be $script:Sending
+        $done.Result | Should -BeLike "*left for $($script:Sender)*"
+        [string] $kept = Join-Path $script:Orders $script:Sender
+        @(Get-ChildItem -LiteralPath $kept -Filter '*-retry.toml').Count | Should -Be 1
+
+        $dismissed = Get-XmipScope -Snapshot $script:Published -Scope $script:Sending `
+            -Journey 'j-1' -Dismiss -Confirm:$false
+        $dismissed.Act | Should -Be ([Xmip.Surface.JourneyAct]::Dismiss)
+        @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.toml').Count | Should -Be 1
+        Get-FormatData -TypeName 'Xmip.Surface.JourneyOperation' | Should -Not -BeNullOrEmpty
+    }
+
+    It 'refuses an act on a wildcard or a scope on no node, in words' {
+        $wildcard = {
+            Get-XmipScope -Snapshot $script:Published -Scope "$($script:Sending)/send/*" `
+                -Journey 'j-1' -Dismiss -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $wildcard.FullyQualifiedErrorId | Should -BeLike 'XmipJourneyScopeRefused*'
+
+        $nowhere = {
+            Get-XmipScope -Snapshot $script:Published -Scope $script:Cluster.Scope `
+                -Journey 'j-1' -Retry -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $nowhere.FullyQualifiedErrorId | Should -BeLike 'XmipJourneyActRefused*'
+        $nowhere.Exception.Message | Should -BeLike 'REFUSED*'
+    }
+}
