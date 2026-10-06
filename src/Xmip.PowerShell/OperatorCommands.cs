@@ -252,12 +252,22 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     }
 
     // The Journeys that failed at or beneath each scope named — the cluster
-    // the surface publishes where none is — one row each.
+    // the surface publishes where none is — one row each, and only for an
+    // answer: a surface that cannot list them, or asked and was not answered,
+    // says so as a non-terminating error in the words xmip-cli says it with.
     private void Failed()
     {
         foreach (string scope in Scope.Length == 0 ? [Surface.Root()] : Scope)
         {
-            foreach (FailedJourneyPort port in Surface.FailedJourneys(scope, Offset, Limit).Ports)
+            FailedJourneyList failed = Surface.FailedJourneys(scope, Offset, Limit);
+
+            if (FailedJourneyError.Of(failed, scope, Surface.Source) is { } unlisted)
+            {
+                Refuse(unlisted);
+                continue;
+            }
+
+            foreach (FailedJourneyPort port in failed.Ports)
             {
                 WriteVerbose(
                     $"{port.Node} Send Port {port.SendPort}: {port.Count} failed in its queue"
