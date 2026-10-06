@@ -108,7 +108,15 @@ why. `Get-XmipScope -Scope <cluster, node or Send Port scope> -FailedJourney
 -Offset <place> -Limit <count>` emits each as a `FailedJourneyRecord` —
 identifier, Send Port, place and why — read from Xmip Storage where the
 node runs in the process, or the oldest hundred its publication carries;
-`-Verbose` says each Port's count and where its next page starts.
+`-Verbose` says each Port's count and where its next page starts. Objects
+are emitted only for an answer, and an answer that lists none emits nothing
+and no error. A surface that cannot list them — no node reached, no runtime
+loaded, no publication read yet — writes a non-terminating error,
+`XmipFailedJourneysNotListed`, saying `NOT LISTED:` and that whether any wait
+is not known, not that none do; one that asked and Xmip Storage did not
+answer writes `XmipFailedJourneysUnanswered`, saying `FAILED:` in the
+runtime's words (`FailedJourneyError`) — the sentences `xmip-cli journey` says
+(`JourneyOperation.Unlisted`).
 `Get-XmipScope -Scope <Send Port or node scope> -Journey <id>
 -Retry|-Dismiss -Who <name>`, with `-WhatIf` and
 `-Confirm`, emits the `JourneyOperation`; a row piped from `Get-XmipScope`

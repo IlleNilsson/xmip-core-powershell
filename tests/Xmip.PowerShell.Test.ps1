@@ -1347,6 +1347,37 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
             Should -Not -BeNullOrEmpty
     }
 
+    It 'says NOT LISTED and FAILED as non-terminating errors, in the words xmip-cli says' {
+        # A surface that cannot list them, and one that asked and was not
+        # answered: the error Get-XmipScope -FailedJourney writes for each.
+        $notListed = [Xmip.PowerShell.FailedJourneyError]::Of(
+            [Xmip.Abi.Operate.FailedJourneyList]::Unlisted, $script:Port, 'REMOTE — lost')
+        $notListed.FullyQualifiedErrorId | Should -Be 'XmipFailedJourneysNotListed'
+        $notListed.CategoryInfo.Category | Should -Be 'ResourceUnavailable'
+        $notListed.Exception.Message | Should -Be (
+            'NOT LISTED: REMOTE — lost cannot list the Journeys that failed, so whether any ' +
+            "wait at or beneath $($script:Port) is not known — not that none do.")
+
+        $failed = [Xmip.PowerShell.FailedJourneyError]::Of(
+            [Xmip.Abi.Operate.FailedJourneyList]::Unanswered('Xmip Storage is not open'),
+            $script:Port, 'NATIVE')
+        $failed.FullyQualifiedErrorId | Should -Be 'XmipFailedJourneysUnanswered'
+        $failed.CategoryInfo.Category | Should -Be 'ReadError'
+        $failed.Exception.Message | Should -Be 'FAILED: Xmip Storage is not open'
+
+        # An answer is no error, none failing among them: no object, and nothing said.
+        [Xmip.PowerShell.FailedJourneyError]::Of(
+            [Xmip.Abi.Operate.FailedJourneyList]::new(
+                '', [Xmip.Abi.Operate.FailedJourneyPort[]]@(), $true, ''),
+            $script:Port, 'SNAPSHOT') |
+            Should -BeNullOrEmpty
+        [object[]] $none = @()
+        $quiet = @(Get-XmipScope -Snapshot $script:Published `
+            -Scope "$($script:Sending)/send/nothing" -FailedJourney -ErrorVariable none)
+        $quiet.Count | Should -Be 0
+        $none.Count | Should -Be 0
+    }
+
     It 'takes Retry and Dismiss as parameters, honors -WhatIf, and leaves an order file' {
         (Get-Command -Name Get-XmipScope).Parameters.Keys |
             Should -Contain 'Journey'
