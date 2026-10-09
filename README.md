@@ -228,13 +228,13 @@ The module audits as program `Xmip.PowerShell` through the audit capability,
 reached through the runtime's library (ADR-0062; `ModuleAudit` over
 `ProgramAudit` in `Xmip.Surface`). Every cmdlet derives from `XmipCommand`,
 which records, once for all of them: every error a cmdlet writes or ends
-on, and every exception that leaves it, as a `failure` whose action is the
+on, and every exception that leaves it, as a `Failure` whose action is the
 cmdlet's name, with its bound parameters, the user, the error's identifier,
 category and target as properties — each value said by
 `ProgramAudit.Properties`, the one flattening the estate's script module
 uses too, a table as its `name=value` pairs and a list joined; and, for the two acts that change the
-estate, `Suspend-XmipScope` and `Resume-XmipScope`, each scope's `begin` and
-`finished`. The prompt records what it used to swallow as action `prompt`: a
+estate, `Suspend-XmipScope` and `Resume-XmipScope`, each scope's `Begin` and
+`Finished`. The prompt records what it used to swallow as action `prompt`: a
 publication it could not read (once until a tick reads again), a document
 that names a surface this build does not know, and whatever else ended its
 observer. Anything the module leaves unhandled in the session is recorded as
