@@ -65,7 +65,7 @@ public sealed class GetXmipAuditCommand : XmipCommand
     public string? AuditId { get; set; }
 
     /// <summary>
-    /// <para type="description">information, warning or error.</para>
+    /// <para type="description">Information, Warning or Error.</para>
     /// </summary>
     [Parameter]
     [ArgumentCompleter(typeof(AuditWords))]

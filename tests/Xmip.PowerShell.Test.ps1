@@ -859,7 +859,7 @@ Describe 'Every failure and every act is audited' {
         $text | Should -BeLike '*`[`[record`]`]*'
         $text | Should -BeLike '*program = "Xmip.PowerShell"*'
         $text | Should -BeLike '*action = "Get-XmipModuleDescriptor"*'
-        $text | Should -BeLike '*phase = "failure"*'
+        $text | Should -BeLike '*phase = "Failure"*'
         $text | Should -BeLike '*XmipModuleUnloadable*'
     }
 
@@ -870,7 +870,7 @@ Describe 'Every failure and every act is audited' {
 
         [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
         $text | Should -BeLike '*action = "Get-XmipHealth"*'
-        $text | Should -BeLike '*phase = "failure"*'
+        $text | Should -BeLike '*phase = "Failure"*'
         ([regex]::Matches($text, '\[\[record\]\]')).Count | Should -Be 1
     }
 
@@ -880,8 +880,8 @@ Describe 'Every failure and every act is audited' {
 
         [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
         $text | Should -BeLike '*action = "Suspend-XmipScope"*'
-        $text | Should -BeLike '*phase = "begin"*'
-        $text | Should -BeLike '*phase = "failure"*'
+        $text | Should -BeLike '*phase = "Begin"*'
+        $text | Should -BeLike '*phase = "Failure"*'
         $text | Should -BeLike "*xmip:///$script:Receiver*"
     }
 }
@@ -910,7 +910,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
     }
 
     It 'emits each record as the capability read it, with a table view' {
-        $records = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Severity 'error')
+        $records = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Severity 'Error')
 
         $records.Count | Should -Be 1
         $records[0] | Should -BeOfType ([Xmip.Abi.Operate.AuditEntry])
