@@ -920,6 +920,16 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         Get-FormatData -TypeName 'Xmip.Abi.Operate.AuditEntry' | Should -Not -BeNullOrEmpty
     }
 
+    It 'walks the writer''s audit chain with -Verify and says it whole, in words' {
+        $chains = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
+
+        $chains.Count | Should -Be 1
+        $chains[0] | Should -BeOfType ([Xmip.Abi.Operate.AuditChain])
+        $chains[0].Writer | Should -Be 'Xmip.PowerShell'
+        $chains[0].Whole | Should -BeTrue -Because $chains[0].Said
+        $chains[0].Said | Should -BeLike 'OK: *'
+    }
+
     It 'takes one record by its identifier from the pipeline' {
         $record = Get-XmipAudit -First 1
 
