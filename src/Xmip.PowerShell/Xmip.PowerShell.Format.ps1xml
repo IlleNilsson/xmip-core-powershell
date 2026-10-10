@@ -222,6 +222,28 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Abi.Operate.AuditChain</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.AuditChain</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Writer</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Records</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Said</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Writer</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Records</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Said</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Abi.Operate.EventSubscriptionRecord</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Abi.Operate.EventSubscriptionRecord</TypeName>

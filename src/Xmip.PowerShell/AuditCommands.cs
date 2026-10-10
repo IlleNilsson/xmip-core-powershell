@@ -20,10 +20,12 @@ namespace Xmip.PowerShell;
 /// parameter is a word of the query, and what it means, which records match
 /// and in what order is the capability's. The words a severity, a sort and an
 /// action take are the capability's too, offered on Tab from what it answers
-/// rather than listed here. Objects out: the <see cref="AuditEntry"/> itself.
+/// rather than listed here. Objects out: the <see cref="AuditEntry"/> itself;
+/// with <c>-Verify</c>, an <see cref="AuditChain"/> for each writer of the
+/// records matched instead (ADR-0070 clause 5).
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipAudit", SupportsPaging = true)]
-[OutputType(typeof(AuditEntry))]
+[OutputType(typeof(AuditEntry), typeof(AuditChain))]
 public sealed class GetXmipAuditCommand : XmipCommand
 {
     /// <summary>
@@ -117,6 +119,17 @@ public sealed class GetXmipAuditCommand : XmipCommand
     [Parameter]
     public SwitchParameter IncludeHidden { get; set; }
 
+    /// <summary>
+    /// <para type="description">Walk the audit chain of each writer of the
+    /// records matched — a node's location, or a program's name — whole, and
+    /// emit one AuditChain for each instead of the records: Whole, and Said,
+    /// OK or FAILED with the first place it breaks, a record deleted, changed
+    /// or out of order (ADR-0070 clause 5). It reads no payload, so an
+    /// Observer may run it.</para>
+    /// </summary>
+    [Parameter]
+    public SwitchParameter Verify { get; set; }
+
     /// <summary>What this invocation asks, in the query's words. -First is the
     /// page's length, the capability's 100 when omitted and 1000 at most;
     /// -Skip where it starts.</summary>
@@ -136,6 +149,7 @@ public sealed class GetXmipAuditCommand : XmipCommand
             Sort = Sort,
             Order = Ascending ? "ascending" : null,
             IncludeHidden = IncludeHidden,
+            Verify = Verify,
             Offset = (int)Math.Min(PagingParameters.Skip, int.MaxValue),
             Limit = PagingParameters.First == ulong.MaxValue
                 ? 0
@@ -208,6 +222,16 @@ public sealed class GetXmipAuditCommand : XmipCommand
                 "XmipAuditRecordNotFound",
                 ErrorCategory.ObjectNotFound,
                 id));
+
+            return;
+        }
+
+        if (Verify)
+        {
+            foreach (AuditChain chain in read.Chains)
+            {
+                WriteObject(chain);
+            }
 
             return;
         }

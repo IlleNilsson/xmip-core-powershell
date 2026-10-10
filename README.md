@@ -256,8 +256,15 @@ call. It emits each `AuditEntry` whole, newest first:
 Get-XmipAudit -Pattern <pattern> -Location <scope> -ComputerName <name>
     -Program <name> -AuditId <id> -Severity <word> -Action <word>
     -From <datetime> -To <datetime> -Sort <column> -Ascending
-    -First <n> -Skip <n> -IncludeTotalCount -IncludeHidden
+    -First <n> -Skip <n> -IncludeTotalCount -IncludeHidden -Verify
 ```
+
+`-Verify` emits, instead of the records, one `AuditChain` for each writer of
+the records matched — a node's location, or a program's name — its chain
+walked whole: `Writer`, `Records`, `Whole`, and `Said`, OK or FAILED with
+the first place it breaks, a record deleted, changed or out of order
+(ADR-0070 clause 5). It reads no payload, so an Observer may run it
+(ADR-0009, amendment 2026-09-06).
 
 Each parameter is a word of the query and means what the capability says:
 `-Pattern` is `*` and `?` over the location each record's process declared
