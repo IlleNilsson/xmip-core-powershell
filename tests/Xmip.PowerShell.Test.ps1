@@ -930,6 +930,27 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         $chains[0].Said | Should -BeLike 'OK: *'
     }
 
+    It 'says a write left unfinished apart from the chain, and FAILED once sealed' {
+        [string] $file = Join-Path $script:Read 'audit.toml'
+        [System.IO.File]::AppendAllText($file, "[[record]]`naudit_id = `"0")
+
+        $open = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
+        $open.Count | Should -Be 2
+        $open[0].Whole | Should -BeTrue -Because $open[0].Said
+        $open[1] | Should -BeOfType ([Xmip.Abi.Operate.AuditFragment])
+        $open[1].Sealed | Should -BeFalse
+        $open[1].Said | Should -BeLike 'UNFINISHED: *'
+
+        # Any cmdlet's record is the next append, which seals it.
+        Get-XmipModuleDescriptor -Library 'no-such-xmip-module.dll' `
+            -ErrorAction SilentlyContinue | Out-Null
+        $sealed = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
+        $sealed[0].Whole | Should -BeTrue -Because $sealed[0].Said
+        $sealed[1].Sealed | Should -BeTrue
+        $sealed[1].Said | Should -BeLike 'FAILED: *'
+        Get-FormatData -TypeName 'Xmip.Abi.Operate.AuditFragment' | Should -Not -BeNullOrEmpty
+    }
+
     It 'takes one record by its identifier from the pipeline' {
         $record = Get-XmipAudit -First 1
 
