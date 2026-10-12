@@ -263,7 +263,11 @@ Get-XmipAudit -Pattern <pattern> -Location <scope> -ComputerName <name>
 the records matched — a node's location, or a program's name — its chain
 walked whole: `Writer`, `Records`, `Whole`, and `Said`, OK or FAILED with
 the first place it breaks, a record deleted, changed or out of order
-(ADR-0070 clause 5). It reads no payload, so an Observer may run it
+(ADR-0070 clause 5). After them comes one `AuditFragment` for each part of
+the file that is not a whole record — `Offset`, `Length`, `Sealed` and
+`Said`: a record whose write was interrupted, which the next append kept as
+written and sealed, in no chain, said FAILED; or the file's end, a write
+still going on or not yet sealed, said UNFINISHED. It reads no payload, so an Observer may run it
 (ADR-0009, amendment 2026-09-06).
 
 Each parameter is a word of the query and means what the capability says:

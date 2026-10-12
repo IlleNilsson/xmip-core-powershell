@@ -22,10 +22,11 @@ namespace Xmip.PowerShell;
 /// action take are the capability's too, offered on Tab from what it answers
 /// rather than listed here. Objects out: the <see cref="AuditEntry"/> itself;
 /// with <c>-Verify</c>, an <see cref="AuditChain"/> for each writer of the
-/// records matched instead (ADR-0070 clause 5).
+/// records matched instead, then an <see cref="AuditFragment"/> for each part
+/// of the file no write finished (ADR-0070 clause 5).
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipAudit", SupportsPaging = true)]
-[OutputType(typeof(AuditEntry), typeof(AuditChain))]
+[OutputType(typeof(AuditEntry), typeof(AuditChain), typeof(AuditFragment))]
 public sealed class GetXmipAuditCommand : XmipCommand
 {
     /// <summary>
@@ -124,8 +125,11 @@ public sealed class GetXmipAuditCommand : XmipCommand
     /// records matched — a node's location, or a program's name — whole, and
     /// emit one AuditChain for each instead of the records: Whole, and Said,
     /// OK or FAILED with the first place it breaks, a record deleted, changed
-    /// or out of order (ADR-0070 clause 5). It reads no payload, so an
-    /// Observer may run it.</para>
+    /// or out of order (ADR-0070 clause 5); then one AuditFragment for each
+    /// part of the file that is not a whole record: Sealed, a record whose
+    /// write was interrupted, kept as written, in no chain, its Said opening
+    /// FAILED; or the file's unfinished end, opening UNFINISHED. It reads no
+    /// payload, so an Observer may run it.</para>
     /// </summary>
     [Parameter]
     public SwitchParameter Verify { get; set; }
@@ -231,6 +235,11 @@ public sealed class GetXmipAuditCommand : XmipCommand
             foreach (AuditChain chain in read.Chains)
             {
                 WriteObject(chain);
+            }
+
+            foreach (AuditFragment fragment in read.Fragments)
+            {
+                WriteObject(fragment);
             }
 
             return;

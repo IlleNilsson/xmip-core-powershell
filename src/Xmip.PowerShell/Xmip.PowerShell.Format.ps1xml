@@ -244,6 +244,28 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Abi.Operate.AuditFragment</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.AuditFragment</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Offset</Label><Width>10</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Sealed</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Said</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Offset</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Sealed</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Said</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Abi.Operate.EventSubscriptionRecord</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Abi.Operate.EventSubscriptionRecord</TypeName>
