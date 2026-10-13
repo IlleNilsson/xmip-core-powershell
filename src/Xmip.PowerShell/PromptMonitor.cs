@@ -33,9 +33,8 @@ public sealed record XmipPromptSegment(XmipPromptPart[] Parts)
 /// beside the module, through the same keys and the same choice as the GUI
 /// hosts and the executable (ADR-0052 clause 3); nothing is guessed from an
 /// environment variable or a file in a temp directory. A document that names
-/// no surface leaves the one runtime-discovery rule — <c>RuntimeLibrary</c>,
-/// else <c>XMIP_RUNTIME_LIBRARY</c>, else the library beside the module —
-/// and the segment says so while nothing answers.
+/// no surface names no node, and the segment shows nothing, as posh-git
+/// outside a repository.
 /// </remarks>
 public static class PromptMonitor
 {
@@ -228,8 +227,7 @@ public static class PromptMonitor
     // The snapshot the session named, stated over the document, by the one
     // precedence the executable and every cmdlet share: the document's
     // choice and the first cluster where it names several — the prompt is
-    // one line (ADR-0052, amendment 2026-09-20) — else the runtime rule, with
-    // "beside the executable" read as beside the module.
+    // one line (ADR-0052, amendment 2026-09-20) — else no node, said so.
     private static IOperatorSurface OpenSurface()
     {
         return ModuleSurface.Stated(new SurfaceLine(Snapshot: Volatile.Read(ref _followed)));

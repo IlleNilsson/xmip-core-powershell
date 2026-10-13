@@ -6,9 +6,11 @@ namespace Xmip.PowerShell;
 /// <summary>
 /// What every cmdlet that reads a scope shares: the surface it reads and the
 /// scopes an operator named. The surface is the one <c>xmip-cli</c> would
-/// read — <c>-Remote</c>, then <c>-Snapshot</c>, then <c>-Library</c>, then
-/// <c>xmip.powershell.toml</c> beside the module, then the runtime rule
-/// (<see cref="SurfaceChoice.Stated"/>, ADR-0052 clause 1) — and a scope may
+/// read — <c>-Remote</c>, then <c>-Local</c>, then <c>-Snapshot</c>, then
+/// <c>xmip.powershell.toml</c> beside the module
+/// (<see cref="SurfaceChoice.Stated"/>, ADR-0052 clause 1), a node on this
+/// machine or another followed over gRPC at its operate listener (ADR-0014,
+/// amendment 2026-10-13) — and a scope may
 /// be a wildcard over the scopes that exist, selected by the one
 /// <see cref="ScopeSelection"/> the executable uses (ADR-0059 clause 7).
 /// Until 2026-09-24 every cmdlet demanded a library path, loaded the binding
@@ -24,17 +26,28 @@ public abstract class XmipSurfaceCommand : XmipCommand
 
     /// <summary>
     /// <para type="description">The runtime's native library to load, the one
-    /// exporting xmip_operate_v1, over what the module's document says.
-    /// Omitted, the document decides, and with no surface named there the
-    /// library is found by the one rule: RuntimeLibrary in the document, else
-    /// XMIP_RUNTIME_LIBRARY, else beside the module.</para>
+    /// exporting xmip_operate_v1, over what the module's document says: what
+    /// the surface calls the runtime through, its gRPC client among it. It
+    /// chooses no surface. Omitted, it is found by the one rule:
+    /// RuntimeLibrary in the document, else XMIP_RUNTIME_LIBRARY, else beside
+    /// the module.</para>
     /// </summary>
     [Parameter]
     public string? Library { get; set; }
 
     /// <summary>
+    /// <para type="description">A node on this machine to follow, at its local
+    /// endpoint as its [operate] local names it, such as xmip-node1: gRPC on a
+    /// named pipe on Windows and a Unix domain socket elsewhere, the node
+    /// taking every act as the user this session runs as (ADR-0014, amendment
+    /// 2026-10-13).</para>
+    /// </summary>
+    [Parameter]
+    public string? Local { get; set; }
+
+    /// <summary>
     /// <para type="description">One published snapshot to read — one
-    /// cluster's — over the library and the document.</para>
+    /// cluster's — over the document.</para>
     /// </summary>
     [Parameter]
     public string? Snapshot { get; set; }
@@ -77,7 +90,7 @@ public abstract class XmipSurfaceCommand : XmipCommand
     /// <inheritdoc />
     protected override void Begin()
     {
-        SurfaceLine line = new(Remote, Resolved(Snapshot), Resolved(Library));
+        SurfaceLine line = new(Remote, Resolved(Snapshot), Resolved(Library), Local);
 
         if (line.Refusal is { } refusal)
         {

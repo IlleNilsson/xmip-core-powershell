@@ -33,8 +33,9 @@ boundary carries,
 `Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
 `ScopeOperation.Who`, the rule `xmip-cli pause --who` and the GUI follow;
 over `-Remote` the node takes every act as the subject of the client
-certificate presented, only where the role its `[operate]` grants may act —
-ADR-0009; ADR-0014, amendment 2026-10-12) and
+certificate presented, over `-Local` as the user the session runs as, only
+where the role its `[operate]` grants may act — ADR-0009; ADR-0014,
+amendments 2026-10-12 and 2026-10-13) and
 `Resume-XmipScope -Scope`, both with
 `-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
@@ -147,10 +148,12 @@ operation, `JourneyOperation` among them. A mood, an age and the figures in a co
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 
 **The cmdlets read the surface `xmip-cli` reads** (ADR-0052 clause 1). The
-four that take a `-Scope` take `-Remote`, `-Snapshot` and `-Library` as the
-executable takes `--remote`, `--snapshot` and `--runtime`, in the same order —
-a node's operate address, then one cluster's snapshot, then a runtime library, then
-`xmip.powershell.toml`, then the runtime rule — because both ask
+four that take a `-Scope` take `-Remote`, `-Local`, `-Snapshot` and
+`-Library` as the executable takes `--remote`, `--local`, `--snapshot` and
+`--runtime`, in the same order — a node's operate address on another
+machine, then a node's local endpoint on this one, then one cluster's
+snapshot, then `xmip.powershell.toml`; `-Library` names the runtime library
+the surface calls the runtime through and chooses none — because both ask
 `SurfaceChoice.Stated` in `Xmip.Surface`. A `-Scope` may be a wildcard over
 the scopes that exist, `Get-XmipHealth -Scope 'xmip:///C1/node/R*'`, selected
 by the executable's own `ScopeSelection`: each topmost scope it names is
@@ -203,9 +206,13 @@ found when the module is removed. A background observer follows the shared `Xmip
 stream and updates an in-memory segment; the prompt itself performs no runtime
 call, file read, subprocess, wait, or poll. Which surface it follows is stated
 in `xmip.powershell.toml` beside the module, with the same `[Xmip]` keys as
-the GUI hosts and the executable — `Surface = "native" | "snapshot" |
-"remote"`, `RuntimeLibrary`, `Snapshot`, `Address` — and never guessed
-(ADR-0052 clause 3). Remote, it follows a node over gRPC to its operate
+the GUI hosts and the executable — `Surface = "local" | "snapshot" |
+"remote"`, `Local`, `RuntimeLibrary`, `Snapshot`, `Address` — and never
+guessed (ADR-0052 clause 3). Local, it follows the node on this machine
+whose `[operate] local` names the endpoint `Local` names, over gRPC on a
+named pipe on Windows and a Unix domain socket elsewhere, the node taking
+every act as the user this session runs as (ADR-0014, amendment
+2026-10-13), and `-Local` does the same. Remote, it follows a node over gRPC to its operate
 listener at `Address`, `host:port`, and is told when the node's publication
 advances (ADR-0014, amendment 2026-10-12): the runtime's remote surface
 (`xmip_operate.h` section 17), inside Xmip's mutual TLS always — it presents
@@ -213,9 +220,7 @@ the certificate `Certificate` and `PrivateKey` name and takes the node only
 where its certificate reaches `TrustAnchor` (else `XMIP_CERTIFICATE`,
 `XMIP_PRIVATE_KEY`, `XMIP_TRUST_ANCHOR`), and `-Remote` does the same
 (ADR-0063). With no
-surface named, the prompt follows whatever library the one discovery rule
-finds (`RuntimeLibrary`, else `XMIP_RUNTIME_LIBRARY`, else beside the module)
-and shows nothing while nothing answers, as posh-git shows nothing outside a
+surface named, no node is named, and the prompt shows nothing, as posh-git shows nothing outside a
 repository: that Xmip is connected is obvious where the figures show (the
 owner, 2026-09-18). Only a document that names a surface this build does not
 know says a word, `[Xmip misconfigured]`. The mood's color is
