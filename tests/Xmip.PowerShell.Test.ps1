@@ -656,7 +656,33 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
             $parameters = $script:Module.ExportedCmdlets[$name].Parameters
             $parameters.Keys | Should -Contain 'Snapshot'
             $parameters.Keys | Should -Contain 'Remote'
+            $parameters.Keys | Should -Contain 'Local'
         }
+    }
+
+    It 'follows a node on this machine at its local endpoint, over gRPC' {
+        # ADR-0014, amendment 2026-10-13: a local node is operated over its
+        # operate listener's local endpoint, never by loading the runtime here.
+        [string] $endpoint = "xmip-pester-local-$([guid]::NewGuid().ToString('n'))"
+        [string] $reason = ''
+        $served = [Xmip.Surface.RuntimeLibrary]::Rules.Remotes.ServeLocal(
+            $endpoint, '', 'pester-local', [ref] $reason)
+        $served | Should -Not -BeNullOrEmpty -Because $reason
+        try {
+            $served.Post([System.IO.File]::ReadAllText($script:Fixture))
+            [object[]] $records = @(Get-XmipHealth -Local $endpoint -Scope 'xmip:///')
+
+            $records.Count | Should -Be 5
+            $records[0] | Should -BeOfType ([Xmip.Abi.Operate.HealthRecord])
+        }
+        finally {
+            $served.Dispose()
+        }
+    }
+
+    It 'ends with why the node -Local names does not answer' {
+        { Get-XmipHealth -Local 'xmip-pester-nobody-listens' -Scope 'xmip:///' -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage '*LOCAL — xmip-pester-nobody-listens unreachable*'
     }
 
     It 'reads a snapshot the line names, worst first' {
@@ -1399,7 +1425,7 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
 
         $failed = [Xmip.PowerShell.FailedJourneyError]::Of(
             [Xmip.Abi.Operate.FailedJourneyList]::Unanswered('Xmip Storage is not open'),
-            $script:Port, 'NATIVE')
+            $script:Port, 'LOCAL')
         $failed.FullyQualifiedErrorId | Should -Be 'XmipFailedJourneysUnanswered'
         $failed.CategoryInfo.Category | Should -Be 'ReadError'
         $failed.Exception.Message | Should -Be 'FAILED: Xmip Storage is not open'

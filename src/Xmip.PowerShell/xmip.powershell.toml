@@ -6,14 +6,13 @@
 # Paths are relative to this file's directory.
 
 [Xmip]
-# Which surface the prompt follows (ADR-0052 clause 3): "native", the
-# runtime's library loaded into this session, "snapshot", a file a node or
-# the Playground publishes, or "remote", a node followed over gRPC at its
+# Which surface the prompt follows (ADR-0052 clause 3): "local", a node on
+# this machine followed over gRPC at the local endpoint Local names (ADR-0014,
+# amendment 2026-10-13), "snapshot", a file a node or the Playground
+# publishes, or "remote", a node on another machine followed over gRPC at its
 # operate Address. Stated here and never guessed from an environment
 # variable or a file in a temp directory. With no surface named, the prompt
-# follows whatever library the one discovery rule finds — RuntimeLibrary
-# below, else XMIP_RUNTIME_LIBRARY, else the library beside the module — and
-# shows nothing while nothing answers, as posh-git outside a repository.
+# names no node and shows nothing, as posh-git outside a repository.
 #
 # As shipped, in a developer's clone: the Playground roll the estate's own
 # walkthrough starts, which names its cluster C1 only because a roll must be
@@ -21,7 +20,8 @@
 # Start-XmipTest tell this session. A deployment writes its own.
 Surface = "snapshot"
 
-# The runtime's native library, exporting xmip_operate_v1.
+# The runtime's native library, exporting xmip_operate_v1: what the module
+# calls the runtime through, the gRPC client among it.
 # RuntimeLibrary = "../../../../../platform/runtime/target/debug/xmip_core_runtime.dll"
 
 # The file to read when Surface = "snapshot". A path with no file behind it
@@ -31,6 +31,11 @@ Surface = "snapshot"
 # under .local-work/playground. The file is named for the cluster the roll was
 # started as, so this line follows one particular roll and no other.
 Snapshot = "../../../../../../../../../.local-work/playground/C1-snapshot.toml"
+
+# The node on this machine to follow when Surface = "local": its local
+# endpoint, as its [operate] local names it; the same serves -Local. The node
+# takes every act as the user this session runs as.
+# Local = "xmip-node1"
 
 # The node to follow when Surface = "remote", at its operate address,
 # host:port (ADR-0067); the prompt is told when its publication advances and
