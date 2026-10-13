@@ -32,9 +32,9 @@ row's `Worst` the next scope on the way to the cause; the two acts the
 boundary carries,
 `Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
 `ScopeOperation.Who`, the rule `xmip-cli pause --who` and the GUI follow;
-over `-Remote` the web host takes every act as the subject of the client
-certificate presented, only where its role may act — ADR-0009, amendment
-2026-10-03) and
+over `-Remote` the node takes every act as the subject of the client
+certificate presented, only where the role its `[operate]` grants may act —
+ADR-0009; ADR-0014, amendment 2026-10-12) and
 `Resume-XmipScope -Scope`, both with
 `-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
@@ -149,7 +149,7 @@ an outcome is OK or REFUSED; `Format-List` still shows everything.
 **The cmdlets read the surface `xmip-cli` reads** (ADR-0052 clause 1). The
 four that take a `-Scope` take `-Remote`, `-Snapshot` and `-Library` as the
 executable takes `--remote`, `--snapshot` and `--runtime`, in the same order —
-a web host, then one cluster's snapshot, then a runtime library, then
+a node's operate address, then one cluster's snapshot, then a runtime library, then
 `xmip.powershell.toml`, then the runtime rule — because both ask
 `SurfaceChoice.Stated` in `Xmip.Surface`. A `-Scope` may be a wildcard over
 the scopes that exist, `Get-XmipHealth -Scope 'xmip:///C1/node/R*'`, selected
@@ -204,13 +204,15 @@ stream and updates an in-memory segment; the prompt itself performs no runtime
 call, file read, subprocess, wait, or poll. Which surface it follows is stated
 in `xmip.powershell.toml` beside the module, with the same `[Xmip]` keys as
 the GUI hosts and the executable — `Surface = "native" | "snapshot" |
-"remote"`, `RuntimeLibrary`, `Snapshot`, `Url` — and never guessed (ADR-0052
-clause 3). Remote, it follows a web host's surface hub over SignalR and is
-told when that host's surface changes (ADR-0052, amendment 2026-09-15), over
-TLS: it presents the certificate `Certificate` and `PrivateKey` name and
-checks the host's against `TrustAnchor` (else `XMIP_CERTIFICATE`,
-`XMIP_PRIVATE_KEY`, `XMIP_TRUST_ANCHOR`), and `-Remote` does the same; plain
-http is refused to anything but this machine (ADR-0063 clause 1). With no
+"remote"`, `RuntimeLibrary`, `Snapshot`, `Address` — and never guessed
+(ADR-0052 clause 3). Remote, it follows a node over gRPC to its operate
+listener at `Address`, `host:port`, and is told when the node's publication
+advances (ADR-0014, amendment 2026-10-12): the runtime's remote surface
+(`xmip_operate.h` section 17), inside Xmip's mutual TLS always — it presents
+the certificate `Certificate` and `PrivateKey` name and takes the node only
+where its certificate reaches `TrustAnchor` (else `XMIP_CERTIFICATE`,
+`XMIP_PRIVATE_KEY`, `XMIP_TRUST_ANCHOR`), and `-Remote` does the same
+(ADR-0063). With no
 surface named, the prompt follows whatever library the one discovery rule
 finds (`RuntimeLibrary`, else `XMIP_RUNTIME_LIBRARY`, else beside the module)
 and shows nothing while nothing answers, as posh-git shows nothing outside a

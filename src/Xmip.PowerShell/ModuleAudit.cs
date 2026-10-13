@@ -44,8 +44,8 @@ public static class ModuleAudit
 
     /// <summary>What a cmdlet was invoked with, as properties: every bound
     /// parameter and who ran it. None of this module's parameters is a
-    /// secret; the user and password a -Remote address may carry are left
-    /// out of every record by the audit capability. Each value is said by
+    /// secret, and the audit capability leaves out any user and password an
+    /// address carries, in every record. Each value is said by
     /// <see cref="ProgramAudit.Properties"/>, as the script module's are; only
     /// what is PowerShell's own — a switch, a wrapped object — is unwrapped
     /// here first.</summary>
