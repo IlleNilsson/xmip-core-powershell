@@ -40,11 +40,11 @@ public abstract class XmipSurfaceCommand : XmipCommand
     public string? Snapshot { get; set; }
 
     /// <summary>
-    /// <para type="description">A web host on another machine to follow, such
-    /// as https://host:5443, over everything else: TLS, presenting and trusting
-    /// what xmip.powershell.toml or XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and
-    /// XMIP_TRUST_ANCHOR name; plain http only to this machine (ADR-0063
-    /// clause 1).</para>
+    /// <para type="description">A node on another machine to follow, at its
+    /// operate address such as node1:7401, over everything else: gRPC inside
+    /// Xmip's mutual TLS, presenting and trusting what xmip.powershell.toml or
+    /// XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and XMIP_TRUST_ANCHOR name
+    /// (ADR-0014, amendment 2026-10-12; ADR-0063).</para>
     /// </summary>
     [Parameter]
     public string? Remote { get; set; }
@@ -83,7 +83,7 @@ public abstract class XmipSurfaceCommand : XmipCommand
         {
             Stop(new ErrorRecord(
                 new ArgumentException(refusal),
-                "XmipRemoteNotAWebHost",
+                "XmipRemoteNoAddress",
                 ErrorCategory.InvalidArgument,
                 Remote));
         }

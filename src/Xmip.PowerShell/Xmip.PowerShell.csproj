@@ -16,7 +16,7 @@
 
     <!-- A binary module is loaded by pwsh from its own directory, and pwsh
          resolves nothing from NuGet: every assembly the module needs — the
-         TOML reader, the configuration abstractions, the SignalR client —
+         TOML reader, the configuration abstractions —
          must lie beside it. A library build copies none of them by default,
          and the prompt said [Xmip unavailable] for a document it could not
          read (the owner, 2026-09-15). -->

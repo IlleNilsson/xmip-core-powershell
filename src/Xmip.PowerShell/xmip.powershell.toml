@@ -8,8 +8,8 @@
 [Xmip]
 # Which surface the prompt follows (ADR-0052 clause 3): "native", the
 # runtime's library loaded into this session, "snapshot", a file a node or
-# the Playground publishes, or "remote", a web host followed over its surface
-# hub at Url. Stated here and never guessed from an environment
+# the Playground publishes, or "remote", a node followed over gRPC at its
+# operate Address. Stated here and never guessed from an environment
 # variable or a file in a temp directory. With no surface named, the prompt
 # follows whatever library the one discovery rule finds — RuntimeLibrary
 # below, else XMIP_RUNTIME_LIBRARY, else the library beside the module — and
@@ -32,14 +32,14 @@ Surface = "snapshot"
 # started as, so this line follows one particular roll and no other.
 Snapshot = "../../../../../../../../../.local-work/playground/C1-snapshot.toml"
 
-# The web host to follow when Surface = "remote"; the prompt is told when its
-# surface changes and shows nothing while it does not answer. The same keys
-# serve -Remote.
-# HTTPS, presenting Certificate and checking the host's certificate against
-# TrustAnchor (PEM files; unset, nothing presented and the operating system's
-# trust store), each else XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and
-# XMIP_TRUST_ANCHOR. Plain http only to this machine (ADR-0063 clause 1).
-# Url = "https://another-host:5443"
+# The node to follow when Surface = "remote", at its operate address,
+# host:port (ADR-0067); the prompt is told when its publication advances and
+# shows nothing while it does not answer. The same keys serve -Remote.
+# gRPC inside Xmip's mutual TLS, always: presenting Certificate with
+# PrivateKey and taking the node only where its certificate reaches
+# TrustAnchor (PEM files), each else XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and
+# XMIP_TRUST_ANCHOR (ADR-0063).
+# Address = "node1:7401"
 # Certificate = "surface.pem"
 # PrivateKey = "surface.key"
 # TrustAnchor = "anchor.pem"

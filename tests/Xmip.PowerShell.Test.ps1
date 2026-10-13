@@ -784,6 +784,14 @@ observed_unix_nanos = 1789111688000000000
             Should -Throw -ExpectedMessage '*no file at*'
     }
 
+    It 'ends with why the node -Remote names does not answer' {
+        # -Remote takes a node's operate address (ADR-0014, amendment
+        # 2026-10-12); the runtime judges it, and a surface that cannot reach
+        # the node says so in its source.
+        { Get-XmipHealth -Remote 'https://node1:7401' -Scope 'xmip:///' -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage '*REMOTE — https://node1:7401 unreachable*'
+    }
+
     It 'refuses to pause a snapshot, as the surface does for xmip-cli pause' {
         Suspend-XmipScope -Snapshot $script:Fixture -Scope "xmip:///$script:Receiver" `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
