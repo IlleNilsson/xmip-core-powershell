@@ -48,6 +48,23 @@ a parameter set, as `xmip-cli subscriptions`, `xmip-cli
 event-subscriptions` and `xmip-cli dead-messages` take it as an option
 (ADR-0014, amendment 2026-09-15; ADR-0052).
 
+`New-XmipCertificate` makes and signs a person's certificate for reaching a
+node's operate listener, the phone first (ADR-0034, amendment 2026-10-15):
+client authentication alone, its subject the person, `CN=<person>`, which is
+the caller the listener proves and grants its `[operate]` role.
+`New-XmipCertificate -Operator <person> -Path <folder>` makes a fresh key and
+a request naming the person — as their directory knows them,
+`alice@example.org` — as `operator.key` and `operator.csr`, and emits an
+`OperatorRequested`; `New-XmipCertificate -Request <request> -Configuration
+<node configuration> -Path <chain>` signs it by the authority that node
+configuration's `[provision.operator]` names, for its `lifetime`, and emits
+an `OperatorSigned`; a request asking more than client authentication for a
+person is refused in the runtime's words, and nothing is overwritten. Both
+take `-WhatIf` and `-Library`, and the first pipes into the second by its
+`Request`. Running the signing is the approval, out of band. The files and
+the rules are `OperatorCertificate`'s in `Xmip.Surface` and the runtime's
+(`xmip_operate.h` section 19), the ones `xmip-cli certificate` uses.
+
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
 and opens a Journey, drawn in an Xmip Application and bound in a node's TOML.

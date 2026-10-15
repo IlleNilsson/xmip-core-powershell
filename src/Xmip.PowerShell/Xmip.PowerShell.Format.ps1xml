@@ -110,6 +110,52 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Surface.OperatorRequested</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.OperatorRequested</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Person</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Key</Label><Width>32</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Request</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Person</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Key</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Request</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.OperatorSigned</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.OperatorSigned</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Request</Label><Width>32</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Written</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Request</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Written</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Abi.Module.ModuleProbe+Result</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Abi.Module.ModuleProbe+Result</TypeName>
