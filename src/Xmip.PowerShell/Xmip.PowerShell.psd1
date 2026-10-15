@@ -25,6 +25,7 @@
         'Get-XmipHealth'
         'Get-XmipScope'
         'Test-XmipNodeConfiguration'
+        'New-XmipCertificate'
         'Suspend-XmipScope'
         'Resume-XmipScope'
         'Get-XmipAudit'

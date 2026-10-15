@@ -1482,3 +1482,71 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
         $nowhere.Exception.Message | Should -BeLike 'REFUSED*'
     }
 }
+
+Describe 'New-XmipCertificate makes and signs a person''s certificate' {
+    # ADR-0034, amendment 2026-10-15: the key and request made, the request
+    # signed by the authority a node configuration's [provision.operator]
+    # names; the rules are the runtime's, tested in Rust where they are written.
+    BeforeAll {
+        [string] $script:Place = Join-Path -Path $TestDrive -ChildPath 'certificate'
+        [string] $kept = Join-Path -Path $script:Place -ChildPath 'authority'
+        $null = New-Item -ItemType Directory -Path $kept -Force
+        $key = [System.Security.Cryptography.ECDsa]::Create(
+            [System.Security.Cryptography.ECCurve+NamedCurves]::nistP256)
+        $root = [System.Security.Cryptography.X509Certificates.CertificateRequest]::new(
+            'CN=pester authority', $key, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
+        $root.CertificateExtensions.Add(
+            [System.Security.Cryptography.X509Certificates.X509BasicConstraintsExtension]::new(
+                $true, $false, 0, $true))
+        $authority = $root.CreateSelfSigned(
+            [DateTimeOffset]::UtcNow.AddMinutes(-5), [DateTimeOffset]::UtcNow.AddDays(1))
+        Set-Content -LiteralPath (Join-Path $kept 'authority.pem') `
+            -Value $authority.ExportCertificatePem()
+        Set-Content -LiteralPath (Join-Path $kept 'authority.key') `
+            -Value $key.ExportPkcs8PrivateKeyPem()
+        [string] $script:Configuration = Join-Path -Path $script:Place -ChildPath 'node.toml'
+        Set-Content -LiteralPath $script:Configuration -Value (
+            "[service]`nname = `"n`"`ncluster_name = `"c`"`nnode_name = `"d`"`n`n" +
+            "[provision.operator]`nauthority = `"authority`"`n")
+    }
+
+    It 'makes a key and a request, and signs it piped by its Request' {
+        [string] $phone = Join-Path -Path $script:Place -ChildPath 'phone'
+        [string] $chain = Join-Path -Path $phone -ChildPath 'operator.pem'
+        $made = New-XmipCertificate -Operator 'alice@example.org' -Path $phone -Confirm:$false
+
+        $made | Should -BeOfType ([Xmip.Surface.OperatorRequested])
+        $made.Ok | Should -BeTrue
+        Test-Path -LiteralPath $made.Key | Should -BeTrue
+
+        $signed = $made |
+            New-XmipCertificate -Configuration $script:Configuration -Path $chain -Confirm:$false
+        $signed | Should -BeOfType ([Xmip.Surface.OperatorSigned])
+        $signed.Written | Should -Be $chain
+        $leaf = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPem(
+            (Get-Content -LiteralPath $chain -Raw))
+        $leaf.Subject | Should -Be 'CN=alice@example.org'
+    }
+
+    It 'refuses in the runtime''s words, and overwrites nothing' {
+        [string] $other = Join-Path -Path $script:Place -ChildPath 'other'
+        $named = {
+            New-XmipCertificate -Operator 'CN=alice' -Path $other -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $named.FullyQualifiedErrorId | Should -BeLike 'XmipCertificateRefused*'
+        $named.Exception.Message | Should -BeLike 'REFUSED*'
+
+        [string] $phone = Join-Path -Path $script:Place -ChildPath 'phone'
+        $again = {
+            New-XmipCertificate -Operator 'alice@example.org' -Path $phone -Confirm:$false `
+                -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $again.Exception.Message | Should -BeLike '*nothing is overwritten*'
+    }
+
+    It 'makes nothing under -WhatIf' {
+        [string] $none = Join-Path -Path $script:Place -ChildPath 'none'
+        New-XmipCertificate -Operator 'bob' -Path $none -WhatIf
+        Test-Path -LiteralPath $none | Should -BeFalse
+    }
+}
