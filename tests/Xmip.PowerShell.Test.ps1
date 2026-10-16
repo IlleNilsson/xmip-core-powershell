@@ -1542,6 +1542,16 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
                 -ErrorAction Stop
         } | Should -Throw -PassThru
         $again.Exception.Message | Should -BeLike '*nothing is overwritten*'
+
+        [string] $chain = Join-Path -Path $phone -ChildPath 'operator.pem'
+        [string] $kept = Get-Content -LiteralPath $chain -Raw
+        $over = {
+            New-XmipCertificate -Request (Join-Path -Path $phone -ChildPath 'operator.csr') `
+                -Configuration $script:Configuration -Path $chain -Confirm:$false `
+                -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $over.Exception.Message | Should -BeLike '*nothing is overwritten*'
+        Get-Content -LiteralPath $chain -Raw | Should -Be $kept
     }
 
     It 'makes nothing under -WhatIf' {
