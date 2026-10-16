@@ -18,8 +18,9 @@ namespace Xmip.PowerShell;
 /// request by the authority that node configuration's
 /// <c>[provision.operator]</c> names, the chain written to <c>-Path</c> where
 /// one is given. Running the signing is the approval, out of band. One
-/// cmdlet, two acts on one noun; the files and the rules are
-/// <see cref="OperatorCertificate"/>'s and the runtime's, the ones
+/// cmdlet, two acts on one noun; the key's and the request's files, private
+/// to the user the session runs as, and the rules are the runtime's, reached
+/// through <see cref="OperatorCertificate"/>, the ones
 /// <c>xmip-cli certificate</c> uses.
 /// </remarks>
 [Cmdlet(VerbsCommon.New, "XmipCertificate", SupportsShouldProcess = true,

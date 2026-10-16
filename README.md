@@ -61,9 +61,12 @@ configuration's `[provision.operator]` names, for its `lifetime`, and emits
 an `OperatorSigned`; a request asking more than client authentication for a
 person is refused in the runtime's words, and nothing is overwritten. Both
 take `-WhatIf` and `-Library`, and the first pipes into the second by its
-`Request`. Running the signing is the approval, out of band. The files and
-the rules are `OperatorCertificate`'s in `Xmip.Surface` and the runtime's
-(`xmip_operate.h` section 19), the ones `xmip-cli certificate` uses.
+`Request`. Running the signing is the approval, out of band. The key and the
+request are written by the runtime as private files, readable by the user it
+runs as alone, the key never in the session's memory; they and the rules are
+the runtime's (`xmip_operate.h` section 19), reached through
+`OperatorCertificate` in `Xmip.Surface`, the ones `xmip-cli certificate`
+uses.
 
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
@@ -125,8 +128,14 @@ its evidence how many failed wait in its queue and the last that failed and
 why. `Get-XmipScope -Scope <cluster, node or Send Port scope> -FailedJourney
 -Offset <place> -Limit <count>` emits each as a `FailedJourneyRecord` —
 identifier, Send Port, place and why — read from Xmip Storage where the
-node runs in the process, or the oldest hundred its publication carries;
-`-Verbose` says each Port's count and where its next page starts. Objects
+node runs in the process, or the oldest its publication carries
+(`[tuning] failed_window` of each Port, a hundred by default); `-Verbose`
+says each Port's count and where its next page starts. `-Offset` is a place
+in the Port's index of failed Journeys where they are read from Xmip
+Storage, as the last page's next said; a publication carries only its
+node's window, each Journey with its place in the Port's queue and none in
+the index, so read from one `-Offset` is a place in the Port's queue and no
+next follows. Objects
 are emitted only for an answer, and an answer that lists none emits nothing
 and no error. A surface that cannot list them — no node reached, no runtime
 loaded, no publication read yet — writes a non-terminating error,
