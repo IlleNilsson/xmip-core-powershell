@@ -63,7 +63,8 @@ person is refused in the runtime's words, and nothing is overwritten. Both
 take `-WhatIf` and `-Library`, and the first pipes into the second by its
 `Request`. Running the signing is the approval, out of band. The key and the
 request are written by the runtime as private files, readable by the user it
-runs as alone, the key never in the session's memory; they and the rules are
+runs as alone, the key never in the session's memory, and the chain whole and
+synced by the runtime too; they and the rules are
 the runtime's (`xmip_operate.h` section 19), reached through
 `OperatorCertificate` in `Xmip.Surface`, the ones `xmip-cli certificate`
 uses.
