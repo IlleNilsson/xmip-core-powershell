@@ -147,15 +147,19 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// <para type="description">The Journeys that failed at the Send Ports at
     /// or beneath the scope, oldest first, each with its Send Port and why:
     /// read from Xmip Storage where the node runs in this process, or the
-    /// oldest hundred of each Port its publication carries. How many wait at
+    /// oldest of each Port its publication carries, its
+    /// <c>[tuning] failed_window</c>, a hundred by default. How many wait at
     /// each Port, and where its next page starts, are said with -Verbose.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = FailedSet)]
     public SwitchParameter FailedJourney { get; set; }
 
     /// <summary>
-    /// <para type="description">The place in each Send Port's queue to read
-    /// from, as the last page's next said. The oldest when omitted.</para>
+    /// <para type="description">Where each Send Port's page starts, 0 the
+    /// oldest when omitted. Read from Xmip Storage, a place in the Port's
+    /// index of failed Journeys, as the last page's next said; read from a
+    /// publication, which carries only its node's window and no places in
+    /// the index, a place in the Port's queue, and no next follows.</para>
     /// </summary>
     [Parameter(ParameterSetName = FailedSet)]
     public ulong Offset { get; set; }
