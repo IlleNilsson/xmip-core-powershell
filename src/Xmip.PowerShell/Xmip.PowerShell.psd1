@@ -15,7 +15,7 @@
     Copyright            = 'Copyright (c) Ilian Nilsson. Licensed AGPL-3.0-or-later.'
     Description          = 'Operate Xmip from PowerShell and show its live health in the prompt through the shared operator surface.'
 
-    PowerShellVersion    = '7.6.5'
+    PowerShellVersion    = '7.6.7'
     CompatiblePSEditions = @('Core')
 
     CmdletsToExport      = @(
