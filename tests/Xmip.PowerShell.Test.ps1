@@ -1,5 +1,5 @@
 #requires -PSEdition Core
-#requires -Version 7.6.5
+#requires -Version 7.6.7
 
 <#
     The operator module had no tests, and ARCHITECTURE.md said it did.
@@ -131,9 +131,9 @@ Describe 'The module loads and exports what it says' {
     }
 
     It 'requires the PowerShell floor ADR-0021 states' {
-        # 7.6.5 Core. A binary module that loads on an older host is a module
+        # 7.6.7 Core. A binary module that loads on an older host is a module
         # that will fail somewhere less obvious than the import.
-        $script:Declared.PowerShellVersion | Should -Be '7.6.5'
+        $script:Declared.PowerShellVersion | Should -Be '7.6.7'
         $script:Declared.CompatiblePSEditions | Should -Contain 'Core'
     }
 }

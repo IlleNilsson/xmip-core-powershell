@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- ADR-0014, amendment of 2026-08-30: the .NET 11 preview SDK compiles
+    <!-- ADR-0014, amendment of 2026-08-30: the .NET 11 SDK compiles
          this (global.json), and the target framework is owned by whoever
-         loads the assembly. This one loads into pwsh 7.6.5, which hosts
+         loads the assembly. This one loads into pwsh 7.6.7, which hosts
          .NET 10 — proven by Import-Module refusing the net11.0 build. The
          cli, an executable that owns its runtime, targets net11.0. -->
     <TargetFramework>net10.0</TargetFramework>

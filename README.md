@@ -369,9 +369,9 @@ ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 
 ## Runtime
 
-Compiled by the .NET 11 preview SDK, targeting net10.0 — ADR-0014's amendment
+Compiled by the .NET 11 SDK, targeting net10.0 — ADR-0014's amendment
 of 2026-08-30. The SDK is the estate's; the target framework belongs to
-whoever loads the assembly, and this one loads into pwsh 7.6.5, which hosts
+whoever loads the assembly, and this one loads into pwsh 7.6.7, which hosts
 .NET 10. Proven rather than assumed: the net11.0 build was refused by
 `Import-Module` on the platform shell. Follows pwsh upward when pwsh moves.
 
