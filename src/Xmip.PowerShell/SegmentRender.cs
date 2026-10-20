@@ -55,7 +55,7 @@ public static class SegmentRender
     /// <para>
     /// <b>T and F are rates too</b>, on the same ruling — the owner named all
     /// five letters when he capped the numbers, and they were left as totals
-    /// on the assistant's judgement rather than his. They are gated on the
+    /// on the assistant's judgment rather than his. They are gated on the
     /// <em>total</em> and drawn as the <em>rate</em>: a run that has retried
     /// once carries T for as long as it rolls, and the number says whether the
     /// trouble is still arriving. Gating on the rate would put T on the line
