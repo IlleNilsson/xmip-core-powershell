@@ -110,6 +110,28 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Abi.Operate.DatabaseScript</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Abi.Operate.DatabaseScript</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Name</Label><Width>40</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Lines</Label><Width>6</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Opens</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>($_.Text -split "`n").Count</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>($_.Text -split "`n")[0]</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Surface.OperatorRequested</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Surface.OperatorRequested</TypeName>

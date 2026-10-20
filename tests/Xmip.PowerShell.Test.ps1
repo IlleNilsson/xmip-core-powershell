@@ -1560,3 +1560,25 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
         Test-Path -LiteralPath $none | Should -BeFalse
     }
 }
+
+Describe 'Get-XmipDatabaseScript writes the upgrade between two schema versions' {
+    # Open problem 41; ADR-0015, amendment 2026-10-20. Until the first release
+    # the schema is version 1, so every upgrade is none and refused in the
+    # runtime's words; what an upgrade writes is xmip-core-persist's and
+    # tested in Rust where it is written.
+    It 'refuses an upgrade that is none, and writes nothing' {
+        [string] $folder = Join-Path -Path $TestDrive -ChildPath 'upgrade'
+        $none = {
+            Get-XmipDatabaseScript -Server postgresql -From 1 -Path $folder -Confirm:$false `
+                -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $none.FullyQualifiedErrorId | Should -BeLike 'XmipDatabaseUpgradeRefused*'
+        $none.Exception.Message | Should -BeLike '*is none*'
+        Test-Path -LiteralPath $folder | Should -BeFalse
+    }
+
+    It 'takes only a server Xmip Storage keeps a database on, and a version from 1' {
+        { Get-XmipDatabaseScript -Server rocksdb -From 1 -ErrorAction Stop } | Should -Throw
+        { Get-XmipDatabaseScript -Server mssql -From 0 -ErrorAction Stop } | Should -Throw
+    }
+}
