@@ -11,7 +11,7 @@ namespace Xmip.PowerShell;
 // that is held by construction rather than by care: both call Xmip.Abi in
 // xmip-core-abi, the one binding over the header; since 2026-09-24 both take
 // the answer itself from there too — AbiBoundaries, StatusMeaning and the
-// probe's own judgement — and render or emit it.
+// probe's own judgment — and render or emit it.
 //
 // Objects out, never text. The cli renders for a human; a cmdlet's caller
 // pipes, filters and compares, and a rendered string can do none of that.
@@ -75,7 +75,7 @@ public sealed class ConvertFromXmipStatusCommand : XmipCommand
 /// deliberately so. The one difference is earned rather than drift — the cli
 /// writes module log lines to stderr as they arrive, while a cmdlet has a
 /// verbose stream, so here they are collected and emitted after the probe.
-/// Whether the module conforms is the probe's own judgement
+/// Whether the module conforms is the probe's own judgment
 /// (<see cref="ModuleProbe.Result.Complaint"/>), the one the cli exits on, and
 /// so is whether it loaded at all (<see cref="ModuleProbe.Result.Unloadable"/>);
 /// the object written is the probe's own result.
