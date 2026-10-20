@@ -69,6 +69,21 @@ the runtime's (`xmip_operate.h` section 19), reached through
 `OperatorCertificate` in `Xmip.Surface`, the ones `xmip-cli certificate`
 uses.
 
+`Get-XmipDatabaseScript -Server <postgresql|mssql|mariadb> -From <version>`
+emits a `DatabaseScript` — its `Name`, `04-<domain>-upgrade-<from>-<to>.sql`,
+and its `Text` — for each Xmip database on that server, the difference
+between the schema version the databases hold and this build's, or `-To`
+(open problem 41; ADR-0015, amendment 2026-10-20). An upgrade only adds:
+tables, columns and indexes, and the version it reached; IT runs each as
+the schema's owner, as `deploy/database/<server>/README.md` says. `-Path`
+writes them into a folder, made where missing, under `-WhatIf` and
+`-Confirm`, and nothing is overwritten. One that is none — before the first
+release, every one — is refused in the runtime's words. The scripts are the
+runtime's (`xmip_operate.h` section 20), reached through `RuntimeDatabases`
+and written by `DatabaseScripts` in `Xmip.Surface`, the ones `xmip-cli
+database` uses. The schema version each database holds is a node's health
+record, `Get-XmipHealth xmip:///<cluster>/node/<node>/storage/*`.
+
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
 and opens a Journey, drawn in an Xmip Application and bound in a node's TOML.
