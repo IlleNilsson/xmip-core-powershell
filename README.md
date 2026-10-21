@@ -67,7 +67,14 @@ runs as alone, the key never in the session's memory, and the chain whole and
 synced by the runtime too; they and the rules are
 the runtime's (`xmip_operate.h` section 19), reached through
 `OperatorCertificate` in `Xmip.Surface`, the ones `xmip-cli certificate`
-uses.
+uses. `New-XmipCertificate -Node <node> -Cluster <cluster> -Authority
+<folder> -Name <name>, <name> -Path <folder>` issues a node put on a machine
+of its own a fresh key and a certificate for server and client
+authentication from the cluster's authority kept in that folder, made there
+where none is, for its own name and every `-Name`, written as `node.pem`,
+`node.key` and `anchors.pem` — the files its `[operate]` names — and emits a
+`NodeCertified` (ADR-0015, amendment 2026-10-21; `xmip_operate.h` section
+22, through `NodeCertificate`).
 
 `Get-XmipDatabaseScript -Server <postgresql|mssql|mariadb> -From <version>`
 emits a `DatabaseScript` — its `Name`, `04-<domain>-upgrade-<from>-<to>.sql`,

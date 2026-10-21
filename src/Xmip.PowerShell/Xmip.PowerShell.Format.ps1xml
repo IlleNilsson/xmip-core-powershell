@@ -178,6 +178,28 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Surface.NodeCertified</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.NodeCertified</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>12</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Certificate</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Certificate</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Abi.Module.ModuleProbe+Result</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Abi.Module.ModuleProbe+Result</TypeName>

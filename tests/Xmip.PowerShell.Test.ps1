@@ -1559,6 +1559,29 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
         New-XmipCertificate -Operator 'bob' -Path $none -WhatIf
         Test-Path -LiteralPath $none | Should -BeFalse
     }
+
+    # ADR-0015, amendment 2026-10-21: a node put on a machine of its own is
+    # issued its key and certificate from the cluster's authority.
+    It 'issues a node its key, certificate and anchors from the cluster''s authority' {
+        [string] $folder = Join-Path -Path $script:Place -ChildPath 'node'
+        [hashtable] $issue = @{
+            Node      = $script:Receiver
+            Cluster   = $script:Cluster.Name
+            Authority = Join-Path -Path $script:Place -ChildPath 'cluster-authority'
+            Name      = "$script:Receiver.example"
+            Path      = $folder
+            Confirm   = $false
+        }
+        $issued = New-XmipCertificate @issue
+
+        $issued | Should -BeOfType ([Xmip.Surface.NodeCertified])
+        $issued.Ok | Should -BeTrue
+        $issued.Certificate | Should -Be (Join-Path -Path $folder -ChildPath 'node.pem')
+        Test-Path -LiteralPath $issued.Anchors | Should -BeTrue
+        $leaf = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPem(
+            (Get-Content -LiteralPath $issued.Certificate -Raw))
+        $leaf.Subject | Should -Be "CN=$script:Receiver"
+    }
 }
 
 Describe 'Get-XmipDatabaseScript writes the upgrade between two schema versions' {
