@@ -26,6 +26,7 @@
         'Get-XmipScope'
         'Test-XmipNodeConfiguration'
         'New-XmipCertificate'
+        'Get-XmipCertificate'
         'Get-XmipDatabaseScript'
         'Suspend-XmipScope'
         'Resume-XmipScope'

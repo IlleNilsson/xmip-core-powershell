@@ -17,7 +17,7 @@ namespace Xmip.PowerShell;
 /// </summary>
 /// <remarks>
 /// One cmdlet for the noun, the act a parameter on it (ADR-0014, amendment
-/// 2026-09-15; ADR-0065, amendment 2026-09-29), as <c>xmip-cli
+/// 2026-09-15; ADR-0065, amendment 2026-09-29), as <c>xmip
 /// event-subscriptions</c> takes it as an option. Not a Subscription, which
 /// picks a published Message up (<c>Get-XmipSubscription</c>). Which Event
 /// subscriptions a call selects and in what order is

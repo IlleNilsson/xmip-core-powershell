@@ -580,7 +580,7 @@ Describe 'ConvertFrom-XmipStatus' {
         # down with it.
         [PSObject] $answer = ConvertFrom-XmipStatus -Code 4711
 
-        # The one StatusMeaning xmip-cli status renders, so the same word.
+        # The one StatusMeaning xmip status renders, so the same word.
         $answer.Name | Should -Be 'unknown'
         $answer.Known | Should -BeFalse
         $answer.Code | Should -Be 4711
@@ -625,7 +625,7 @@ Describe 'Get-XmipAbi' {
 }
 
 Describe 'Get-XmipAbi, both boundaries' {
-    It 'says the operator boundary beside the module boundary, as xmip-cli abi does' {
+    It 'says the operator boundary beside the module boundary, as xmip abi does' {
         # Until 2026-09-24 the cmdlet said only the module boundary.
         $abi = Get-XmipAbi
 
@@ -635,7 +635,7 @@ Describe 'Get-XmipAbi, both boundaries' {
     }
 }
 
-Describe 'The cmdlets read the surface xmip-cli reads' {
+Describe 'The cmdlets read the surface xmip reads' {
     # ADR-0052 clause 1: one precedence (SurfaceChoice.Stated) and one
     # selection (ScopeSelection) for the executable and this module. Until
     # 2026-09-24 every cmdlet demanded -Library and took a scope literally.
@@ -702,7 +702,7 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
     It 'drills from the cluster to the leaf that explains it, one level at a time' {
         # 2026-09-26: the module had no row and no figure, and Get-XmipHealth
         # answered with every leaf beneath a scope. Get-XmipScope is the row
-        # xmip-cli show and list render; a row's Worst is the next step.
+        # xmip show and list render; a row's Worst is the next step.
         [string] $cluster = Join-Path $script:Root `
             '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
         # The fixture is the test cluster's; its sending node holds the cause.
@@ -731,7 +731,7 @@ Describe 'The cmdlets read the surface xmip-cli reads' {
             Should -Be 6 -Because 'a node has figures of its own'
     }
 
-    It 'follows, as xmip-cli --follow does, until the pipeline is stopped' {
+    It 'follows, as xmip --follow does, until the pipeline is stopped' {
         # 2026-09-27: the command line followed health and measure and the
         # module could not. One follow (Xmip.Surface SurfaceFollow) for both.
         foreach ($name in @('Get-XmipHealth', 'Get-XmipScope')) {
@@ -796,7 +796,7 @@ observed_unix_nanos = 1789111688000000000
         $failure[0].Exception.Message | Should -BeLike "REFUSED*$script:Nowhere*"
     }
 
-    It 'says nothing at a scope in the words xmip-cli uses' {
+    It 'says nothing at a scope in the words xmip uses' {
         Get-XmipHealth -Snapshot $script:Fixture -Scope $script:Nowhere `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Out-Null
 
@@ -818,7 +818,7 @@ observed_unix_nanos = 1789111688000000000
             Should -Throw -ExpectedMessage '*REMOTE — https://node1:7401 unreachable*'
     }
 
-    It 'refuses to pause a snapshot, as the surface does for xmip-cli pause' {
+    It 'refuses to pause a snapshot, as the surface does for xmip pause' {
         Suspend-XmipScope -Snapshot $script:Fixture -Scope "xmip:///$script:Receiver" `
             -ErrorAction SilentlyContinue -ErrorVariable failure | Should -BeNullOrEmpty
 
@@ -1037,7 +1037,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
 
 Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
     # ADR-0065, amendment 2026-09-29: one cmdlet for the noun, the act a
-    # parameter on it, over the surface xmip-cli reads. A snapshot of the
+    # parameter on it, over the surface xmip reads. A snapshot of the
     # test cluster whose publisher takes orders: an act is left there for the
     # node. Its first two nodes hold one each; the first does not hear the third.
     BeforeAll {
@@ -1412,7 +1412,7 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
             Should -Not -BeNullOrEmpty
     }
 
-    It 'says NOT LISTED and FAILED as non-terminating errors, in the words xmip-cli says' {
+    It 'says NOT LISTED and FAILED as non-terminating errors, in the words xmip says' {
         # A surface that cannot list them, and one that asked and was not
         # answered: the error Get-XmipScope -FailedJourney writes for each.
         $notListed = [Xmip.PowerShell.FailedJourneyError]::Of(
@@ -1581,6 +1581,52 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
         $leaf = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromPem(
             (Get-Content -LiteralPath $issued.Certificate -Raw))
         $leaf.Subject | Should -Be "CN=$script:Receiver"
+    }
+
+    # ADR-0034, amendment 2026-10-22: a node no network reaches the
+    # authority from makes its request, carried to the authority, signed
+    # there, carried back and imported; the authority read, revoked from,
+    # exported and backed up.
+    It 'carries a node''s certificate across an air gap and acts on the authority' {
+        [string] $authority = Join-Path -Path $script:Place -ChildPath 'gap-authority'
+        [string] $tls = Join-Path -Path $script:Place -ChildPath 'gap-node'
+        [string] $carried = Join-Path -Path $script:Place -ChildPath 'gap.pem'
+        $set = New-XmipCertificate -Authority $authority -Cluster $script:Cluster.Name `
+            -Publish 'http://ca.example:8080' -Confirm:$false
+        $set | Should -BeOfType ([Xmip.Surface.AuthorityState])
+        $set.Published | Should -Be 'http://ca.example:8080'
+
+        $asked = New-XmipCertificate -Node $script:Receiver -Name "$script:Receiver.example" `
+            -Path $tls -Confirm:$false
+        $asked | Should -BeOfType ([Xmip.Surface.CarriedRequest])
+        $signed = $asked | New-XmipCertificate -Authority $authority -Path $carried `
+            -Name $asked.Names -Confirm:$false
+        $signed | Should -BeOfType ([Xmip.Surface.CarriedSigned])
+        $imported = New-XmipCertificate -Import $carried -Path $tls -Confirm:$false
+        $imported.AnchorTaken | Should -BeTrue
+        $imported.AnchorFingerprint | Should -Be $set.Fingerprint
+
+        (Get-XmipCertificate -Path $imported.Certificate).Standing | Should -Be 'current'
+        $revoked = Get-XmipCertificate -Authority $authority |
+            Select-Object -ExpandProperty Issued |
+            Where-Object -Property Serial -EQ -Value $signed.Serial |
+            Get-XmipCertificate -Authority $authority -Revoke -Reason keyCompromise `
+                -Confirm:$false
+        $revoked.Standing | Should -Be 'revoked'
+        (Get-XmipCertificate -Authority $authority).Revoked | Should -Be 1
+
+        [string] $anchor = Join-Path -Path $script:Place -ChildPath 'gap-authority.cer'
+        (Get-XmipCertificate -Authority $authority -Export $anchor -Format Der `
+            -Confirm:$false).Written | Should -Be $anchor
+        [string] $copy = Join-Path -Path $script:Place -ChildPath 'gap-backup'
+        (Get-XmipCertificate -Authority $authority -Backup $copy -Confirm:$false).Ok |
+            Should -BeTrue
+        (Get-XmipCertificate -Authority $copy).Fingerprint | Should -Be $set.Fingerprint
+
+        $again = {
+            New-XmipCertificate -Import $carried -Path $tls -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $again.Exception.Message | Should -BeLike '*no request is waiting*'
     }
 }
 

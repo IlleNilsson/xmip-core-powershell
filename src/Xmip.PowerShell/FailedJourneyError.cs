@@ -7,7 +7,7 @@ namespace Xmip.PowerShell;
 /// <summary>
 /// The non-terminating error <c>Get-XmipScope -FailedJourney</c> writes where
 /// a list of the Journeys that failed is no answer, in the sentence
-/// <c>xmip-cli journey</c> says it with (<see cref="JourneyOperation.Unlisted"/>):
+/// <c>xmip journey</c> says it with (<see cref="JourneyOperation.Unlisted"/>):
 /// <c>XmipFailedJourneysNotListed</c> where the surface cannot list them,
 /// <c>XmipFailedJourneysUnanswered</c> where it asked and Xmip Storage did not
 /// answer.

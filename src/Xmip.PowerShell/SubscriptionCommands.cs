@@ -10,7 +10,7 @@ namespace Xmip.PowerShell;
 /// </summary>
 /// <remarks>
 /// One cmdlet for the noun, the act a parameter on it (ADR-0014, amendment
-/// 2026-09-15; ADR-0013, amendment 2026-09-30), as <c>xmip-cli
+/// 2026-09-15; ADR-0013, amendment 2026-09-30), as <c>xmip
 /// subscriptions</c> takes it as an option. A Subscription picks a
 /// published Message up and opens a Journey; it is configuration, so there
 /// is no remove: <see cref="SubscriptionOperation.Configured"/>. Not an

@@ -14,7 +14,7 @@ namespace Xmip.PowerShell;
 /// <remarks>
 /// The audit read back by the audit capability's one reader
 /// (<see cref="ProgramAudit.Read"/>, ADR-0062, amendment 2026-09-29) — the one
-/// <c>xmip-cli audit</c> and the web's Audit view call — from where this
+/// <c>xmip audit</c> and the web's Audit view call — from where this
 /// module's own records go: <c>AuditDirectory</c> in
 /// <c>xmip.powershell.toml</c>, else <c>XMIP_AUDIT_DIRECTORY</c>. Each
 /// parameter is a word of the query, and what it means, which records match
@@ -55,7 +55,7 @@ public sealed class GetXmipAuditCommand : XmipCommand
 
     /// <summary>
     /// <para type="description">The records of one program, exactly, such
-    /// as xmip-cli or Xmip.PowerShell.</para>
+    /// as xmip or Xmip.PowerShell.</para>
     /// </summary>
     [Parameter]
     public string? Program { get; set; }

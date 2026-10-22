@@ -22,7 +22,7 @@ namespace Xmip.PowerShell;
 /// <remarks>
 /// Both boundaries, versioned apart (ADR-0027 clause 2): the module boundary
 /// a Module plugs into and the operator boundary a surface drives from — the
-/// same <see cref="AbiBoundaries"/> <c>xmip-cli abi</c> prints.
+/// same <see cref="AbiBoundaries"/> <c>xmip abi</c> prints.
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipAbi")]
 [OutputType(typeof(AbiBoundaries))]

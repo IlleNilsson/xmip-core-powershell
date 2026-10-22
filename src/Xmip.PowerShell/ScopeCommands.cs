@@ -5,7 +5,7 @@ namespace Xmip.PowerShell;
 
 // The two acts the operator boundary carries (ADR-0027 clause 5), as cmdlets.
 // Suspend rather than Pause because Pause is not an approved verb. Each emits
-// the ScopeOperation the surface returns and `xmip-cli pause` renders, so a
+// the ScopeOperation the surface returns and `xmip pause` renders, so a
 // pipeline object and an exit code say the same thing, decided in one place
 // (IOperatorSurface.Control). There is no Start, Stop or Restart: the
 // boundary has no such call, and the thing that watches must not be able to

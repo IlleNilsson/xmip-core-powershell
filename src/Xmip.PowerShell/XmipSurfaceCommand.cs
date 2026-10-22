@@ -5,7 +5,7 @@ namespace Xmip.PowerShell;
 
 /// <summary>
 /// What every cmdlet that reads a scope shares: the surface it reads and the
-/// scopes an operator named. The surface is the one <c>xmip-cli</c> would
+/// scopes an operator named. The surface is the one <c>xmip</c> would
 /// read — <c>-Remote</c>, then <c>-Local</c>, then <c>-Snapshot</c>, then
 /// <c>xmip.powershell.toml</c> beside the module
 /// (<see cref="SurfaceChoice.Stated"/>, ADR-0052 clause 1), a node on this
@@ -123,7 +123,7 @@ public abstract class XmipSurfaceCommand : XmipCommand
     /// <c>-Follow</c>: the rows <paramref name="read"/> answers for what
     /// <paramref name="chosen"/> names, now and again each time the
     /// publication advances and the answer changed, until Ctrl+C — the one
-    /// follow <c>xmip-cli --follow</c> uses (<see cref="SurfaceFollow"/>), so
+    /// follow <c>xmip --follow</c> uses (<see cref="SurfaceFollow"/>), so
     /// a wildcard is matched again at every notice. Ctrl+C is its normal end.
     /// </summary>
     protected void Following<T>(

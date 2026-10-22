@@ -21,31 +21,31 @@ cmdlets with approved verbs, objects on the pipeline rather than text, and
 
 Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
-`Get-XmipModuleDescriptor` — and emit what `xmip-cli abi`, `status` and
+`Get-XmipModuleDescriptor` — and emit what `xmip abi`, `status` and
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
 probe's own `ModuleProbe.Result` — a library it cannot load refused with its
 `Unloadable`, else `Conforms` and `Complaint` — all from `Xmip.Abi`. Five read a
 running Xmip: `Get-XmipHealth -Scope`; `Get-XmipScope [-Scope]`, the drill —
-the `ScopeItem` `xmip-cli show` and `list` render, the cluster when no scope
+the `ScopeItem` `xmip show` and `list` render, the cluster when no scope
 is named, `-Scope xmip:///C1/*` the level beneath it worst first, and each
 row's `Worst` the next scope on the way to the cause; the two acts the
 boundary carries,
 `Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
-`ScopeOperation.Who`, the rule `xmip-cli pause --who` and the GUI follow;
+`ScopeOperation.Who`, the rule `xmip pause --who` and the GUI follow;
 over `-Remote` the node takes every act as the subject of the client
 certificate presented, over `-Local` as the user the session runs as, only
 where the role its `[operate]` grants may act — ADR-0009; ADR-0014,
 amendments 2026-10-12 and 2026-10-13) and
 `Resume-XmipScope -Scope`, both with
-`-WhatIf` and both emitting the `ScopeOperation` `xmip-cli pause` renders, and
+`-WhatIf` and both emitting the `ScopeOperation` `xmip pause` renders, and
 `Test-XmipNodeConfiguration -Path`, which emits the `ConfigurationVerdict`
-`xmip-cli validate` renders. There is no Start-, Stop- or Restart-XmipScope:
+`xmip validate` renders. There is no Start-, Stop- or Restart-XmipScope:
 the boundary has no such call, because the thing that watches must not be able
 to stop the thing it watches. One reads what every Xmip program recorded:
 `Get-XmipAudit` (below). Three list what a node publishes for an operator to
 act on, and with a parameter act on one — one cmdlet for each noun, the act
-a parameter set, as `xmip-cli subscriptions`, `xmip-cli
-event-subscriptions` and `xmip-cli dead-messages` take it as an option
+a parameter set, as `xmip subscriptions`, `xmip
+event-subscriptions` and `xmip dead-messages` take it as an option
 (ADR-0014, amendment 2026-09-15; ADR-0052).
 
 `New-XmipCertificate` makes and signs a person's certificate for reaching a
@@ -66,7 +66,7 @@ request are written by the runtime as private files, readable by the user it
 runs as alone, the key never in the session's memory, and the chain whole and
 synced by the runtime too; they and the rules are
 the runtime's (`xmip_operate.h` section 19), reached through
-`OperatorCertificate` in `Xmip.Surface`, the ones `xmip-cli certificate`
+`OperatorCertificate` in `Xmip.Surface`, the ones `xmip certificate`
 uses. `New-XmipCertificate -Node <node> -Cluster <cluster> -Authority
 <folder> -Name <name>, <name> -Path <folder>` issues a node put on a machine
 of its own a fresh key and a certificate for server and client
@@ -75,6 +75,27 @@ where none is, for its own name and every `-Name`, written as `node.pem`,
 `node.key` and `anchors.pem` — the files its `[operate]` names — and emits a
 `NodeCertified` (ADR-0015, amendment 2026-10-21; `xmip_operate.h` section
 22, through `NodeCertificate`).
+
+The cluster's authority, the premises' own ACME service, and a node's
+certificate across an air gap (ADR-0034, amendment 2026-10-22):
+`New-XmipCertificate -Authority <folder> -Cluster <cluster> [-Publish
+http://host:port]` sets the authority up and records the plain-HTTP address
+its revocation list and certificate are fetched from;
+`Get-XmipCertificate -Authority <folder>` reads it and every certificate it
+signed with its standing (`AuthorityState`, `AuthorityRecord`), with the act
+a parameter on it — `-Serial <serial> -Revoke [-Reason <word>]`,
+`-Export <file> [-Format Pem|Der|Crl]`, `-Backup <folder>` — and
+`Get-XmipCertificate -Path <file>` says whether a certificate's renewal is
+due (`CertificateStanding`). On a node no network reaches the authority
+from, `New-XmipCertificate -Node <node> [-Name <names>] -Path <folder>`, no
+`-Authority`, writes `node.next.key` and the request `node.csr`
+(`CarriedRequest`); `New-XmipCertificate -Request node.csr -Authority
+<folder> [-Name <names>] [-Path <file>]` signs it where the authority is
+kept (`CarriedSigned`), a `CarriedRequest` piping in by its Request; and
+`New-XmipCertificate -Import <chain> -Path <folder>` checks it and makes it
+the node's (`CarriedImport`). Every act asks with -WhatIf and -Confirm and
+is audited; the rules are the runtime's (`xmip_operate.h` section 23),
+through `AuthorityCertificate`, the one `xmip certificate` uses.
 
 `Get-XmipDatabaseScript -Server <postgresql|mssql|mariadb> -From <version>`
 emits a `DatabaseScript` — its `Name`, `04-<domain>-upgrade-<from>-<to>.sql`,
@@ -87,7 +108,7 @@ writes them into a folder, made where missing, under `-WhatIf` and
 `-Confirm`, and nothing is overwritten. One that is none — before the first
 release, every one — is refused in the runtime's words. The scripts are the
 runtime's (`xmip_operate.h` section 20), reached through `RuntimeDatabases`
-and written by `DatabaseScripts` in `Xmip.Surface`, the ones `xmip-cli
+and written by `DatabaseScripts` in `Xmip.Surface`, the ones `xmip
 database` uses. The schema version each database holds is a node's health
 record, `Get-XmipHealth xmip:///<cluster>/node/<node>/storage/*`, and which
 Storage the node uses and whether it answers is the one above them,
@@ -170,7 +191,7 @@ loaded, no publication read yet — writes a non-terminating error,
 `XmipFailedJourneysNotListed`, saying `NOT LISTED:` and that whether any wait
 is not known, not that none do; one that asked and Xmip Storage did not
 answer writes `XmipFailedJourneysUnanswered`, saying `FAILED:` in the
-runtime's words (`FailedJourneyError`) — the sentences `xmip-cli journey` says
+runtime's words (`FailedJourneyError`) — the sentences `xmip journey` says
 (`JourneyOperation.Unlisted`).
 `Get-XmipScope -Scope <Send Port or node scope> -Journey <id>
 -Retry|-Dismiss -Who <name>`, with `-WhatIf` and
@@ -184,7 +205,7 @@ Each act is also recorded in this module's own audit, as every act of a
 cmdlet is. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
 tests over them.
 
-**`-Follow` keeps answering**, as `xmip-cli --follow` does: `Get-XmipHealth
+**`-Follow` keeps answering**, as `xmip --follow` does: `Get-XmipHealth
 -Scope <scope> -Follow` and `Get-XmipScope [-Scope <scope>] -Follow` write the
 answer now, then again each time the publication advances and the answer
 changed, until Ctrl+C. The loop, the rematching of a wildcard at every change
@@ -198,10 +219,10 @@ cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
 `AbiBoundaries`, `AuditEntry`, `SubscriptionRecord`, `EventSubscriptionRecord`,
 `DeadMessageRecord` (and a list view that opens one) and each noun's
 operation, `JourneyOperation` among them. A mood, an age and the figures in a column are the words
-`English` in `Xmip.Surface` says, the words `xmip-cli` and the web views say;
+`English` in `Xmip.Surface` says, the words `xmip` and the web views say;
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 
-**The cmdlets read the surface `xmip-cli` reads** (ADR-0052 clause 1). The
+**The cmdlets read the surface `xmip` reads** (ADR-0052 clause 1). The
 four that take a `-Scope` take `-Remote`, `-Local`, `-Snapshot` and
 `-Library` as the executable takes `--remote`, `--local`, `--snapshot` and
 `--runtime`, in the same order — a node's operate address on another
@@ -214,7 +235,7 @@ by the executable's own `ScopeSelection`: each topmost scope it names is
 answered in turn and none is rolled up with another, and a pattern that names
 nothing is a non-terminating error that says REFUSED, the pattern and what
 there is. `Test-XmipNodeConfiguration -Library` finds its runtime the same
-way `xmip-cli validate --runtime` does. Until 2026-09-24 every one of them
+way `xmip validate --runtime` does. Until 2026-09-24 every one of them
 demanded `-Library`, loaded the binding itself and took a scope literally.
 
 The public contract is the cmdlet names and the shape of the objects they
@@ -310,7 +331,7 @@ cannot.
 `Get-XmipAudit` reads that file back — every program's records in it, not
 only this module's — through the audit capability's one reader
 (`ProgramAudit.Read` in `Xmip.Surface`, over `xmip_audit_read_v1`; ADR-0062,
-amendment 2026-09-29), the reader `xmip-cli audit` and the web's Audit view
+amendment 2026-09-29), the reader `xmip audit` and the web's Audit view
 call. It emits each `AuditEntry` whole, newest first:
 
 ```powershell
@@ -339,7 +360,7 @@ of programs that declared no location on that machine — and `-AuditId` one
 record, which also binds from the pipeline. `-From` and `-To` are
 `[datetime]`: Get-Date's local time is converted to UTC, and a time with no
 kind, `[datetime]'2026-09-29'`, is UTC, as the capability reads a time with
-no zone and as `xmip-cli audit --from 2026-09-29` means it. Paging is
+no zone and as `xmip audit --from 2026-09-29` means it. Paging is
 PowerShell's own: `-First` is the page (the capability's 100 when omitted,
 1000 at most), `-Skip` where it starts, `-IncludeTotalCount` how many matched.
 Tab offers `-Severity`, `-Sort` and `-Action` the words the capability
@@ -349,7 +370,7 @@ no audit directory stated there is nothing to read, and it ends saying so
 (`XmipAuditDirectoryUnstated`). What a run that declared itself hidden
 recorded — an assistant's test run, `Start-XmipTest -Hidden` — is left out
 unless `-IncludeHidden` is given, and then each such `AuditEntry` says
-`Hidden` (ADR-0028, amendment 2026-09-30); `xmip-cli audit
+`Hidden` (ADR-0028, amendment 2026-09-30); `xmip audit
 --include-hidden` and the views' "show test clusters" box ask the same.
 
 ## Seeing it
@@ -390,7 +411,7 @@ C2` shows C2 and not the C1 the shipped document names (ADR-0052,
 amendment 2026-09-18). A roll started in another session is followed by
 writing its file into `xmip.powershell.toml`.
 
-The executable reads the same file: `xmip-cli show xmip:///C1` from the cli's
+The executable reads the same file: `xmip show xmip:///C1` from the cli's
 build directory answers with the same figures, because its `xmip.cli.toml`
 ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 
