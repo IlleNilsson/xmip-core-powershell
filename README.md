@@ -89,7 +89,12 @@ release, every one — is refused in the runtime's words. The scripts are the
 runtime's (`xmip_operate.h` section 20), reached through `RuntimeDatabases`
 and written by `DatabaseScripts` in `Xmip.Surface`, the ones `xmip-cli
 database` uses. The schema version each database holds is a node's health
-record, `Get-XmipHealth xmip:///<cluster>/node/<node>/storage/*`.
+record, `Get-XmipHealth xmip:///<cluster>/node/<node>/storage/*`, and which
+Storage the node uses and whether it answers is the one above them,
+`Get-XmipHealth xmip:///<cluster>/node/<node>/storage`: Fine, or Done where
+no Storage node answered, each named with what it last came to; on a Storage
+node, whether it is the primary or a standby (ADR-0056, amendment
+2026-10-22).
 
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
