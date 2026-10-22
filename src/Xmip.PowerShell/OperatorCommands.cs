@@ -7,7 +7,7 @@ namespace Xmip.PowerShell;
 // The cmdlets that reach a running Xmip. ADR-0027 said the three in
 // Commands.cs describe the binding and none of them talks to a runtime; these
 // read through Xmip.Surface, the model the executable and the GUI read, so a
-// cmdlet and `xmip-cli` answer one question from one surface in one way
+// cmdlet and `xmip` answer one question from one surface in one way
 // (ADR-0052 clause 1). Objects out, never text.
 
 /// <summary>
@@ -17,7 +17,7 @@ namespace Xmip.PowerShell;
 /// Worst first. Each record is the publisher's own — a state, how far from
 /// healthy, the one line of evidence, and when it was observed, so a stalled
 /// publisher is not mistaken for an idle estate (ADR-0027 clause 6). The
-/// surface is the one <c>xmip-cli health</c> reads, and a scope may be a
+/// surface is the one <c>xmip health</c> reads, and a scope may be a
 /// wildcard, answered for each topmost scope it names and never rolled up
 /// together (ADR-0041).
 /// </remarks>
@@ -37,7 +37,7 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
     /// <summary>
     /// <para type="description">Keep answering: the records now, then again
     /// each time the publication advances and they changed, until Ctrl+C —
-    /// what xmip-cli health --follow does. A wildcard is matched again at
+    /// what xmip health --follow does. A wildcard is matched again at
     /// every change. Follows the first scope named.</para>
     /// </summary>
     [Parameter]
@@ -90,7 +90,7 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// explains it and that leaf's evidence, and its six figures.</para>
 /// </summary>
 /// <remarks>
-/// The drill, in PowerShell: the same <see cref="ScopeItem"/> <c>xmip-cli
+/// The drill, in PowerShell: the same <see cref="ScopeItem"/> <c>xmip
 /// show</c> and <c>list</c> render and the web views draw (ADR-0052). With no
 /// scope it is the cluster; a wildcard names several, so
 /// <c>-Scope xmip:///&lt;cluster&gt;/*</c> is every scope directly beneath the cluster,
@@ -103,9 +103,9 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// that failed and the acts on one are parameters here rather than cmdlets
 /// of their own: <c>-FailedJourney</c> lists every one at or beneath the
 /// scope, a page of each Port from <c>-Offset</c>, at most <c>-Limit</c>, as
-/// <c>xmip-cli journey</c> lists them; <c>-Journey &lt;id&gt; -Retry</c> or
+/// <c>xmip journey</c> lists them; <c>-Journey &lt;id&gt; -Retry</c> or
 /// <c>-Dismiss</c>, with -WhatIf and -Confirm, on the Send Port's scope or
-/// its node's, emits the <see cref="JourneyOperation"/> <c>xmip-cli
+/// its node's, emits the <see cref="JourneyOperation"/> <c>xmip
 /// journey</c> renders.</para>
 /// </remarks>
 [Cmdlet(
@@ -137,7 +137,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// <summary>
     /// <para type="description">Keep answering: the rows now, then again each
     /// time the publication advances and they changed, until Ctrl+C — what
-    /// xmip-cli --follow does. A wildcard is matched again at every change.
+    /// xmip --follow does. A wildcard is matched again at every change.
     /// Follows the first scope named.</para>
     /// </summary>
     [Parameter(ParameterSetName = ReadSet)]
@@ -258,7 +258,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     // The Journeys that failed at or beneath each scope named — the cluster
     // the surface publishes where none is — one row each, and only for an
     // answer: a surface that cannot list them, or asked and was not answered,
-    // says so as a non-terminating error in the words xmip-cli says it with.
+    // says so as a non-terminating error in the words xmip says it with.
     private void Failed()
     {
         foreach (string scope in Scope.Length == 0 ? [Surface.Root()] : Scope)

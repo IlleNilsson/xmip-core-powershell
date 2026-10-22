@@ -10,7 +10,7 @@ namespace Xmip.PowerShell;
 /// </summary>
 /// <remarks>
 /// One cmdlet for the noun, the act a parameter on it (ADR-0014, amendment
-/// 2026-09-15; ADR-0052, amendment 2026-10-01), as <c>xmip-cli
+/// 2026-09-15; ADR-0052, amendment 2026-10-01), as <c>xmip
 /// dead-messages</c> takes it as an option. Each entry is an accepted Message
 /// kept in the Ledger with its receive context, its gate verdicts, its
 /// promoted properties and every Subscription's decline; it is not a dead

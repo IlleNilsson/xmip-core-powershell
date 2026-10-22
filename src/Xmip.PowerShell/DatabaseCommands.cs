@@ -17,7 +17,7 @@ namespace Xmip.PowerShell;
 /// <c>04-&lt;domain&gt;-upgrade-&lt;from&gt;-&lt;to&gt;.sql</c>, for IT to run as
 /// the schema's owner — written into <c>-Path</c> where one is given, nothing
 /// overwritten. The scripts are the runtime's, reached through the
-/// <see cref="RuntimeDatabases"/> <c>xmip-cli database</c> uses, and written
+/// <see cref="RuntimeDatabases"/> <c>xmip database</c> uses, and written
 /// by the <see cref="DatabaseScripts"/> it uses.
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipDatabaseScript", SupportsShouldProcess = true)]

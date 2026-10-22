@@ -12,7 +12,7 @@ namespace Xmip.PowerShell;
 /// document and publishes nothing (ADR-0027 clause 9). Test, because that is
 /// what it does — a document goes in, a verdict comes out, and nothing is
 /// applied. The verdict is the <see cref="ConfigurationVerdict"/>
-/// <c>xmip-cli validate</c> renders and the desktop decides from.
+/// <c>xmip validate</c> renders and the desktop decides from.
 /// </remarks>
 [Cmdlet(VerbsDiagnostic.Test, "XmipNodeConfiguration")]
 [OutputType(typeof(ConfigurationVerdict))]

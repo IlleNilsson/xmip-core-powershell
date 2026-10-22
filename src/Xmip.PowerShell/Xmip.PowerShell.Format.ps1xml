@@ -4,7 +4,7 @@
   operator (ADR-0014: every operator object is typed and has a table view),
   so the console reads at a glance and Format-List still shows everything.
 
-  A word in a column is Xmip.Surface English's, the words xmip-cli and the
+  A word in a column is Xmip.Surface English's, the words xmip and the
   web views say: a mood by English.Mood, an age by English.Age, the figures
   by English.Figures. Nothing here writes a word of its own. An outcome is a
   word, OK or REFUSED, never a color alone. A long free-text or path field
@@ -193,6 +193,178 @@
             <TableColumnItems>
               <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Certificate</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.AuthorityState</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.AuthorityState</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Subject</Label><Width>30</Width></TableColumnHeader>
+          <TableColumnHeader><Label>NotAfter</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Revoked</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Fingerprint</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Subject</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>NotAfter</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Revoked</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Fingerprint</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.AuthorityRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.AuthorityRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Serial</Label><Width>34</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Subject</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Purpose</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>NotAfter</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Standing</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Serial</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Subject</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Purpose</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>NotAfter</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Standing</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.CertificateStanding</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.CertificateStanding</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Subject</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>NotAfter</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>RenewAt</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Standing</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Subject</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>NotAfter</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>RenewAt</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Standing</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.AuthorityExport</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.AuthorityExport</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Format</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Written</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Format</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Written</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.CarriedRequest</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.CarriedRequest</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Node</Label><Width>12</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Request</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Request</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.CarriedSigned</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.CarriedSigned</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Serial</Label><Width>34</Width></TableColumnHeader>
+          <TableColumnHeader><Label>NotAfter</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Written</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Serial</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>NotAfter</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Written</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.CarriedImport</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.CarriedImport</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Serial</Label><Width>34</Width></TableColumnHeader>
+          <TableColumnHeader><Label>RenewAt</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Certificate</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Ok) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Serial</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>RenewAt</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Certificate</PropertyName></TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
