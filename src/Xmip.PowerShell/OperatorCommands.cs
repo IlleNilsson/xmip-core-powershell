@@ -182,7 +182,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// <summary>
     /// <para type="description">Send the Journey again, its tries begun anew,
     /// from the end of its Send Port's queue — or from its place, where it
-    /// blocks a Sequential Send Port.</para>
+    /// blocks its sequence.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = RetrySet)]
     public SwitchParameter Retry { get; set; }
@@ -273,6 +273,11 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 
             foreach (FailedJourneyPort port in failed.Ports)
             {
+                if (port.Blocked)
+                {
+                    WriteWarning(Blocking(port));
+                }
+
                 WriteVerbose(
                     $"{port.Node} Send Port {port.SendPort}: {port.Count} failed in its queue"
                     + (port.Next is { } next
@@ -285,6 +290,15 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                 }
             }
         }
+    }
+
+    // A blocked key, said loud: every Journey of its key waits behind the
+    // first that failed until it is retried or dismissed (ADR-0024,
+    // amendment 2026-10-27).
+    private static string Blocking(FailedJourneyPort port)
+    {
+        return $"{port.Node} Send Port {port.SendPort} blocks its sequence: every Journey of "
+            + "its key waits behind the first that failed until it is retried or dismissed";
     }
 
     // An act names one Journey on one scope, no wildcard: the node that sends
