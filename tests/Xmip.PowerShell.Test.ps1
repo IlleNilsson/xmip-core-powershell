@@ -1651,3 +1651,43 @@ Describe 'Get-XmipDatabaseScript writes the upgrade between two schema versions'
         { Get-XmipDatabaseScript -Server mssql -From 0 -ErrorAction Stop } | Should -Throw
     }
 }
+
+Describe 'Set-XmipSecret sets a secret through a node and lists them, never a value' {
+    # ADR-0019, amendment 2026-10-29: a Location names its secret; the value
+    # is kept in the Administration Database and set through a node's
+    # operate listener. One cmdlet for the noun, listing a parameter on it.
+    BeforeAll {
+        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
+        $script:SecretPlace = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-secret-$stamp"
+        $script:SecretSnapshot = Join-Path $script:SecretPlace 'snapshot.toml'
+        New-Item -ItemType Directory -Path $script:SecretPlace | Out-Null
+        Set-Content -LiteralPath $script:SecretSnapshot -Value "node = `"$($script:Cluster.Scope)`""
+    }
+
+    AfterAll {
+        Remove-Item -LiteralPath $script:SecretPlace -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'takes a value as a secure string or a file, -List apart, and offers the kinds' {
+        $command = Get-Command -Name Set-XmipSecret
+        $command.ParameterSets.Name | Sort-Object | Should -Be @('List', 'Path', 'Value')
+        $command.Parameters['Value'].ParameterType | Should -Be ([System.Security.SecureString])
+        $command.Parameters.Keys | Should -Not -Contain 'Credential'
+        Get-Command -Name Get-XmipSecret -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        $offered = [Xmip.PowerShell.SecretKinds]::new().CompleteArgument(
+            'Set-XmipSecret', 'Kind', 'c', $null, @{})
+        $offered.CompletionText | Should -Be @('certificate')
+    }
+
+    It 'is refused in words by a surface that reaches no node, and -WhatIf sets nothing' {
+        [securestring] $drawn = ConvertTo-SecureString -String ([System.Guid]::NewGuid().ToString()) `
+            -AsPlainText -Force
+        Set-XmipSecret -Snapshot $script:SecretSnapshot -Name 'partner-x' -Kind 'password' `
+            -Value $drawn -WhatIf | Should -BeNullOrEmpty
+        { Set-XmipSecret -Snapshot $script:SecretSnapshot -Name 'partner-x' -Kind 'password' `
+                -Value $drawn -Confirm:$false -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage '*reaches no node to set a secret*'
+        { Set-XmipSecret -Snapshot $script:SecretSnapshot -List -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage '*lists no secrets*'
+    }
+}
