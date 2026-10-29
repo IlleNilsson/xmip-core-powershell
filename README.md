@@ -170,6 +170,18 @@ opens a Journey for each match and takes it out of the queue, once; a
 Message that still matches nothing stays, and the Replay is refused in
 words. The node audits it as `dead-message.replay`.
 
+`Set-XmipSecret -Name <name> -Kind password|key|certificate -Value <secure
+string>` sets the secret a Location presents to the party it connects to, the
+one its `secret = "<name>"` names (ADR-0019, amendment 2026-10-29); `-Path
+<file>` in place of `-Value` reads a key's or a certificate's PEM, and
+`-Location <node scope>` names the node it is set through, the one the surface
+reaches where omitted, with `-WhatIf` and `-Confirm`, emitting the
+`SecretOperation`. The node keeps it in the Xmip Administration Database,
+sealed at rest, and a Location naming it presents it as it next connects; the
+act is admitted by role and audited with the name, never the value.
+`Set-XmipSecret -List` emits each `SecretRecord` — name, kind, when and by
+whom it was set — and never a value: no surface reads one back out.
+
 The Journeys that failed (runtime-model.md section 13; ADR-0013) are listed
 and acted on through `Get-XmipScope`, where they are seen, rather than
 cmdlets of their own: a Send Port's row, at `<node>/send/<Port>`, says in

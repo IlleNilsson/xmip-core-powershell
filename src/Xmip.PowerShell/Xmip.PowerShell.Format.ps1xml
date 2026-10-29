@@ -726,6 +726,52 @@
       </TableControl>
     </View>
     <View>
+      <Name>Xmip.Surface.SecretOperation</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.SecretOperation</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Outcome</Label><Width>7</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Result</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.SecretRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.SecretRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Name</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Kind</Label><Width>11</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Set</Label><Width>25</Width></TableColumnHeader>
+          <TableColumnHeader><Label>SetBy</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Kind</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Set</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>SetBy</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
       <Name>Xmip.Abi.Operate.FailedJourneyRecord</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Abi.Operate.FailedJourneyRecord</TypeName>
