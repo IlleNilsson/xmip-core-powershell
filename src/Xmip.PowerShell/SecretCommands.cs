@@ -13,7 +13,7 @@ namespace Xmip.PowerShell;
 /// A Location that connects to a party names its proof with
 /// <c>secret = "&lt;name&gt;"</c>; the secret itself is never in the TOML. It
 /// is kept in the Xmip Administration Database, in a table of its own,
-/// sealed at rest on an embedded Storage node, and read as the Location next
+/// its value sealed by Xmip whatever store keeps it, and read as the Location next
 /// connects — no restart (ADR-0019, amendment 2026-10-29). Its kinds:
 /// password, key (an SSH private key, OpenSSH's form, unencrypted) and
 /// certificate (a PEM chain, leaf first, with its private key). One cmdlet
