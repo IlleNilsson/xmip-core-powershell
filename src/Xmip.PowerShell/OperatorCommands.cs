@@ -98,23 +98,23 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// scope to ask about on the way to the cause. Until 2026-09-26 the module
 /// had no row and no figure: <c>Get-XmipHealth</c> answered with every leaf
 /// beneath a scope, thousands for one node.
-/// <para>A Send Port's row says, in its evidence, how many Journeys failed
-/// there and the last with why (runtime-model.md section 13). The Journeys
+/// <para>A Send Port's row says, in its evidence, how many Messages failed
+/// there and the last with why (runtime-model.md section 13). The Messages
 /// that failed and the acts on one are parameters here rather than cmdlets
-/// of their own: <c>-FailedJourney</c> lists every one at or beneath the
+/// of their own: <c>-FailedMessage</c> lists every one at or beneath the
 /// scope, a page of each Port from <c>-Offset</c>, at most <c>-Limit</c>, as
-/// <c>xmip journey</c> lists them; <c>-Journey &lt;id&gt; -Retry</c> or
+/// <c>xmip message</c> lists them; <c>-Journey &lt;id&gt; -Retry</c> or
 /// <c>-Dismiss</c>, with -WhatIf and -Confirm, on the Send Port's scope or
-/// its node's, emits the <see cref="JourneyOperation"/> <c>xmip
-/// journey</c> renders.</para>
+/// its node's, emits the <see cref="MessageOperation"/> <c>xmip
+/// message</c> renders.</para>
 /// </remarks>
 [Cmdlet(
     VerbsCommon.Get, "XmipScope",
     DefaultParameterSetName = ReadSet,
     SupportsShouldProcess = true)]
 [OutputType(typeof(ScopeItem), ParameterSetName = [ReadSet])]
-[OutputType(typeof(JourneyOperation), ParameterSetName = [RetrySet, DismissSet])]
-[OutputType(typeof(FailedJourneyRecord), ParameterSetName = [FailedSet])]
+[OutputType(typeof(MessageOperation), ParameterSetName = [RetrySet, DismissSet])]
+[OutputType(typeof(FailedMessageRecord), ParameterSetName = [FailedSet])]
 public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 {
     private const string ReadSet = "Read";
@@ -127,7 +127,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// xmip:///&lt;cluster&gt;, or a wildcard over the scopes that exist, such
     /// as xmip:///&lt;cluster&gt;/node/*.
     /// Omitted, the cluster the surface publishes. With -Journey, the one
-    /// Send Port's scope where the Journey is said to have failed, such as
+    /// Send Port's scope where its Message is said to have failed, such as
     /// xmip:///&lt;cluster&gt;/node/&lt;node&gt;/send/&lt;Port&gt;, or its node's.</para>
     /// </summary>
     [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
@@ -144,7 +144,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     public SwitchParameter Follow { get; set; }
 
     /// <summary>
-    /// <para type="description">The Journeys that failed at the Send Ports at
+    /// <para type="description">The Messages that failed at the Send Ports at
     /// or beneath the scope, oldest first, each with its Send Port and why:
     /// read from Xmip Storage where the node runs in this process, or the
     /// oldest of each Port its publication carries, its
@@ -152,12 +152,12 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// each Port, and where its next page starts, are said with -Verbose.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = FailedSet)]
-    public SwitchParameter FailedJourney { get; set; }
+    public SwitchParameter FailedMessage { get; set; }
 
     /// <summary>
     /// <para type="description">Where each Send Port's page starts, 0 the
     /// oldest when omitted. Read from Xmip Storage, a place in the Port's
-    /// index of failed Journeys, as the last page's next said; read from a
+    /// index of failed Messages, as the last page's next said; read from a
     /// publication, which carries only its node's window and no places in
     /// the index, a place in the Port's queue, and no next follows.</para>
     /// </summary>
@@ -165,22 +165,22 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     public ulong Offset { get; set; }
 
     /// <summary>
-    /// <para type="description">The most Journeys of each Send Port. A
+    /// <para type="description">The most Messages of each Send Port. A
     /// hundred when omitted.</para>
     /// </summary>
     [Parameter(ParameterSetName = FailedSet)]
     public uint Limit { get; set; }
 
     /// <summary>
-    /// <para type="description">A Journey that failed, by its identifier, as
-    /// its Send Port's row says it: the one -Retry or -Dismiss acts on.</para>
+    /// <para type="description">The Journey of a Message that failed, by its identifier,
+    /// as its Send Port's row says it: the one -Retry or -Dismiss acts on.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = RetrySet)]
     [Parameter(Mandatory = true, ParameterSetName = DismissSet)]
     public string? Journey { get; set; }
 
     /// <summary>
-    /// <para type="description">Send the Journey again, its tries begun anew,
+    /// <para type="description">Send the Message again, its tries begun anew,
     /// from the end of its Send Port's queue — or from its place, where it
     /// blocks its sequence.</para>
     /// </summary>
@@ -188,7 +188,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     public SwitchParameter Retry { get; set; }
 
     /// <summary>
-    /// <para type="description">Give the Journey up: written Dismissed, its
+    /// <para type="description">Give the Message up: written Dismissed, its
     /// history, Message and Stream kept, and taken out of its Send Port's
     /// queue.</para>
     /// </summary>
@@ -196,7 +196,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     public SwitchParameter Dismiss { get; set; }
 
     /// <summary>
-    /// <para type="description">Who acts on the Journey, as the node's audit
+    /// <para type="description">Who acts on the Message, as the node's audit
     /// records it. The current user when omitted.</para>
     /// </summary>
     [Parameter(ParameterSetName = RetrySet)]
@@ -215,7 +215,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 
         if (ParameterSetName != ReadSet)
         {
-            Act(ParameterSetName == RetrySet ? JourneyAct.Retry : JourneyAct.Dismiss);
+            Act(ParameterSetName == RetrySet ? MessageAct.Retry : MessageAct.Dismiss);
 
             return;
         }
@@ -255,7 +255,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
         }
     }
 
-    // The Journeys that failed at or beneath each scope named — the cluster
+    // The Messages that failed at or beneath each scope named — the cluster
     // the surface publishes where none is — one row each, and only for an
     // answer: a surface that cannot list them, or asked and was not answered,
     // says so as a non-terminating error in the words xmip says it with.
@@ -263,15 +263,15 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     {
         foreach (string scope in Scope.Length == 0 ? [Surface.Root()] : Scope)
         {
-            FailedJourneyList failed = Surface.FailedJourneys(scope, Offset, Limit);
+            FailedMessageList failed = Surface.FailedMessages(scope, Offset, Limit);
 
-            if (FailedJourneyError.Of(failed, scope, Surface.Source) is { } unlisted)
+            if (FailedMessageError.Of(failed, scope, Surface.Source) is { } unlisted)
             {
                 Refuse(unlisted);
                 continue;
             }
 
-            foreach (FailedJourneyPort port in failed.Ports)
+            foreach (FailedMessagePort port in failed.Ports)
             {
                 if (port.Blocked)
                 {
@@ -284,7 +284,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                         ? $"; the next page from -Offset {next}"
                         : string.Empty));
 
-                foreach (FailedJourneyRecord journey in port.Journeys)
+                foreach (FailedMessageRecord journey in port.Messages)
                 {
                     WriteObject(journey);
                 }
@@ -292,49 +292,49 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
         }
     }
 
-    // A blocked key, said loud: every Journey of its key waits behind the
+    // A blocked key, said loud: every Message of its key waits behind the
     // first that failed until it is retried or dismissed (ADR-0024,
     // amendment 2026-10-27).
-    private static string Blocking(FailedJourneyPort port)
+    private static string Blocking(FailedMessagePort port)
     {
-        return $"{port.Node} Send Port {port.SendPort} blocks its sequence: every Journey of "
+        return $"{port.Node} Send Port {port.SendPort} blocks its sequence: every Message of "
             + "its key waits behind the first that failed until it is retried or dismissed";
     }
 
-    // An act names one Journey on one scope, no wildcard: the node that sends
+    // An act names one Message on one scope, no wildcard: the node that sends
     // its Send Port, or the Port's scope beneath it.
-    private void Act(JourneyAct act)
+    private void Act(MessageAct act)
     {
         string journey = Journey ?? string.Empty;
-        string target = $"the Journey {journey} sent at {string.Join(", ", Scope)}";
+        string target = $"the Message of the Journey {journey} sent at {string.Join(", ", Scope)}";
 
         if (Scope is not [var scope] || WildcardPattern.ContainsWildcardCharacters(scope))
         {
             Refuse(new ErrorRecord(
                 new ArgumentException(
-                    $"REFUSED: to {JourneyOperation.Word(act)} {target}, name one scope: the "
+                    $"REFUSED: to {MessageOperation.Word(act)} {target}, name one scope: the "
                     + "Send Port's, such as xmip:///<cluster>/node/<node>/send/<Port>, or its "
                     + "node's."),
-                "XmipJourneyScopeRefused",
+                "XmipMessageScopeRefused",
                 ErrorCategory.InvalidArgument,
                 target));
 
             return;
         }
 
-        if (!ShouldProcess(target, JourneyOperation.Word(act)))
+        if (!ShouldProcess(target, MessageOperation.Word(act)))
         {
             return;
         }
 
         Acting(target);
-        JourneyOperation done = Surface.Act(scope, journey, act, ScopeOperation.Who(Who));
+        MessageOperation done = Surface.Act(scope, journey, act, ScopeOperation.Who(Who));
 
         if (!done.Applied)
         {
             Refuse(new ErrorRecord(
                 new InvalidOperationException(done.Result),
-                "XmipJourneyActRefused",
+                "XmipMessageActRefused",
                 ErrorCategory.InvalidOperation,
                 target));
 

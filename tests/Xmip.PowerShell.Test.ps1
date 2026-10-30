@@ -1358,13 +1358,13 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
     }
 }
 
-Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses one' {
-    # runtime-model.md section 13: a Send Port's row says the last Journey
+Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses one' {
+    # runtime-model.md section 13: a Send Port's row says the last Message
     # that failed there; Retry and Dismiss are parameters on the scope's
     # cmdlet, not a cmdlet of their own.
     BeforeAll {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-journey-$stamp"
+        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-message-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
         $script:Sending = "$($script:Cluster.Scope)/node/$($script:Sender)"
@@ -1375,17 +1375,17 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
             "node = `"$($script:Cluster.Scope)`""
             "orders = '$script:Orders'"
             ''
-            '[[failed_journeys]]'
+            '[[failed_messages]]'
             "node = `"$($script:Sending)`""
             'send_port = "invoices"'
             'count = 2'
             ''
-            '[[failed_journeys.journeys]]'
+            '[[failed_messages.messages]]'
             'journey = "j-1"'
             'sequence = 3'
             'reason = "invoices: the far end refused it"'
             ''
-            '[[failed_journeys.journeys]]'
+            '[[failed_messages.messages]]'
             'journey = "j-2"'
             'sequence = 7'
             'reason = "invoices: refused again"'
@@ -1396,49 +1396,49 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
         Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    It 'lists every Journey that failed at a scope, paged by -Offset and -Limit' {
-        $failed = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Sending -FailedJourney)
+    It 'lists every Message that failed at a scope, paged by -Offset and -Limit' {
+        $failed = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Sending -FailedMessage)
 
         $failed.Count | Should -Be 2
-        $failed[0] | Should -BeOfType ([Xmip.Abi.Operate.FailedJourneyRecord])
+        $failed[0] | Should -BeOfType ([Xmip.Abi.Operate.FailedMessageRecord])
         $failed[0].Journey | Should -Be 'j-1'
         $failed[0].SendPort | Should -Be 'invoices'
         $failed[0].Reason | Should -Be 'invoices: the far end refused it'
 
         $paged = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Port `
-            -FailedJourney -Offset 4 -Limit 1)
+            -FailedMessage -Offset 4 -Limit 1)
         $paged.Journey | Should -Be @('j-2')
-        Get-FormatData -TypeName 'Xmip.Abi.Operate.FailedJourneyRecord' |
+        Get-FormatData -TypeName 'Xmip.Abi.Operate.FailedMessageRecord' |
             Should -Not -BeNullOrEmpty
     }
 
     It 'says NOT LISTED and FAILED as non-terminating errors, in the words xmip says' {
         # A surface that cannot list them, and one that asked and was not
-        # answered: the error Get-XmipScope -FailedJourney writes for each.
-        $notListed = [Xmip.PowerShell.FailedJourneyError]::Of(
-            [Xmip.Abi.Operate.FailedJourneyList]::Unlisted, $script:Port, 'REMOTE — lost')
-        $notListed.FullyQualifiedErrorId | Should -Be 'XmipFailedJourneysNotListed'
+        # answered: the error Get-XmipScope -FailedMessage writes for each.
+        $notListed = [Xmip.PowerShell.FailedMessageError]::Of(
+            [Xmip.Abi.Operate.FailedMessageList]::Unlisted, $script:Port, 'REMOTE — lost')
+        $notListed.FullyQualifiedErrorId | Should -Be 'XmipFailedMessagesNotListed'
         $notListed.CategoryInfo.Category | Should -Be 'ResourceUnavailable'
         $notListed.Exception.Message | Should -Be (
-            'NOT LISTED: REMOTE — lost cannot list the Journeys that failed, so whether any ' +
+            'NOT LISTED: REMOTE — lost cannot list the Messages that failed, so whether any ' +
             "wait at or beneath $($script:Port) is not known — not that none do.")
 
-        $failed = [Xmip.PowerShell.FailedJourneyError]::Of(
-            [Xmip.Abi.Operate.FailedJourneyList]::Unanswered('Xmip Storage is not open'),
+        $failed = [Xmip.PowerShell.FailedMessageError]::Of(
+            [Xmip.Abi.Operate.FailedMessageList]::Unanswered('Xmip Storage is not open'),
             $script:Port, 'LOCAL')
-        $failed.FullyQualifiedErrorId | Should -Be 'XmipFailedJourneysUnanswered'
+        $failed.FullyQualifiedErrorId | Should -Be 'XmipFailedMessagesUnanswered'
         $failed.CategoryInfo.Category | Should -Be 'ReadError'
         $failed.Exception.Message | Should -Be 'FAILED: Xmip Storage is not open'
 
         # An answer is no error, none failing among them: no object, and nothing said.
-        [Xmip.PowerShell.FailedJourneyError]::Of(
-            [Xmip.Abi.Operate.FailedJourneyList]::new(
-                '', [Xmip.Abi.Operate.FailedJourneyPort[]]@(), $true, ''),
+        [Xmip.PowerShell.FailedMessageError]::Of(
+            [Xmip.Abi.Operate.FailedMessageList]::new(
+                '', [Xmip.Abi.Operate.FailedMessagePort[]]@(), $true, ''),
             $script:Port, 'SNAPSHOT') |
             Should -BeNullOrEmpty
         [object[]] $none = @()
         $quiet = @(Get-XmipScope -Snapshot $script:Published `
-            -Scope "$($script:Sending)/send/nothing" -FailedJourney -ErrorVariable none)
+            -Scope "$($script:Sending)/send/nothing" -FailedMessage -ErrorVariable none)
         $quiet.Count | Should -Be 0
         $none.Count | Should -Be 0
     }
@@ -1453,7 +1453,7 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
         $done = Get-XmipScope -Snapshot $script:Published -Scope $script:Port -Journey 'j-1' `
             -Retry -Who 'ilian' -Confirm:$false
 
-        $done | Should -BeOfType ([Xmip.Surface.JourneyOperation])
+        $done | Should -BeOfType ([Xmip.Surface.MessageOperation])
         $done.Applied | Should -BeTrue
         $done.Node | Should -Be $script:Sending
         $done.Result | Should -BeLike "*left for $($script:Sender)*"
@@ -1462,9 +1462,9 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
 
         $dismissed = Get-XmipScope -Snapshot $script:Published -Scope $script:Sending `
             -Journey 'j-1' -Dismiss -Confirm:$false
-        $dismissed.Act | Should -Be ([Xmip.Surface.JourneyAct]::Dismiss)
+        $dismissed.Act | Should -Be ([Xmip.Surface.MessageAct]::Dismiss)
         @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.toml').Count | Should -Be 1
-        Get-FormatData -TypeName 'Xmip.Surface.JourneyOperation' | Should -Not -BeNullOrEmpty
+        Get-FormatData -TypeName 'Xmip.Surface.MessageOperation' | Should -Not -BeNullOrEmpty
     }
 
     It 'refuses an act on a wildcard or a scope on no node, in words' {
@@ -1472,13 +1472,13 @@ Describe 'Get-XmipScope lists the Journeys that failed and retries or dismisses 
             Get-XmipScope -Snapshot $script:Published -Scope "$($script:Sending)/send/*" `
                 -Journey 'j-1' -Dismiss -Confirm:$false -ErrorAction Stop
         } | Should -Throw -PassThru
-        $wildcard.FullyQualifiedErrorId | Should -BeLike 'XmipJourneyScopeRefused*'
+        $wildcard.FullyQualifiedErrorId | Should -BeLike 'XmipMessageScopeRefused*'
 
         $nowhere = {
             Get-XmipScope -Snapshot $script:Published -Scope $script:Cluster.Scope `
                 -Journey 'j-1' -Retry -Confirm:$false -ErrorAction Stop
         } | Should -Throw -PassThru
-        $nowhere.FullyQualifiedErrorId | Should -BeLike 'XmipJourneyActRefused*'
+        $nowhere.FullyQualifiedErrorId | Should -BeLike 'XmipMessageActRefused*'
         $nowhere.Exception.Message | Should -BeLike 'REFUSED*'
     }
 }

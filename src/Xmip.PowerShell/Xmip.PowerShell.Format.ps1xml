@@ -772,9 +772,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.FailedJourneyRecord</Name>
+      <Name>Xmip.Abi.Operate.FailedMessageRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.FailedJourneyRecord</TypeName>
+        <TypeName>Xmip.Abi.Operate.FailedMessageRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -796,9 +796,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Surface.JourneyOperation</Name>
+      <Name>Xmip.Surface.MessageOperation</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Surface.JourneyOperation</TypeName>
+        <TypeName>Xmip.Surface.MessageOperation</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
