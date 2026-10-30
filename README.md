@@ -155,7 +155,7 @@ act by its Node and Id. The node audits an act as `event.pause`,
 `Get-XmipDeadMessage` lists what each node's Dead Message Queue keeps
 (ADR-0052, amendment 2026-10-01): every accepted Message that no
 Subscription matched, kept in the Ledger with its receive context. It is not
-a dead letter queue: a failed Journey never goes there.
+a dead letter queue: a failed Message never goes there.
 `Get-XmipDeadMessage -Pattern <pattern> -Location <scope> -Message <id>
 -Sort <column> -Descending` emits each `DeadMessageRecord` — its node, the
 Message's identifier, its place in the queue, the Receive Location it arrived
@@ -182,36 +182,36 @@ act is admitted by role and audited with the name, never the value.
 `Set-XmipSecret -List` emits each `SecretRecord` — name, kind, when and by
 whom it was set — and never a value: no surface reads one back out.
 
-The Journeys that failed (runtime-model.md section 13; ADR-0013) are listed
+The Messages that failed (runtime-model.md section 13; ADR-0013) are listed
 and acted on through `Get-XmipScope`, where they are seen, rather than
 cmdlets of their own: a Send Port's row, at `<node>/send/<Port>`, says in
 its evidence how many failed wait in its queue and the last that failed and
-why. `Get-XmipScope -Scope <cluster, node or Send Port scope> -FailedJourney
--Offset <place> -Limit <count>` emits each as a `FailedJourneyRecord` —
-identifier, Send Port, place and why — read from Xmip Storage where the
+why. `Get-XmipScope -Scope <cluster, node or Send Port scope> -FailedMessage
+-Offset <place> -Limit <count>` emits each as a `FailedMessageRecord` —
+its Journey's identifier, Send Port, place and why — read from Xmip Storage where the
 node runs in the process, or the oldest its publication carries
 (`[tuning] failed_window` of each Port, a hundred by default); `-Verbose`
 says each Port's count and where its next page starts. `-Offset` is a place
-in the Port's index of failed Journeys where they are read from Xmip
+in the Port's index of failed Messages where they are read from Xmip
 Storage, as the last page's next said; a publication carries only its
-node's window, each Journey with its place in the Port's queue and none in
+node's window, each Message with its place in the Port's queue and none in
 the index, so read from one `-Offset` is a place in the Port's queue and no
 next follows. Objects
 are emitted only for an answer, and an answer that lists none emits nothing
 and no error. A surface that cannot list them — no node reached, no runtime
 loaded, no publication read yet — writes a non-terminating error,
-`XmipFailedJourneysNotListed`, saying `NOT LISTED:` and that whether any wait
+`XmipFailedMessagesNotListed`, saying `NOT LISTED:` and that whether any wait
 is not known, not that none do; one that asked and Xmip Storage did not
-answer writes `XmipFailedJourneysUnanswered`, saying `FAILED:` in the
-runtime's words (`FailedJourneyError`) — the sentences `xmip journey` says
-(`JourneyOperation.Unlisted`).
+answer writes `XmipFailedMessagesUnanswered`, saying `FAILED:` in the
+runtime's words (`FailedMessageError`) — the sentences `xmip message` says
+(`MessageOperation.Unlisted`).
 `Get-XmipScope -Scope <Send Port or node scope> -Journey <id>
 -Retry|-Dismiss -Who <name>`, with `-WhatIf` and
-`-Confirm`, emits the `JourneyOperation`; a row piped from `Get-XmipScope`
+`-Confirm`, emits the `MessageOperation`; a row piped from `Get-XmipScope`
 gives the scope. Retry sends it again, its tries begun anew; Dismiss writes
 it Dismissed and takes it out of its Port's queue. One scope, no wildcard,
-or the act is refused in words. The node audits it as `journey.retry` or
-`journey.dismiss`.
+or the act is refused in words. The node audits it as `message.retry` or
+`message.dismiss`.
 
 Each act is also recorded in this module's own audit, as every act of a
 cmdlet is. `tests/Xmip.PowerShell.Test.ps1` holds the Pester
@@ -230,7 +230,7 @@ cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
 `ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning`,
 `AbiBoundaries`, `AuditEntry`, `SubscriptionRecord`, `EventSubscriptionRecord`,
 `DeadMessageRecord` (and a list view that opens one) and each noun's
-operation, `JourneyOperation` among them. A mood, an age and the figures in a column are the words
+operation, `MessageOperation` among them. A mood, an age and the figures in a column are the words
 `English` in `Xmip.Surface` says, the words `xmip` and the web views say;
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 

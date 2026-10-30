@@ -14,7 +14,7 @@ namespace Xmip.PowerShell;
 /// dead-messages</c> takes it as an option. Each entry is an accepted Message
 /// kept in the Ledger with its receive context, its gate verdicts, its
 /// promoted properties and every Subscription's decline; it is not a dead
-/// letter queue: a failed Journey never goes there. Which entries a call
+/// letter queue: a failed Message never goes there. Which entries a call
 /// selects and in what order is <see cref="DeadMessageQuery"/>'s, the one
 /// every surface asks, and how a Replay reaches the node whose queue keeps
 /// the Message is the surface's. Listing, objects out:
