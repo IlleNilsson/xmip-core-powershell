@@ -166,7 +166,7 @@ public sealed class GetXmipDeadMessageCommand : XmipSurfaceCommand
         }
 
         Acting(target);
-        DeadMessageOperation done = Surface.Act(one, act, ScopeOperation.Who(Who));
+        DeadMessageOperation done = Surface.Act(one, act, ScopeOperation.Who(Who), caller: null);
 
         if (!done.Applied)
         {

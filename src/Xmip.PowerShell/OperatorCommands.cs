@@ -328,7 +328,8 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
         }
 
         Acting(target);
-        MessageOperation done = Surface.Act(scope, journey, act, ScopeOperation.Who(Who));
+        MessageOperation done =
+            Surface.Act(scope, journey, act, ScopeOperation.Who(Who), caller: null);
 
         if (!done.Applied)
         {

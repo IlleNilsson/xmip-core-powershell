@@ -118,7 +118,8 @@ public sealed class SetXmipSecretCommand : XmipSurfaceCommand
         }
 
         Acting(target);
-        SecretOperation done = Surface.SetSecret(node, Name, Kind, value, ScopeOperation.Who(Who));
+        SecretOperation done = Surface.SetSecret(
+            node, Name, Kind, value, ScopeOperation.Who(Who), caller: null);
 
         if (!done.Applied)
         {
@@ -141,7 +142,7 @@ public sealed class SetXmipSecretCommand : XmipSurfaceCommand
 
         try
         {
-            secrets = Surface.Secrets(node);
+            secrets = Surface.Secrets(node, caller: null);
         }
         catch (InvalidOperationException refused)
         {
