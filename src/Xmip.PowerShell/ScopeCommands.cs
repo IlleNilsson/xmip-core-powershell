@@ -49,7 +49,7 @@ public abstract class XmipScopeCommand : XmipSurfaceCommand
                 }
 
                 Acting(scope);
-                ScopeOperation operation = Surface.Control(scope, Action, Actor);
+                ScopeOperation operation = Surface.Control(scope, Action, Actor, caller: null);
 
                 if (!operation.Applied)
                 {

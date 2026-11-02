@@ -181,7 +181,7 @@ public sealed class GetXmipSubscriptionCommand : XmipSurfaceCommand
         }
 
         Acting(target);
-        SubscriptionOperation done = Surface.Act(one, act, ScopeOperation.Who(Who));
+        SubscriptionOperation done = Surface.Act(one, act, ScopeOperation.Who(Who), caller: null);
 
         if (!done.Applied)
         {
