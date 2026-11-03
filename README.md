@@ -393,7 +393,7 @@ In a fresh pwsh, nothing imported yet, from the estate root:
 dotnet build module/core/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
-Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net10.0/Xmip.PowerShell.psd1
+Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net11.0/Xmip.PowerShell.psd1
 Start-XmipTest -Suite Playground -Cluster C1 -Test RoundTrip `
     -Nodes R1, P1, S1 `
     -NodeRole @{ R1 = 'receiving'; P1 = 'processing'; S1 = 'sending' }
@@ -429,11 +429,13 @@ ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 
 ## Runtime
 
-Compiled by the .NET 11 SDK, targeting net10.0 — ADR-0014's amendment
-of 2026-08-30. The SDK is the estate's; the target framework belongs to
-whoever loads the assembly, and this one loads into pwsh 7.6.7, which hosts
-.NET 10. Proven rather than assumed: the net11.0 build was refused by
-`Import-Module` on the platform shell. Follows pwsh upward when pwsh moves.
+Compiled by the .NET 11 SDK, targeting net11.0. The SDK is the estate's;
+the target framework belongs to whoever loads the assembly (ADR-0014,
+amendment 2026-08-30), and this one loads into pwsh 7.7, the floor, which
+hosts .NET 11 (amendment 2026-11-02). Until then it targeted net10.0, the
+runtime pwsh 7.6 hosted. It compiles against `Microsoft.PowerShell.SDK`,
+PowerShell 7's own surface, and takes nothing of it into the output: pwsh
+provides it.
 
 ## Dependencies
 
@@ -490,7 +492,7 @@ conformance rule the cli's probe exercises.
 **The suite builds into a temporary directory and imports from there.** A
 loaded binary module locks its own assembly: on 2026-09-03 a `dotnet build`
 here failed ten retries because a pwsh session opened the day before still held
-`bin/Debug/net10.0/Xmip.PowerShell.dll`. Testing out of `bin/` would make every
+`bin/Debug/net11.0/Xmip.PowerShell.dll`. Testing out of `bin/` would make every
 test run do that to the next build. The repository's own output is never
 loaded.
 

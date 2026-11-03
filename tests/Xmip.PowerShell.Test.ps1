@@ -1,5 +1,5 @@
 #requires -PSEdition Core
-#requires -Version 7.6.7
+#requires -Version 7.7.0
 
 <#
     The operator module had no tests, and ARCHITECTURE.md said it did.
@@ -22,7 +22,7 @@
 
     A loaded binary module locks its own assembly. On 2026-09-03 a `dotnet
     build` in this repository failed ten retries because a pwsh session started
-    the day before still held `bin/Debug/net10.0/Xmip.PowerShell.dll` — and the
+    the day before still held `bin/Debug/net11.0/Xmip.PowerShell.dll` — and the
     session belonged to the operator, not to the build.
 
     Running the tests out of `bin/` would make that worse: every test run would
@@ -131,9 +131,9 @@ Describe 'The module loads and exports what it says' {
     }
 
     It 'requires the PowerShell floor ADR-0021 states' {
-        # 7.6.7 Core. A binary module that loads on an older host is a module
+        # 7.7.0 Core. A binary module that loads on an older host is a module
         # that will fail somewhere less obvious than the import.
-        $script:Declared.PowerShellVersion | Should -Be '7.6.7'
+        $script:Declared.PowerShellVersion | Should -Be '7.7.0'
         $script:Declared.CompatiblePSEditions | Should -Contain 'Core'
     }
 }
