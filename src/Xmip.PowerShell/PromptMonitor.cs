@@ -29,7 +29,7 @@ public sealed record XmipPromptSegment(XmipPromptPart[] Parts)
 /// PowerShell's prompt function. The prompt thread never touches the runtime.
 /// </summary>
 /// <remarks>
-/// The surface the prompt reads is stated in <c>xmip.powershell.toml</c>
+/// The surface the prompt reads is stated in <c>powershell.xmip</c>
 /// beside the module, through the same keys and the same choice as the GUI
 /// hosts and the executable (ADR-0052 clause 3); nothing is guessed from an
 /// environment variable or a file in a temp directory. A document that names
