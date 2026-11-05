@@ -142,8 +142,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
     # ADR-0052 clause 3: the surface a host reads is stated in its
     # configuration, never guessed. The module's document ships beside it and
     # is read through the same choice as the GUI hosts and the executable.
-    It 'ships xmip.powershell.toml beside the module' {
-        [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
+    It 'ships powershell.xmip beside the module' {
+        [string] $document = Join-Path $script:Output 'powershell.xmip'
 
         Test-Path -LiteralPath $document | Should -BeTrue
         $document | Should -BeLike "*$([Xmip.PowerShell.ModuleSurface]::ConfigurationFile)"
@@ -157,9 +157,9 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # The same day: nothing to say is nothing on the line, as posh-git
         # outside a repository, so the segment shows once a snapshot is read.
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
         [Xmip.PowerShell.PromptMonitor]::Follow(
-            (Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.toml'))
+            (Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.xmip'))
         Start-Sleep -Milliseconds 500
         [string] $silent = -join @(& (Get-Item Function:\prompt).ScriptBlock)
         $silent | Should -Be 'provider> '
@@ -184,14 +184,14 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # published snapshot here loads the TOML reader and the configuration
         # abstractions in the session, which is what a prompt does.
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
-        [string] $document = Join-Path $script:Output 'xmip.powershell.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
+        [string] $document = Join-Path $script:Output 'powershell.xmip'
 
         [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
         $shipped = [Xmip.Surface.TomlDocument]::Read($document)
         [Xmip.Surface.SurfaceChoice]::IsChosen($shipped) |
             Should -BeTrue -Because 'the shipped document follows a roll'
-        $shipped['Xmip:Snapshot'] | Should -BeLike '*?-snapshot.toml'
+        $shipped['Xmip:Snapshot'] | Should -BeLike '*?-snapshot.xmip'
     }
 
     It 'follows the snapshot the session names, over the one the document ships' {
@@ -199,7 +199,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # the file the shipped document names. Start-XmipTest now says which
         # file its roll publishes, through this.
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
 
         [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
 
@@ -218,7 +218,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # The interval is the reader's own, between the two publications it
         # saw, because a published snapshot carries no clock for its counts.
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-rate-$stamp.toml"
+        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-rate-$stamp.xmip"
         [string] $name = $script:Cluster.Name
         [string] $scope = $script:Cluster.Scope
 
@@ -334,7 +334,7 @@ scope = "$scope/process"
 
         # posh-git's order, [main ≡ +0 ~1 -0]: what the prompt is at, its sign
         # when square, then the counts. At one node it is the node's name; at
-        # a cluster, the cluster's; the Playground's `node` segment names nothing.
+        # a cluster, the cluster's; the Essentials' `node` segment names nothing.
         [string] $cluster = $script:Cluster.Name
         [string] $node = $script:Cluster.Nodes[0]
         [string] $here = "$($script:Cluster.Scope)/node/$node"
@@ -489,9 +489,9 @@ scope = "$scope/process"
 
     It 'follows one roll and counts the others the session named beside it' {
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
         [string] $beside = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-c2.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-c2.xmip'
 
         # Named by the session, never counted from files on disk: a surface is
         # stated (ADR-0052 clause 3). The followed one among them is not an
@@ -641,7 +641,7 @@ Describe 'The cmdlets read the surface xmip reads' {
     # 2026-09-24 every cmdlet demanded -Library and took a scope literally.
     BeforeAll {
         [string] $script:Fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
     }
 
     It 'names no library as mandatory, and takes the scope first' {
@@ -704,7 +704,7 @@ Describe 'The cmdlets read the surface xmip reads' {
         # answered with every leaf beneath a scope. Get-XmipScope is the row
         # xmip show and list render; a row's Worst is the next step.
         [string] $cluster = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
         # The fixture is the test cluster's; its sending node holds the cause.
         [string] $leaf = "$($script:Cluster.Scope)/node/$script:Sender/send/tcp/json"
 
@@ -739,7 +739,7 @@ Describe 'The cmdlets read the surface xmip reads' {
         }
 
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-follow-$stamp.toml"
+        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-follow-$stamp.xmip"
         Copy-Item -LiteralPath $script:Fixture -Destination $moving
         [string] $manifest = Join-Path $script:Output 'Xmip.PowerShell.psd1'
 
@@ -804,7 +804,7 @@ observed_unix_nanos = 1789111688000000000
     }
 
     It 'ends with the reason when the surface named does not answer' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.toml'
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.xmip'
 
         { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } |
             Should -Throw -ExpectedMessage '*no file at*'
@@ -869,7 +869,7 @@ Describe 'Every failure and every act is audited' {
     # XMIP_AUDIT_DIRECTORY, set here for this process alone.
     BeforeAll {
         [string] $script:Fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.toml'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
         $script:WasAuditing = $env:XMIP_AUDIT_DIRECTORY
     }
 
@@ -889,7 +889,7 @@ Describe 'Every failure and every act is audited' {
 
         Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue | Out-Null
 
-        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.xmip') -Raw
         $text | Should -BeLike '*`[`[record`]`]*'
         $text | Should -BeLike '*program = "Xmip.PowerShell"*'
         $text | Should -BeLike '*action = "Get-XmipModuleDescriptor"*'
@@ -898,11 +898,11 @@ Describe 'Every failure and every act is audited' {
     }
 
     It 'records a terminating error once' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-snapshot.toml'
+        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-snapshot.xmip'
 
         { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } | Should -Throw
 
-        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.xmip') -Raw
         $text | Should -BeLike '*action = "Get-XmipHealth"*'
         $text | Should -BeLike '*phase = "Failure"*'
         ([regex]::Matches($text, '\[\[record\]\]')).Count | Should -Be 1
@@ -912,7 +912,7 @@ Describe 'Every failure and every act is audited' {
         Suspend-XmipScope -Snapshot $script:Fixture -Scope "xmip:///$script:Receiver" `
             -ErrorAction SilentlyContinue | Out-Null
 
-        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.xmip') -Raw
         $text | Should -BeLike '*action = "Suspend-XmipScope"*'
         $text | Should -BeLike '*phase = "Begin"*'
         $text | Should -BeLike '*phase = "Failure"*'
@@ -965,7 +965,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
     }
 
     It 'says a write left unfinished apart from the chain, and FAILED once sealed' {
-        [string] $file = Join-Path $script:Read 'audit.toml'
+        [string] $file = Join-Path $script:Read 'audit.xmip'
         [System.IO.File]::AppendAllText($file, "[[record]]`naudit_id = `"0")
 
         $open = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
@@ -1016,7 +1016,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
             "program = `"probe`"`nhost = `"H1`"`nprocess = `"7`"`n" +
             "location = `"$($script:Cluster.Scope)`"`nhidden = `"true`"`naction = `"start`"`n" +
             "phase = `"begin`"`nseverity = `"information`"`n`n"
-        Add-Content -LiteralPath (Join-Path $script:Read 'audit.toml') -Value $hidden -NoNewline
+        Add-Content -LiteralPath (Join-Path $script:Read 'audit.xmip') -Value $hidden -NoNewline
 
         @(Get-XmipAudit -Location $script:Cluster.Scope).Count | Should -Be 0
         $shown = @(Get-XmipAudit -Location $script:Cluster.Scope -IncludeHidden)
@@ -1044,7 +1044,7 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-event-subs-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
-        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
         Set-Content -LiteralPath $script:Published -Value @(
             "node = `"$($script:Cluster.Scope)`""
@@ -1123,7 +1123,7 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
         $done | Should -BeOfType ([Xmip.Surface.EventSubscriptionOperation])
         $done.Applied | Should -BeTrue
         $done.Result | Should -BeLike "*left for $second*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.xmip').
             Count | Should -Be 1
     }
 
@@ -1146,7 +1146,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-subs-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
-        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
 
         function Get-Entry {
@@ -1160,7 +1160,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
             'application = "RoundTrip"'
             "filter = ""MessageType = '$Name'"""
             'destination = "the Send Port ''RoundTripOut''"'
-            'file = "RoundTrip.toml"'
+            'file = "RoundTrip.xmip"'
             "configuration = ""[[subscription]] name = '$Name'"""
             "state = ""$State"""
             "by = ""$(if ($State -eq 'paused') { 'ilian' })"""
@@ -1222,7 +1222,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         $done | Should -BeOfType ([Xmip.Surface.SubscriptionOperation])
         $done.Applied | Should -BeTrue
         $done.Result | Should -BeLike "*left for $first*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*.toml').Count |
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*.xmip').Count |
             Should -Be 1
     }
 
@@ -1232,7 +1232,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
             Get-XmipSubscription -Snapshot $script:Published -Resume -Confirm:$false
 
         $done.Name | Should -Be 'flat'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.xmip').
             Count | Should -Be 1
     }
 
@@ -1254,7 +1254,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-dead-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
-        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
 
         function Get-Entry {
@@ -1333,7 +1333,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         $done | Should -BeOfType ([Xmip.Surface.DeadMessageOperation])
         $done.Applied | Should -BeTrue
         $done.Result | Should -BeLike "*left for $first*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*-replay.toml').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*-replay.xmip').
             Count | Should -Be 1
     }
 
@@ -1343,7 +1343,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
             Get-XmipDeadMessage -Snapshot $script:Published -Replay -Confirm:$false
 
         $done.Message | Should -Be 'm-3'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-replay.toml').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-replay.xmip').
             Count | Should -Be 1
     }
 
@@ -1366,7 +1366,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-message-$stamp"
         $script:Orders = Join-Path $script:Place 'orders'
-        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.toml"
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         $script:Sending = "$($script:Cluster.Scope)/node/$($script:Sender)"
         $script:Port = "$($script:Sending)/send/invoices"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
@@ -1458,12 +1458,12 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         $done.Node | Should -Be $script:Sending
         $done.Result | Should -BeLike "*left for $($script:Sender)*"
         [string] $kept = Join-Path $script:Orders $script:Sender
-        @(Get-ChildItem -LiteralPath $kept -Filter '*-retry.toml').Count | Should -Be 1
+        @(Get-ChildItem -LiteralPath $kept -Filter '*-retry.xmip').Count | Should -Be 1
 
         $dismissed = Get-XmipScope -Snapshot $script:Published -Scope $script:Sending `
             -Journey 'j-1' -Dismiss -Confirm:$false
         $dismissed.Act | Should -Be ([Xmip.Surface.MessageAct]::Dismiss)
-        @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.toml').Count | Should -Be 1
+        @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.xmip').Count | Should -Be 1
         Get-FormatData -TypeName 'Xmip.Surface.MessageOperation' | Should -Not -BeNullOrEmpty
     }
 
@@ -1504,7 +1504,7 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
             -Value $authority.ExportCertificatePem()
         Set-Content -LiteralPath (Join-Path $kept 'authority.key') `
             -Value $key.ExportPkcs8PrivateKeyPem()
-        [string] $script:Configuration = Join-Path -Path $script:Place -ChildPath 'node.toml'
+        [string] $script:Configuration = Join-Path -Path $script:Place -ChildPath 'node.xmip'
         Set-Content -LiteralPath $script:Configuration -Value (
             "[service]`nname = `"n`"`ncluster_name = `"c`"`nnode_name = `"d`"`n`n" +
             "[provision.operator]`nauthority = `"authority`"`n")
@@ -1659,7 +1659,7 @@ Describe 'Set-XmipSecret sets a secret through a node and lists them, never a va
     BeforeAll {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
         $script:SecretPlace = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-secret-$stamp"
-        $script:SecretSnapshot = Join-Path $script:SecretPlace 'snapshot.toml'
+        $script:SecretSnapshot = Join-Path $script:SecretPlace 'snapshot.xmip'
         New-Item -ItemType Directory -Path $script:SecretPlace | Out-Null
         Set-Content -LiteralPath $script:SecretSnapshot -Value "node = `"$($script:Cluster.Scope)`""
     }

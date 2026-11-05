@@ -16,7 +16,7 @@ namespace Xmip.PowerShell;
 /// (<see cref="ProgramAudit.Read"/>, ADR-0062, amendment 2026-09-29) — the one
 /// <c>xmip audit</c> and the web's Audit view call — from where this
 /// module's own records go: <c>AuditDirectory</c> in
-/// <c>xmip.powershell.toml</c>, else <c>XMIP_AUDIT_DIRECTORY</c>. Each
+/// <c>powershell.xmip</c>, else <c>XMIP_AUDIT_DIRECTORY</c>. Each
 /// parameter is a word of the query, and what it means, which records match
 /// and in what order is the capability's. The words a severity, a sort and an
 /// action take are the capability's too, offered on Tab from what it answers

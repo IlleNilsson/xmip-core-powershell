@@ -7,7 +7,7 @@ namespace Xmip.PowerShell;
 /// What every cmdlet that reads a scope shares: the surface it reads and the
 /// scopes an operator named. The surface is the one <c>xmip</c> would
 /// read — <c>-Remote</c>, then <c>-Local</c>, then <c>-Snapshot</c>, then
-/// <c>xmip.powershell.toml</c> beside the module
+/// <c>powershell.xmip</c> beside the module
 /// (<see cref="SurfaceChoice.Stated"/>, ADR-0052 clause 1), a node on this
 /// machine or another followed over gRPC at its operate listener (ADR-0014,
 /// amendment 2026-10-13) — and a scope may
@@ -55,7 +55,7 @@ public abstract class XmipSurfaceCommand : XmipCommand
     /// <summary>
     /// <para type="description">A node on another machine to follow, at its
     /// operate address such as node1:7401, over everything else: gRPC inside
-    /// Xmip's mutual TLS, presenting and trusting what xmip.powershell.toml or
+    /// Xmip's mutual TLS, presenting and trusting what powershell.xmip or
     /// XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and XMIP_TRUST_ANCHOR name
     /// (ADR-0014, amendment 2026-10-12; ADR-0063).</para>
     /// </summary>

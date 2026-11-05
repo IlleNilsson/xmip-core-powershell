@@ -82,7 +82,7 @@ public sealed class NewXmipCertificateCommand : CertificateCommand
 
     /// <summary>
     /// <para type="description">The node a key and certificate are issued
-    /// to, or whose request is made, as its cluster's xmip.toml declares
+    /// to, or whose request is made, as its cluster's cluster.xmip declares
     /// it: R1.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = Issuing)]

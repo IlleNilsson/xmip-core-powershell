@@ -1,20 +1,20 @@
 # The PowerShell module's configuration, beside the module. TOML, like
 # everything Xmip configures — Xmip uses no JSON for configuration anywhere.
-# The same keys as the GUI hosts' xmip.gui.toml and the executable's
-# xmip.cli.toml, read by the same reader (ADR-0052).
+# The same keys as the GUI hosts' gui.xmip and the executable's
+# cli.xmip, read by the same reader (ADR-0052).
 #
 # Paths are relative to this file's directory.
 
 [Xmip]
 # Which surface the prompt follows (ADR-0052 clause 3): "local", a node on
 # this machine followed over gRPC at the local endpoint Local names (ADR-0014,
-# amendment 2026-10-13), "snapshot", a file a node or the Playground
+# amendment 2026-10-13), "snapshot", a file a node or the Essentials
 # publishes, or "remote", a node on another machine followed over gRPC at its
 # operate Address. Stated here and never guessed from an environment
 # variable or a file in a temp directory. With no surface named, the prompt
 # names no node and shows nothing, as posh-git outside a repository.
 #
-# As shipped, in a developer's clone: the Playground roll the estate's own
+# As shipped, in a developer's clone: the Essentials roll the estate's own
 # walkthrough starts, which names its cluster C1 only because a roll must be
 # given some name. Roll under another name and name that file below, or let
 # Start-XmipTest tell this session. A deployment writes its own.
@@ -28,9 +28,9 @@ Surface = "snapshot"
 # shows no segment, never another file's figures. A relative path
 # is from the directory the module is loaded from, bin/Debug/net11.0 under
 # this project: eight levels up is the estate root, where a roll publishes
-# under .local-work/playground. The file is named for the cluster the roll was
+# under .local-work/essentials. The file is named for the cluster the roll was
 # started as, so this line follows one particular roll and no other.
-Snapshot = "../../../../../../../../../.local-work/playground/C1-snapshot.toml"
+Snapshot = "../../../../../../../../../.local-work/essentials/C1-snapshot.xmip"
 
 # The node on this machine to follow when Surface = "local": its local
 # endpoint, as its [operate] local names it; the same serves -Local. The node
@@ -50,7 +50,7 @@ Snapshot = "../../../../../../../../../.local-work/playground/C1-snapshot.toml"
 # TrustAnchor = "anchor.pem"
 
 # Where this module's audit records go (ADR-0062): every cmdlet failure, each
-# pause and resume, and the prompt's failures, as <AuditDirectory>/audit.toml.
+# pause and resume, and the prompt's failures, as <AuditDirectory>/audit.xmip.
 # Unset, the audit capability decides — XMIP_AUDIT_DIRECTORY, else the
 # operating system's log.
 # AuditDirectory = "../../../../../../../../../.local-work/audit"

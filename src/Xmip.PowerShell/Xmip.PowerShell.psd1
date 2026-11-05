@@ -41,7 +41,7 @@
     AliasesToExport      = @()
 
     # What a gallery shows of the module: the Xmip mark, from the estate's
-    # one source of it (asset/brand/brand.toml).
+    # one source of it (asset/brand/brand.xmip).
     PrivateData          = @{
         PSData = @{
             IconUri = 'https://raw.githubusercontent.com/IlleNilsson/Xmip/main/asset/brand/icon/xmip-x-128.png'
