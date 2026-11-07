@@ -63,8 +63,9 @@ BeforeAll {
     $script:Project = Join-Path $script:Root 'src/Xmip.PowerShell/Xmip.PowerShell.csproj'
     $script:Manifest = Join-Path $script:Root 'src/Xmip.PowerShell/Xmip.PowerShell.psd1'
 
-    [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-    $script:Output = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-powershell-$stamp"
+    # Its own folder, never removed in the run: the module loaded from it
+    # holds its assembly open.
+    $script:Output = (New-TemporaryDirectory).FullName
 
     & dotnet build $script:Project --output $script:Output --verbosity quiet --nologo
 
@@ -875,7 +876,7 @@ Describe 'Every failure and every act is audited' {
 
     BeforeEach {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Audit = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-powershell-audit-$stamp"
+        $script:Audit = Join-Path -Path $TestDrive -ChildPath "audit-$stamp"
         $env:XMIP_AUDIT_DIRECTORY = $script:Audit
     }
 
@@ -930,7 +931,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
 
     BeforeEach {
         [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Read = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-powershell-read-$stamp"
+        $script:Read = Join-Path -Path $TestDrive -ChildPath "read-$stamp"
         $env:XMIP_AUDIT_DIRECTORY = $script:Read
 
         # One failure recorded by a cmdlet, as any operator's would be.
@@ -1041,8 +1042,7 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
     # test cluster whose publisher takes orders: an act is left there for the
     # node. Its first two nodes hold one each; the first does not hear the third.
     BeforeAll {
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-event-subs-$stamp"
+        $script:Place = Join-Path -Path $TestDrive -ChildPath 'event-subscriptions'
         $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
@@ -1071,10 +1071,6 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
             'since_unix_nanos = 1790000000000000000'
             'why = "connection refused"'
         )
-    }
-
-    AfterAll {
-        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     It 'lists each Event subscription as the record, with a table view' {
@@ -1143,8 +1139,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
     # up; one cmdlet for the noun, pause and resume parameters on it, and no
     # remove, because the TOML configuration adds and removes a Subscription.
     BeforeAll {
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-subs-$stamp"
+        $script:Place = Join-Path -Path $TestDrive -ChildPath 'subscriptions'
         $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
@@ -1177,10 +1172,6 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
             Get-Entry -Node $script:At[0] -Name 'edi' -State 'paused' -PickedUp 3 -Held 9
             Get-Entry -Node $script:At[1] -Name 'flat' -State 'active' -PickedUp 40 -Held 0
         )
-    }
-
-    AfterAll {
-        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     It 'lists each Subscription as the record, drilled and sorted, with a table view' {
@@ -1251,8 +1242,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
     # ADR-0052, amendment 2026-10-01: an accepted Message no Subscription
     # matched; one cmdlet for the noun, Replay a parameter on it.
     BeforeAll {
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-dead-$stamp"
+        $script:Place = Join-Path -Path $TestDrive -ChildPath 'dead'
         $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
@@ -1281,10 +1271,6 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
                 'declines = [["structured", "MessageType is Invoice"], ["edi", "paused"]]')
             Get-Entry -Node $script:At[1] -Message 'm-3' -Sequence 1 -Rest @()
         )
-    }
-
-    AfterAll {
-        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     It 'lists each entry as the record, drilled and sorted, with a table and a list view' {
@@ -1363,8 +1349,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
     # that failed there; Retry and Dismiss are parameters on the scope's
     # cmdlet, not a cmdlet of their own.
     BeforeAll {
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:Place = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-message-$stamp"
+        $script:Place = Join-Path -Path $TestDrive -ChildPath 'message'
         $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         $script:Sending = "$($script:Cluster.Scope)/node/$($script:Sender)"
@@ -1390,10 +1375,6 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
             'sequence = 7'
             'reason = "invoices: refused again"'
         )
-    }
-
-    AfterAll {
-        Remove-Item -LiteralPath $script:Place -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     It 'lists every Message that failed at a scope, paged by -Offset and -Limit' {
@@ -1657,15 +1638,10 @@ Describe 'Set-XmipSecret sets a secret through a node and lists them, never a va
     # is kept in the Administration Database and set through a node's
     # operate listener. One cmdlet for the noun, listing a parameter on it.
     BeforeAll {
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        $script:SecretPlace = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-ps-secret-$stamp"
+        $script:SecretPlace = Join-Path -Path $TestDrive -ChildPath 'secret'
         $script:SecretSnapshot = Join-Path $script:SecretPlace 'snapshot.xmip'
         New-Item -ItemType Directory -Path $script:SecretPlace | Out-Null
         Set-Content -LiteralPath $script:SecretSnapshot -Value "node = `"$($script:Cluster.Scope)`""
-    }
-
-    AfterAll {
-        Remove-Item -LiteralPath $script:SecretPlace -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     It 'takes a value as a secure string or a file, -List apart, and offers the kinds' {
