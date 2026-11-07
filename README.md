@@ -463,7 +463,12 @@ the proof the boundary works (ADR-0012 clause 2).
 
 ## Verification
 
-`dotnet build`, then `Invoke-Pester -Path ./tests`. Forty-one tests, all
+`dotnet build`, then `Invoke-Pester -Path ./tests`. The build is the
+estate's C# gate: `Directory.Build.props` and `.editorconfig` are the ones
+the cli, the GUI and the template carry — the latest language and analysis
+level, warnings as errors, code style enforced in the build, documentation
+generated, packages restored from the lock file — and the csproj sets only
+what is the module's own. Seventy-nine tests, all
 of them the PowerShell shape: the manifest and the exports agree, every verb is
 approved, every object a cmdlet emits has a table view, the two acts carry
 `-WhatIf` and no start, stop or restart exists, the cmdlets emit objects, read

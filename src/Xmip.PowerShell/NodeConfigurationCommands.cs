@@ -16,7 +16,7 @@ namespace Xmip.PowerShell;
 /// </remarks>
 [Cmdlet(VerbsDiagnostic.Test, "XmipNodeConfiguration")]
 [OutputType(typeof(ConfigurationVerdict))]
-public sealed class TestXmipNodeConfigurationCommand : XmipCommand
+public sealed class TestXmipNodeConfigurationCommand : XmipCommand, IDisposable
 {
     private ConfigurationRuntime? _runtime;
 
@@ -79,13 +79,20 @@ public sealed class TestXmipNodeConfigurationCommand : XmipCommand
     }
 
     /// <inheritdoc />
-    protected override void End()
+    protected override void Finish()
     {
         _runtime?.Dispose();
     }
 
     /// <inheritdoc />
     protected override void StopProcessing()
+    {
+        _runtime?.Dispose();
+    }
+
+    /// <summary>The runtime, released when PowerShell is done with the
+    /// cmdlet, however its pipeline ended.</summary>
+    public void Dispose()
     {
         _runtime?.Dispose();
     }
