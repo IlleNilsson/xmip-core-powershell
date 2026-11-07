@@ -16,7 +16,7 @@ namespace Xmip.PowerShell;
 /// Until 2026-09-24 every cmdlet demanded a library path, loaded the binding
 /// itself and took a scope literally; the executable did none of that.
 /// </summary>
-public abstract class XmipSurfaceCommand : XmipCommand
+public abstract class XmipSurfaceCommand : XmipCommand, IDisposable
 {
     private IOperatorSurface? _surface;
 
@@ -114,7 +114,7 @@ public abstract class XmipSurfaceCommand : XmipCommand
     }
 
     /// <inheritdoc />
-    protected override void End()
+    protected override void Finish()
     {
         Release();
     }
@@ -171,6 +171,18 @@ public abstract class XmipSurfaceCommand : XmipCommand
         {
             Release();
         }
+    }
+
+    /// <summary>The surface and the stop signal, released when PowerShell is
+    /// done with the cmdlet, however its pipeline ended.</summary>
+    public void Dispose()
+    {
+        Release();
+        _stopping.Dispose();
+
+        // The dispose pattern for a type others derive from (CA1816), not a
+        // tuning of the collector: nothing here has a finalizer to skip.
+        GC.SuppressFinalize(this);
     }
 
     // A path as PowerShell reads one, from the current location and through

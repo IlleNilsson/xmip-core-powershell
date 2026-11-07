@@ -12,7 +12,7 @@ namespace Xmip.PowerShell;
 /// properties — before PowerShell shows it; an act that changes the estate
 /// records its beginning and end (<see cref="Acting"/>, <see cref="Acted"/>).
 /// A cmdlet writes its steps in <see cref="Begin"/>, <see cref="Process"/>
-/// and <see cref="End"/>, which is what lets the audit be written here once.
+/// and <see cref="Finish"/>, which is what lets the audit be written here once.
 /// </summary>
 public abstract class XmipCommand : PSCmdlet
 {
@@ -38,7 +38,7 @@ public abstract class XmipCommand : PSCmdlet
     /// <inheritdoc />
     protected sealed override void EndProcessing()
     {
-        Audited(End);
+        Audited(Finish);
     }
 
     /// <summary>What <c>BeginProcessing</c> does.</summary>
@@ -52,7 +52,7 @@ public abstract class XmipCommand : PSCmdlet
     }
 
     /// <summary>What <c>EndProcessing</c> does.</summary>
-    protected virtual void End()
+    protected virtual void Finish()
     {
     }
 

@@ -1,0 +1,44 @@
+<Project>
+
+  <!--
+    Properties every project in this repository shares. The same shape as
+    xmip-core-cli's and xmip-core-gui's, on purpose: repositories that must
+    agree about analyzers and warnings will eventually stop agreeing unless
+    the file is the same file.
+  -->
+
+  <PropertyGroup>
+    <!-- ADR-0014, amendment of 2026-08-30: the .NET 11 SDK compiles
+         this (global.json), and the target framework is owned by whoever
+         loads the assembly. This one loads into pwsh 7.7, the floor, which
+         hosts .NET 11 (amendment 2026-11-02). -->
+    <TargetFramework>net11.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- A warning nobody has to fix is a warning nobody reads. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <!-- Required by EnforceCodeStyleInBuild: IDE0005, unnecessary usings, only
+         runs when the documentation file is generated. Wanted regardless — a
+         public surface without documentation is one CS1591 away from being
+         told so, and that is the point. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- An operator surface reports identifiers, status codes and module
+         names. None of that is locale-dependent, and pulling ICU in for it
+         costs about 30 MB in a self-contained build. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- A restore that resolves differently on two machines is not a problem
+         this repository wants to own. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <Authors>Ilian Nilsson</Authors>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>

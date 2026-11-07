@@ -1,17 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Target framework, analyzers and the rest come from
+       Directory.Build.props. -->
+
   <PropertyGroup>
-    <!-- ADR-0014, amendment of 2026-08-30: the .NET 11 SDK compiles
-         this (global.json), and the target framework is owned by whoever
-         loads the assembly. This one loads into pwsh 7.7, the floor, which
-         hosts .NET 11 (amendment 2026-11-02). -->
-    <TargetFramework>net11.0</TargetFramework>
     <RootNamespace>Xmip.PowerShell</RootNamespace>
     <AssemblyName>Xmip.PowerShell</AssemblyName>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <InvariantGlobalization>true</InvariantGlobalization>
 
     <!-- A binary module is loaded by pwsh from its own directory, and pwsh
          resolves nothing from NuGet: every assembly the module needs — the
