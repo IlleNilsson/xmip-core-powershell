@@ -13,8 +13,6 @@ namespace Xmip.PowerShell;
 /// </summary>
 public abstract class CertificateCommand : XmipCommand
 {
-    private RuntimeCertificates? _certificates;
-
     /// <summary>
     /// <para type="description">The runtime's native library to ask.
     /// Omitted, it is found by the one rule: RuntimeLibrary in the module's
@@ -24,8 +22,11 @@ public abstract class CertificateCommand : XmipCommand
     public string? Library { get; set; }
 
     /// <summary>The runtime's certificate exports.</summary>
-    protected RuntimeCertificates Certificates =>
-        _certificates ?? throw new InvalidOperationException("The runtime is not loaded.");
+    protected RuntimeCertificates Certificates
+    {
+        get => field ?? throw new InvalidOperationException("The runtime is not loaded.");
+        private set;
+    }
 
     /// <inheritdoc />
     protected override void Begin()
@@ -37,7 +38,7 @@ public abstract class CertificateCommand : XmipCommand
 
         try
         {
-            _certificates = RuntimeLibrary.Rules.Certificates;
+            Certificates = RuntimeLibrary.Rules.Certificates;
         }
         catch (InvalidOperationException unloaded)
         {

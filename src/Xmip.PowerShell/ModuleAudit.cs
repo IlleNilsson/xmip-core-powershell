@@ -51,7 +51,7 @@ public static class ModuleAudit
     /// here first.</summary>
     public static Dictionary<string, string> Properties(InvocationInfo? invocation)
     {
-        Hashtable bound = new(StringComparer.Ordinal);
+        Hashtable bound = [with(StringComparer.Ordinal)];
 
         foreach ((string name, object? value) in invocation?.BoundParameters
             ?? [])

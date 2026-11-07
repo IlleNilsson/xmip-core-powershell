@@ -257,12 +257,9 @@ public static class SegmentRender
         // A colon between the letter and its number, where there is a number
         // to present (the owner, 2026-09-18): R:1.2K reads as a figure, and
         // R1.2K read as a name. A rate nobody can compute keeps its dash.
-        if (value is not { } rate)
-        {
-            return [new XmipPromptPart(letter + "–", ConsoleColor.DarkGray)];
-        }
-
-        return Trend(rate, before) is { } going
+        return value is not { } rate
+            ? [new XmipPromptPart(letter + "–", ConsoleColor.DarkGray)]
+            : Trend(rate, before) is { } going
             ?
             [
                 new XmipPromptPart(letter + ":", color),

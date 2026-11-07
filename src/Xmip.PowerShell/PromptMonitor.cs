@@ -1,5 +1,3 @@
-using System.Globalization;
-using Xmip.Abi.Operate;
 using Xmip.Surface;
 
 namespace Xmip.PowerShell;
@@ -41,7 +39,7 @@ public static class PromptMonitor
     /// <summary>The action the prompt's failures are audited as.</summary>
     public const string PromptAction = "prompt";
 
-    private static readonly object Gate = new();
+    private static readonly Lock Gate = new();
     private static CancellationTokenSource? _stop;
     private static Task? _worker;
     private static XmipPromptSegment _current = Connecting();
