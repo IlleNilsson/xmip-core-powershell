@@ -666,8 +666,14 @@ Describe 'The cmdlets read the surface xmip reads' {
         # operate listener's local endpoint, never by loading the runtime here.
         [string] $endpoint = "xmip-pester-local-$([guid]::NewGuid().ToString('n'))"
         [string] $reason = ''
+        # The account this test runs as, as the runtime's gate names it,
+        # listed an Observer: a caller no list names reads nothing.
+        $me = [Xmip.Surface.RuntimeLibrary]::Rules.SecurityRoles.Process([ref] $reason)
+        $me | Should -Not -BeNullOrEmpty -Because $reason
+        [string[]] $observers = @($me.Name)
+        $me.Dispose()
         $served = [Xmip.Surface.RuntimeLibrary]::Rules.Remotes.ServeLocal(
-            $endpoint, '', 'pester-local', [ref] $reason)
+            $endpoint, $observers, [string[]] @(), [string[]] @(), 'pester-local', [ref] $reason)
         $served | Should -Not -BeNullOrEmpty -Because $reason
         try {
             $served.Post([System.IO.File]::ReadAllText($script:Fixture))
