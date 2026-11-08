@@ -51,7 +51,8 @@ event-subscriptions` and `xmip dead-messages` take it as an option
 `New-XmipCertificate` makes and signs a person's certificate for reaching a
 node's operate listener, the phone first (ADR-0034, amendment 2026-10-15):
 client authentication alone, its subject the person, `CN=<person>`, which is
-the caller the listener proves and grants its `[operate]` role.
+the caller the listener proves and grants the role its `[operate]` lists
+`CN=<person>` with, none where none does.
 `New-XmipCertificate -Operator <person> -Path <folder>` makes a fresh key and
 a request naming the person — as their directory knows them,
 `alice@example.org` — as `operator.key` and `operator.csr`, and emits an
