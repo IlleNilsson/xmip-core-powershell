@@ -143,8 +143,8 @@ Describe 'The prompt reads its surface from the document beside the module' {
     # ADR-0052 clause 3: the surface a host reads is stated in its
     # configuration, never guessed. The module's document ships beside it and
     # is read through the same choice as the GUI hosts and the executable.
-    It 'ships powershell.xmip beside the module' {
-        [string] $document = Join-Path $script:Output 'powershell.xmip'
+    It 'ships powershell.toml beside the module' {
+        [string] $document = Join-Path $script:Output 'powershell.toml'
 
         Test-Path -LiteralPath $document | Should -BeTrue
         $document | Should -BeLike "*$([Xmip.PowerShell.ModuleSurface]::ConfigurationFile)"
@@ -186,7 +186,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # abstractions in the session, which is what a prompt does.
         [string] $fixture = Join-Path $script:Root `
             '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
-        [string] $document = Join-Path $script:Output 'powershell.xmip'
+        [string] $document = Join-Path $script:Output 'powershell.toml'
 
         [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
         $shipped = [Xmip.Surface.TomlDocument]::Read($document)
@@ -896,7 +896,7 @@ Describe 'Every failure and every act is audited' {
 
         Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue | Out-Null
 
-        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.xmip') -Raw
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
         $text | Should -BeLike '*`[`[record`]`]*'
         $text | Should -BeLike '*program = "Xmip.PowerShell"*'
         $text | Should -BeLike '*action = "Get-XmipModuleDescriptor"*'
@@ -909,7 +909,7 @@ Describe 'Every failure and every act is audited' {
 
         { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } | Should -Throw
 
-        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.xmip') -Raw
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
         $text | Should -BeLike '*action = "Get-XmipHealth"*'
         $text | Should -BeLike '*phase = "Failure"*'
         ([regex]::Matches($text, '\[\[record\]\]')).Count | Should -Be 1
@@ -919,7 +919,7 @@ Describe 'Every failure and every act is audited' {
         Suspend-XmipScope -Snapshot $script:Fixture -Scope "xmip:///$script:Receiver" `
             -ErrorAction SilentlyContinue | Out-Null
 
-        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.xmip') -Raw
+        [string] $text = Get-Content -LiteralPath (Join-Path $script:Audit 'audit.toml') -Raw
         $text | Should -BeLike '*action = "Suspend-XmipScope"*'
         $text | Should -BeLike '*phase = "Begin"*'
         $text | Should -BeLike '*phase = "Failure"*'
@@ -972,7 +972,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
     }
 
     It 'says a write left unfinished apart from the chain, and FAILED once sealed' {
-        [string] $file = Join-Path $script:Read 'audit.xmip'
+        [string] $file = Join-Path $script:Read 'audit.toml'
         [System.IO.File]::AppendAllText($file, "[[record]]`naudit_id = `"0")
 
         $open = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
@@ -1023,7 +1023,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
             "program = `"probe`"`nhost = `"H1`"`nprocess = `"7`"`n" +
             "location = `"$($script:Cluster.Scope)`"`nhidden = `"true`"`naction = `"start`"`n" +
             "phase = `"begin`"`nseverity = `"information`"`n`n"
-        Add-Content -LiteralPath (Join-Path $script:Read 'audit.xmip') -Value $hidden -NoNewline
+        Add-Content -LiteralPath (Join-Path $script:Read 'audit.toml') -Value $hidden -NoNewline
 
         @(Get-XmipAudit -Location $script:Cluster.Scope).Count | Should -Be 0
         $shown = @(Get-XmipAudit -Location $script:Cluster.Scope -IncludeHidden)
@@ -1125,7 +1125,7 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
         $done | Should -BeOfType ([Xmip.Surface.EventSubscriptionOperation])
         $done.Applied | Should -BeTrue
         $done.Result | Should -BeLike "*left for $second*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.xmip').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
             Count | Should -Be 1
     }
 
@@ -1219,7 +1219,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         $done | Should -BeOfType ([Xmip.Surface.SubscriptionOperation])
         $done.Applied | Should -BeTrue
         $done.Result | Should -BeLike "*left for $first*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*.xmip').Count |
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*.toml').Count |
             Should -Be 1
     }
 
@@ -1229,7 +1229,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
             Get-XmipSubscription -Snapshot $script:Published -Resume -Confirm:$false
 
         $done.Name | Should -Be 'flat'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.xmip').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
             Count | Should -Be 1
     }
 
@@ -1325,7 +1325,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         $done | Should -BeOfType ([Xmip.Surface.DeadMessageOperation])
         $done.Applied | Should -BeTrue
         $done.Result | Should -BeLike "*left for $first*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*-replay.xmip').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*-replay.toml').
             Count | Should -Be 1
     }
 
@@ -1335,7 +1335,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
             Get-XmipDeadMessage -Snapshot $script:Published -Replay -Confirm:$false
 
         $done.Message | Should -Be 'm-3'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-replay.xmip').
+        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-replay.toml').
             Count | Should -Be 1
     }
 
@@ -1445,12 +1445,12 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         $done.Node | Should -Be $script:Sending
         $done.Result | Should -BeLike "*left for $($script:Sender)*"
         [string] $kept = Join-Path $script:Orders $script:Sender
-        @(Get-ChildItem -LiteralPath $kept -Filter '*-retry.xmip').Count | Should -Be 1
+        @(Get-ChildItem -LiteralPath $kept -Filter '*-retry.toml').Count | Should -Be 1
 
         $dismissed = Get-XmipScope -Snapshot $script:Published -Scope $script:Sending `
             -Journey 'j-1' -Dismiss -Confirm:$false
         $dismissed.Act | Should -Be ([Xmip.Surface.MessageAct]::Dismiss)
-        @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.xmip').Count | Should -Be 1
+        @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.toml').Count | Should -Be 1
         Get-FormatData -TypeName 'Xmip.Surface.MessageOperation' | Should -Not -BeNullOrEmpty
     }
 

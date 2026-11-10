@@ -12,7 +12,7 @@ namespace Xmip.PowerShell;
 public static class ModuleSurface
 {
     /// <summary>The module's configuration document, beside it.</summary>
-    public const string ConfigurationFile = "powershell.xmip";
+    public const string ConfigurationFile = "powershell.toml";
 
     /// <summary>
     /// The directory the module was loaded from. Beside the module is where

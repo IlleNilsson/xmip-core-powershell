@@ -1,7 +1,7 @@
 # The PowerShell module's configuration, beside the module. TOML, like
 # everything Xmip configures — Xmip uses no JSON for configuration anywhere.
-# The same keys as the GUI hosts' gui.xmip and the executable's
-# cli.xmip, read by the same reader (ADR-0052).
+# The same keys as the GUI hosts' gui.toml and the executable's
+# cli.toml, read by the same reader (ADR-0052).
 #
 # Paths are relative to this file's directory.
 
@@ -50,7 +50,7 @@ Snapshot = "../../../../../../../../../.local-work/essentials/C1-snapshot.xmip"
 # TrustAnchor = "anchor.pem"
 
 # Where this module's audit records go (ADR-0062): every cmdlet failure, each
-# pause and resume, and the prompt's failures, as <AuditDirectory>/audit.xmip.
+# pause and resume, and the prompt's failures, as <AuditDirectory>/audit.toml.
 # Unset, the audit capability decides — XMIP_AUDIT_DIRECTORY, else the
 # operating system's log.
 # AuditDirectory = "../../../../../../../../../.local-work/audit"

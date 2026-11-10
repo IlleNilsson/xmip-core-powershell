@@ -19,7 +19,7 @@ cmdlets with approved verbs, objects on the pipeline rather than text, and
 
 ## State
 
-Scaffolded, which is what `architecture.xmip` says: `maturity = "scaffolded"`.
+Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
 `Get-XmipModuleDescriptor` — and emit what `xmip abi`, `status` and
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
@@ -240,7 +240,7 @@ four that take a `-Scope` take `-Remote`, `-Local`, `-Snapshot` and
 `-Library` as the executable takes `--remote`, `--local`, `--snapshot` and
 `--runtime`, in the same order — a node's operate address on another
 machine, then a node's local endpoint on this one, then one cluster's
-snapshot, then `powershell.xmip`; `-Library` names the runtime library
+snapshot, then `powershell.toml`; `-Library` names the runtime library
 the surface calls the runtime through and chooses none — because both ask
 `SurfaceChoice.Stated` in `Xmip.Surface`. A `-Scope` may be a wildcard over
 the scopes that exist, `Get-XmipHealth -Scope 'xmip:///C1/node/R*'`, selected
@@ -293,7 +293,7 @@ providers rather than replacing their result, and restores the prompt it
 found when the module is removed. A background observer follows the shared `Xmip.Surface` change
 stream and updates an in-memory segment; the prompt itself performs no runtime
 call, file read, subprocess, wait, or poll. Which surface it follows is stated
-in `powershell.xmip` beside the module, with the same `[Xmip]` keys as
+in `powershell.toml` beside the module, with the same `[Xmip]` keys as
 the GUI hosts and the executable — `Surface = "local" | "snapshot" |
 "remote"`, `Local`, `RuntimeLibrary`, `Snapshot`, `Address` — and never
 guessed (ADR-0052 clause 3). Local, it follows the node on this machine
@@ -333,8 +333,8 @@ estate, `Suspend-XmipScope` and `Resume-XmipScope`, each scope's `Begin` and
 publication it could not read (once until a tick reads again), a document
 that names a surface this build does not know, and whatever else ended its
 observer. Anything the module leaves unhandled in the session is recorded as
-`unhandled` from the import on. Records go to `<AuditDirectory>/audit.xmip`,
-`AuditDirectory` in `powershell.xmip`'s `[Xmip]` table resolved from
+`unhandled` from the import on. Records go to `<AuditDirectory>/audit.toml`,
+`AuditDirectory` in `powershell.toml`'s `[Xmip]` table resolved from
 beside the module; unset, the capability decides — `XMIP_AUDIT_DIRECTORY`,
 else the operating system's log, which also takes a record the directory
 cannot.
@@ -404,7 +404,7 @@ Start-XmipTest -Suite Essentials -Cluster C1 -Test RoundTrip `
 a file can be called. `R1`, `P1` and `S1` are how the owner names nodes when
 he tests (2026-09-25), a reminder to the person; what each does is the
 `-NodeRole` beside it, and Xmip never reads the name. `C1` is written here only because the shipped
-`powershell.xmip` follows that roll's snapshot.
+`powershell.toml` follows that roll's snapshot.
 
 Press Enter after the import and the prompt is as it was, with no segment,
 until the roll publishes; a few seconds after the roll starts it says
@@ -422,10 +422,10 @@ A roll started under another name is followed too: `Start-XmipTest` tells
 the prompt in its session which snapshot its roll publishes, so `-Cluster
 C2` shows C2 and not the C1 the shipped document names (ADR-0052,
 amendment 2026-09-18). A roll started in another session is followed by
-writing its file into `powershell.xmip`.
+writing its file into `powershell.toml`.
 
 The executable reads the same file: `xmip show xmip:///C1` from the cli's
-build directory answers with the same figures, because its `cli.xmip`
+build directory answers with the same figures, because its `cli.toml`
 ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 
 ## Runtime
