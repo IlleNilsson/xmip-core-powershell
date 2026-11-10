@@ -8,7 +8,7 @@ namespace Xmip.PowerShell;
 /// <summary>
 /// How this module audits (ADR-0062): as program <c>Xmip.PowerShell</c>,
 /// through the audit capability in the runtime's library
-/// (<see cref="ProgramAudit"/>), into the directory <c>powershell.xmip</c>
+/// (<see cref="ProgramAudit"/>), into the directory <c>powershell.toml</c>
 /// names as <c>AuditDirectory</c>, resolved from beside the module — unset,
 /// the capability decides: <c>XMIP_AUDIT_DIRECTORY</c>, else the operating
 /// system's log. What a cmdlet records is <see cref="XmipCommand"/>'s; what
