@@ -183,6 +183,40 @@ act is admitted by role and audited with the name, never the value.
 `Set-XmipSecret -List` emits each `SecretRecord` — name, kind, when and by
 whom it was set — and never a value: no surface reads one back out.
 
+`Get-XmipReport` is the one noun for every Report (ADR-0072, amendment
+2026-11-10). A Report presents existing data; a Quest probes for data to
+present in a Report. `Get-XmipReport [-Name <name>]` emits a `ReportEntry`
+for every Report, Xmip's own and every one a module adds, or the one named:
+its `Kind` and its kind's `Words` — the name *Quick*, it presents data that
+already exists, or *Takes longer*, it presents what a Quest probes first,
+with the word and the meaning, the runtime's — whether it
+is `Available`, what to `Expect` — *last probe took 4 ms*, read back from
+where this module's records go, *not probed yet*, or *not yet available* —
+and, for a quick one, `PresentedBy`, the cmdlet that presents it:
+`Get-XmipAudit`, `Get-XmipDeadMessage`, `Get-XmipSubscription` or
+`Get-XmipScope`, mapped here from the reader's entrypoint the runtime names.
+`Get-XmipReport -Name <name> -Configuration <path> [-Node <node>]
+[-Parameter <choice>] [-Row <name>]` opens a Report that presents what a
+Quest probes: its Quest probes a node's configuration, or a cluster's
+`cluster.xmip` sliced for `-Node`, told apart by what the file holds, and
+changes nothing; it emits the `ReportProbed` — its `Tally`, a `ReportCount`
+per state in the runtime's words, its `Row`, what a row is called, and
+`Rows`, a `ReportRow` per requirement — or with `-Row` that
+`ReportRequirement` in full, what is behind it and the actions that close
+it; what a Quest does not answer is left empty. The parameter and the row
+are the runtime's words, named by the entry, never a `-Regulation`, and a
+blank `-Row` is refused as the line is bound; Tab offers the names and the
+named Report's choices from the runtime's answer, never a ValidateSet. A
+quick or not yet available Report given `-Configuration` is refused for what
+it is before the file is read, and a name, a choice or a row that is none
+is refused in the runtime's words, the one named by `-Name` found by the
+runtime itself. Where the audit cannot be read, every Report is listed all
+the same and the runtime's sentence is written as a warning. Each probe is
+audited by the runtime as `quest.probe` under program `Xmip.PowerShell`.
+The list and every answer are the runtime's (`xmip_operate.h` section 25,
+through `ReportCatalog` in `Xmip.Surface`, the one `xmip report` uses); a
+node's build only, so a remote build of the runtime refuses it in words.
+
 The Messages that failed (runtime-model.md section 13; ADR-0013) are listed
 and acted on through `Get-XmipScope`, where they are seen, rather than
 cmdlets of their own: a Send Port's row, at `<node>/send/<Port>`, says in
@@ -231,7 +265,8 @@ cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
 `ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning`,
 `AbiBoundaries`, `AuditEntry`, `SubscriptionRecord`, `EventSubscriptionRecord`,
 `DeadMessageRecord` (and a list view that opens one) and each noun's
-operation, `MessageOperation` among them. A mood, an age and the figures in a column are the words
+operation, `MessageOperation` among them, and `ReportEntry` and `ReportRow`
+as tables, `ReportProbed` and `ReportRequirement` as lists. A mood, an age and the figures in a column are the words
 `English` in `Xmip.Surface` says, the words `xmip` and the web views say;
 an outcome is OK or REFUSED; `Format-List` still shows everything.
 
@@ -470,7 +505,7 @@ the cli, the GUI and the template carry — the latest language, every
 analyzer rule at the preview level (`preview-all`; three style rules off in
 `.editorconfig`, each with its reason), warnings as errors, code style
 enforced in the build, documentation generated, packages restored from the lock file — and the csproj sets only
-what is the module's own. Seventy-nine tests, all
+what is the module's own. Eighty-four tests, all
 of them the PowerShell shape: the manifest and the exports agree, every verb is
 approved, every object a cmdlet emits has a table view, the two acts carry
 `-WhatIf` and no start, stop or restart exists, the cmdlets emit objects, read

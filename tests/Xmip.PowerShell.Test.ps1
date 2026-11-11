@@ -1673,3 +1673,92 @@ Describe 'Set-XmipSecret sets a secret through a node and lists them, never a va
             Should -Throw -ExpectedMessage '*lists no secrets*'
     }
 }
+
+Describe 'Get-XmipReport lists every Report and opens one whose Quest probes a configuration' {
+    # ADR-0072, amendment 2026-11-10: one noun for every Report, each saying
+    # whether it is quick or a Quest probes first. Which Reports there are and
+    # what a probe finds are xmip-core-report's and tested there; an entry is
+    # found here by what it holds, never by its name.
+    BeforeAll {
+        $script:Reports = @(Get-XmipReport)
+        $script:Quest = $script:Reports |
+            Where-Object { $_.Kind -eq [Xmip.Abi.Operate.ReportKind]::Quest -and $_.Available } |
+            Select-Object -First 1
+        $script:Quick = $script:Reports |
+            Where-Object { $_.ReadBy -eq [Xmip.Abi.Operate.OperateAbi]::AuditReadEntrypoint }
+        # A node is found by what it declares, the first in the names' order.
+        [string] $script:Storing = @($script:Cluster.Nodes |
+                Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'storage' })[0]
+        $script:Probing = @{
+            Name          = $script:Quest.Name
+            Configuration = $script:Cluster.Path
+            Node          = $script:Storing
+            Parameter     = $script:Quest.Parameter.Choices[0]
+        }
+    }
+
+    It 'lists every Report as an entry saying its kind in the runtime''s words' {
+        $script:Reports.Count | Should -BeGreaterThan 1
+        $script:Reports | ForEach-Object { $_ | Should -BeOfType ([Xmip.Surface.ReportEntry]) }
+        @($script:Reports.Kind | Sort-Object -Unique) |
+            Should -Be @([enum]::GetValues([Xmip.Abi.Operate.ReportKind]))
+        $script:Reports | ForEach-Object { $_.Words.Name | Should -Not -BeNullOrEmpty }
+        $script:Reports | ForEach-Object { $_.Words.Kind | Should -Be $_.Kind }
+        @($script:Reports | Where-Object { -not $_.Available }).Expect |
+            Should -Not -Contain $null
+    }
+
+    It 'names the cmdlet that presents a quick entry, and refuses a name that is none' {
+        $shown = Get-XmipReport -Name $script:Quick.Name
+        $shown.PresentedBy | Should -Be 'Get-XmipAudit'
+        Get-Command -Name $shown.PresentedBy | Should -Not -BeNullOrEmpty
+        { Get-XmipReport -Name 'nowhere' -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage "REFUSED:*$($script:Quick.Name)*"
+    }
+
+    It 'opens a Report its Quest probes for: tally and rows as objects, one row in full' {
+        $opened = Get-XmipReport @script:Probing
+        $opened | Should -BeOfType ([Xmip.Surface.ReportProbed])
+        $opened.Node | Should -Be $script:Storing
+        $opened.Row | Should -Be $script:Quest.Row
+        $opened.Tally[0] | Should -BeOfType ([Xmip.Surface.ReportCount])
+        ($opened.Tally | Measure-Object -Property Count -Sum).Sum | Should -Be $opened.Rows.Count
+        $opened.Rows[0] | Should -BeOfType ([Xmip.Surface.ReportRow])
+        Get-FormatData -TypeName 'Xmip.Surface.ReportRow' | Should -Not -BeNullOrEmpty
+
+        $full = Get-XmipReport @script:Probing -Row $opened.Rows[0].Name
+        $full | Should -BeOfType ([Xmip.Surface.ReportRequirement])
+        $full.Name | Should -Be $opened.Rows[0].Name
+
+        # The probe is audited where the module's records go, and read back.
+        (Get-XmipReport -Name $script:Quest.Name).TookMilliseconds | Should -Not -BeNullOrEmpty
+    }
+
+    It 'refuses to probe a quick entry for what it is, before the file is read' {
+        # A cluster's file and no -Node: the Report is refused, not the file.
+        [string] $reader = [Xmip.Abi.Operate.OperateAbi]::AuditReadEntrypoint
+        { Get-XmipReport -Name $script:Quick.Name -Configuration $script:Cluster.Path `
+                -ErrorAction Stop } |
+            Should -Throw -ExpectedMessage "REFUSED:*$reader*"
+    }
+
+    It 'refuses a blank -Row rather than writing nothing' {
+        [string] $refusal = 'ParameterArgumentValidationError,Xmip.PowerShell.GetXmipReportCommand'
+        foreach ($blank in @('', '   ')) {
+            { Get-XmipReport @script:Probing -Row $blank -ErrorAction Stop } |
+                Should -Throw -ErrorId $refusal
+        }
+    }
+
+    It 'offers the names and the choices of the Report named on Tab, from the runtime' {
+        [Xmip.PowerShell.ReportWords] $words = [Xmip.PowerShell.ReportWords]::new()
+        $words.CompleteArgument('Get-XmipReport', 'Name', '', $null, @{}).ListItemText |
+            Should -Be $script:Reports.Name
+        $words.CompleteArgument(
+            'Get-XmipReport', 'Parameter', '', $null, @{ Name = $script:Quest.Name }).CompletionText |
+            Should -Be $script:Quest.Parameter.Choices
+        (Get-Command -Name Get-XmipReport).Parameters['Name'].Attributes |
+            Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
+            Should -BeNullOrEmpty
+    }
+}
