@@ -821,5 +821,97 @@
         </TableRowEntries>
       </TableControl>
     </View>
+    <!-- Every Report (ADR-0072, amendment 2026-11-10): its kind by the
+         runtime's name for it, Quick or Takes longer; what to expect, the
+         runtime's words; the cmdlet that presents a quick one. -->
+    <View>
+      <Name>Xmip.Surface.ReportEntry</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ReportEntry</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Kind</Label><Width>12</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label><Width>33</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Expect</Label><Width>26</Width></TableColumnHeader>
+          <TableColumnHeader><Label>PresentedBy</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Covers</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><ScriptBlock>$_.Words.Name</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Expect</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>PresentedBy</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Covers</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.ReportProbed</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ReportProbed</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem><PropertyName>Report</PropertyName></ListItem>
+              <ListItem><PropertyName>Parameter</PropertyName></ListItem>
+              <ListItem><PropertyName>Title</PropertyName></ListItem>
+              <ListItem><PropertyName>Node</PropertyName></ListItem>
+              <ListItem><Label>Took</Label><ScriptBlock>"$($_.TookMilliseconds) ms"</ScriptBlock></ListItem>
+              <ListItem><Label>Tally</Label><ScriptBlock>$_.Tally -join ', '</ScriptBlock></ListItem>
+              <ListItem><Label>Rows</Label><ScriptBlock>($_.Rows | ForEach-Object { "$($_.State): $($_.Name)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.ReportRow</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ReportRow</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>State</Label><Width>14</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label><Width>40</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Citation</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Citation</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Surface.ReportRequirement</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Surface.ReportRequirement</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem><PropertyName>Name</PropertyName></ListItem>
+              <ListItem><PropertyName>Citation</PropertyName></ListItem>
+              <ListItem><PropertyName>State</PropertyName></ListItem>
+              <ListItem><PropertyName>Says</PropertyName></ListItem>
+              <ListItem><Label>Behind</Label><ScriptBlock>$_.Behind -join [Environment]::NewLine</ScriptBlock></ListItem>
+              <ListItem><Label>Actions</Label><ScriptBlock>$_.Actions -join [Environment]::NewLine</ScriptBlock></ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
   </ViewDefinitions>
 </Configuration>
