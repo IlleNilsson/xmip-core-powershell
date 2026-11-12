@@ -23,7 +23,9 @@
           <TableColumnHeader><Label>Mood</Label><Width>9</Width></TableColumnHeader>
           <TableColumnHeader><Label>Sev</Label><Width>3</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>Observed</Label><Width>10</Width></TableColumnHeader>
-          <TableColumnHeader><Label>Scope</Label><Width>48</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Scope</Label><Width>34</Width></TableColumnHeader>
+          <TableColumnHeader><Label>From</Label><Width>18</Width></TableColumnHeader>
+          <TableColumnHeader><Label>To</Label><Width>18</Width></TableColumnHeader>
           <TableColumnHeader><Label>Evidence</Label></TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
@@ -33,6 +35,8 @@
               <TableColumnItem><PropertyName>Severity</PropertyName></TableColumnItem>
               <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Age($_.Observed)</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Scope</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>From</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>To</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Evidence</PropertyName></TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
@@ -48,6 +52,8 @@
         <TableHeaders>
           <TableColumnHeader><Label>Mood</Label><Width>9</Width></TableColumnHeader>
           <TableColumnHeader><Label>Scope</Label><Width>34</Width></TableColumnHeader>
+          <TableColumnHeader><Label>From</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>To</Label><Width>24</Width></TableColumnHeader>
           <TableColumnHeader><Label>Figures</Label></TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
@@ -55,6 +61,8 @@
             <TableColumnItems>
               <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Mood($_.Health)</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Scope</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>CameFrom</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>WentTo</PropertyName></TableColumnItem>
               <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Figures($_.Figures)</ScriptBlock></TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
@@ -601,6 +609,7 @@
           <TableColumnHeader><Label>Node</Label><Width>8</Width></TableColumnHeader>
           <TableColumnHeader><Label>Filter</Label><Width>28</Width></TableColumnHeader>
           <TableColumnHeader><Label>Destination</Label><Width>28</Width></TableColumnHeader>
+          <TableColumnHeader><Label>SendPorts</Label><Width>24</Width></TableColumnHeader>
           <TableColumnHeader><Label>State</Label><Width>7</Width></TableColumnHeader>
           <TableColumnHeader><Label>PickedUp</Label><Width>9</Width></TableColumnHeader>
           <TableColumnHeader><Label>Held</Label><Width>7</Width></TableColumnHeader>
@@ -614,6 +623,7 @@
               <TableColumnItem><ScriptBlock>[Xmip.Surface.SubscriptionQuery]::NodeName($_)</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Filter</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Destination</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>$_.Reaches -join ', '</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>PickedUp</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Held</PropertyName></TableColumnItem>

@@ -706,6 +706,48 @@ Describe 'The cmdlets read the surface xmip reads' {
         $records.Count | Should -Be 5
     }
 
+    It 'says From and To on every record and row, in the runtime''s words' {
+        # The owner, 2026-11-10: from and to in every observation (ADR-0052,
+        # amendment 2026-11-11). Said once in observe, read through
+        # Xmip.Surface; the module writes none of it.
+        [string] $node = "$($script:Cluster.Scope)/node/$script:Receiver"
+        [string] $served = Join-Path $TestDrive 'from-to.xmip'
+        @"
+node = "$($script:Cluster.Scope)"
+
+[[records]]
+scope = "$node/receive/In"
+state = "stressed"
+severity = 60
+evidence = "a document no Subscription takes was dropped"
+
+[[subscriptions]]
+node = "$node"
+name = "onward"
+send_ports = ["Out"]
+
+[topology]
+observed_unix_nanos = 5
+
+[[topology.nodes]]
+id = "node/$script:Receiver/receive/In"
+kind = "endpoint"
+scope = "$node/receive/In"
+
+[[topology.links]]
+id = "in"
+from = "node/$script:Receiver/receive/In"
+to = "node/$script:Receiver/process/onward"
+"@ | Set-Content -LiteralPath $served -Encoding utf8
+
+        $record = @(Get-XmipHealth -Snapshot $served -Scope "$node/receive")[0]
+        $record.From | Should -Be "In [$script:Receiver]"
+        $record.To | Should -Be 'Out'
+        $row = Get-XmipScope -Snapshot $served -Scope "$node/receive/In"
+        $row.CameFrom | Should -Be "In [$script:Receiver]"
+        $row.WentTo | Should -Be 'Out'
+    }
+
     It 'drills from the cluster to the leaf that explains it, one level at a time' {
         # 2026-09-26: the module had no row and no figure, and Get-XmipHealth
         # answered with every leaf beneath a scope. Get-XmipScope is the row

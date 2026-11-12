@@ -25,10 +25,13 @@ Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` a
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
 probe's own `ModuleProbe.Result` — a library it cannot load refused with its
 `Unloadable`, else `Conforms` and `Complaint` — all from `Xmip.Abi`. Five read a
-running Xmip: `Get-XmipHealth -Scope`; `Get-XmipScope [-Scope]`, the drill —
+running Xmip: `Get-XmipHealth -Scope`, each record with `From` and `To`;
+`Get-XmipScope [-Scope]`, the drill —
 the `ScopeItem` `xmip show` and `list` render, the cluster when no scope
 is named, `-Scope xmip:///C1/*` the level beneath it worst first, and each
-row's `Worst` the next scope on the way to the cause; the two acts the
+row's `Worst` the next scope on the way to the cause, its `CameFrom` and
+`WentTo` where its work came from and went, in the runtime's words
+(ADR-0052, amendment 2026-11-11); the two acts the
 boundary carries,
 `Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
 `ScopeOperation.Who`, the rule `xmip pause --who` and the GUI follow;
