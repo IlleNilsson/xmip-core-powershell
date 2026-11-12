@@ -190,8 +190,8 @@ whom it was set — and never a value: no surface reads one back out.
 2026-11-10). A Report presents existing data; a Quest probes for data to
 present in a Report. `Get-XmipReport [-Name <name>]` emits a `ReportEntry`
 for every Report, Xmip's own and every one a module adds, or the one named:
-its `Kind` and its kind's `Words` — the name *Quick*, it presents data that
-already exists, or *Takes longer*, it presents what a Quest probes first,
+its `Kind` and its kind's `Words` — the name *Report*, it presents data that
+already exists, or *Probing report*, it presents what a Quest probes first,
 with the word and the meaning, the runtime's — whether it
 is `Available`, what to `Expect` — *last probe took 4 ms*, read back from
 where this module's records go, *not probed yet*, or *not yet available* —

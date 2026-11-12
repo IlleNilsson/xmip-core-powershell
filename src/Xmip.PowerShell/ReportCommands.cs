@@ -14,10 +14,10 @@ namespace Xmip.PowerShell;
 /// <remarks>
 /// A Report presents existing data; a Quest probes for data to present in a
 /// Report. Every Report is in one list, and each says which (ADR-0072,
-/// amendment 2026-11-10): Quick, it presents data that already exists and
-/// is opened at the cmdlet that presents it, its PresentedBy — or Takes
-/// longer, it presents what a Quest probes first, and says how long its last
-/// probe took. One built later is listed and says not yet available. One
+/// amendments 2026-11-10 and 2026-11-12): Report, it presents data that
+/// already exists and is opened at the cmdlet that presents it, its
+/// PresentedBy — or Probing report, it presents what a Quest probes first,
+/// and says how long its last probe took. One built later is listed and says not yet available. One
 /// noun for every Report, the act a parameter on it: -Configuration opens a
 /// Report that presents what a Quest probes, its Quest probing a node's
 /// configuration — or a cluster's cluster.xmip, sliced for -Node — and
