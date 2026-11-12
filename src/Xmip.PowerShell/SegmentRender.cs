@@ -116,7 +116,10 @@ public static class SegmentRender
         for (int at = 0; at < path.Count; at++)
         {
             Counted counted = ScopeTree.CountedAt(path[at]);
-            string letter = (at == 0 ? string.Empty : " ") + English.Stage(path[at])[..1];
+            // The stage word's first letter, R P S as the owner set them
+            // (ADR-0052), never the title's: Work Process would draw W.
+            string letter = (at == 0 ? string.Empty : " ")
+                + path[at][..1].ToUpperInvariant();
 
             parts.AddRange(Moving(
                 letter, flow.Of(counted), before?.Of(counted), Traffic(stages[at])));
