@@ -832,7 +832,7 @@
       </TableControl>
     </View>
     <!-- Every Report (ADR-0072, amendment 2026-11-10): its kind by the
-         runtime's name for it, Quick or Takes longer; what to expect, the
+         runtime's name for it, Report or Probing report; what to expect, the
          runtime's words; the cmdlet that presents a quick one. -->
     <View>
       <Name>Xmip.Surface.ReportEntry</Name>
