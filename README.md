@@ -28,7 +28,7 @@ probe's own `ModuleProbe.Result` — a library it cannot load refused with its
 running Xmip: `Get-XmipHealth -Scope`, each record with `From` and `To`;
 `Get-XmipScope [-Scope]`, the drill —
 the `ScopeItem` `xmip show` and `list` render, the cluster when no scope
-is named, `-Scope xmip:///C1/*` the level beneath it worst first, and each
+is named, `-Scope xmip:///CL1/*` the level beneath it worst first, and each
 row's `Worst` the next scope on the way to the cause, its `CameFrom` and
 `WentTo` where its work came from and went, in the runtime's words
 (ADR-0052, amendment 2026-11-11); the two acts the
@@ -145,7 +145,7 @@ the one its subscriber connected to, not the one it hears: it hears the
 matching Events of every node of the cluster (amendment 2026-10-02), and the
 links that carry them between nodes are the cluster's and never listed; a
 member a node there does not hear is written as a warning beside the
-records, one line each — `R1: not hearing <node> since <time>: <why>` —
+records, one line each — `RX1: not hearing <node> since <time>: <why>` —
 so no Event is missing silently.
 `Get-XmipEventSubscription -Pattern <pattern> -Location <scope> -Id <n>
 -Sort <column> -Descending` emits each `EventSubscriptionRecord` — its
@@ -281,7 +281,7 @@ machine, then a node's local endpoint on this one, then one cluster's
 snapshot, then `powershell.toml`; `-Library` names the runtime library
 the surface calls the runtime through and chooses none — because both ask
 `SurfaceChoice.Stated` in `Xmip.Surface`. A `-Scope` may be a wildcard over
-the scopes that exist, `Get-XmipHealth -Scope 'xmip:///C1/node/R*'`, selected
+the scopes that exist, `Get-XmipHealth -Scope 'xmip:///CL1/node/RX*'`, selected
 by the executable's own `ScopeSelection`: each topmost scope it names is
 answered in turn and none is rolled up with another, and a pattern that names
 nothing is a non-terminating error that says REFUSED, the pattern and what
@@ -313,7 +313,7 @@ owner, 2026-09-18). It wears posh-git's clothes, by the owner's word the same
 evening: yellow brackets, the cyan posh-git gives a branch in step with its
 remote for a stage that is fine, and posh-git's own `≡` when every stage is
 fine and nothing is retrying or failed. It keeps posh-git's order too,
-`[main ≡ +0 ~1 -0]` there and `[C1 ≡ R:12 P:11 S:10]` here: first what the
+`[main ≡ +0 ~1 -0]` there and `[CL1 ≡ R:12 P:11 S:10]` here: first what the
 prompt is at — the node's name where it follows one node, the cluster's
 where it follows a cluster, in the color of the worst stage — then `≡` when
 square, then the counts. R, P and S are the stage letters; a cluster or a
@@ -433,15 +433,15 @@ dotnet build module/core/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
 Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net11.0/Xmip.PowerShell.psd1
-Start-XmipTest -Suite Essentials -Cluster C1 -Test RoundTrip `
-    -Nodes R1, P1, S1 `
-    -NodeRole @{ R1 = 'receiving'; P1 = 'processing'; S1 = 'sending' }
+Start-XmipTest -Suite Essentials -Cluster CL1 -Test RoundTrip `
+    -Nodes RX1, PX1, TX1 `
+    -NodeRole @{ RX1 = 'receiving'; PX1 = 'processing'; TX1 = 'sending' }
 ```
 
-`C1` and the three node names are arguments, nothing more: name them anything
-a file can be called. `R1`, `P1` and `S1` are how the owner names nodes when
-he tests (2026-09-25), a reminder to the person; what each does is the
-`-NodeRole` beside it, and Xmip never reads the name. `C1` is written here only because the shipped
+`CL1` and the three node names are arguments, nothing more: name them anything
+a file can be called. `RX1`, `PX1` and `TX1` are how the owner names nodes (ADR-0056,
+amendment 2026-11-12), a reminder to the person; what each does is the
+`-NodeRole` beside it, and Xmip never reads the name. `CL1` is written here only because the shipped
 `powershell.toml` follows that roll's snapshot.
 
 Press Enter after the import and the prompt is as it was, with no segment,
@@ -458,11 +458,11 @@ segment to sit beside a repository's state; a console started with
 
 A roll started under another name is followed too: `Start-XmipTest` tells
 the prompt in its session which snapshot its roll publishes, so `-Cluster
-C2` shows C2 and not the C1 the shipped document names (ADR-0052,
+CL2` shows CL2 and not the CL1 the shipped document names (ADR-0052,
 amendment 2026-09-18). A roll started in another session is followed by
 writing its file into `powershell.toml`.
 
-The executable reads the same file: `xmip show xmip:///C1` from the cli's
+The executable reads the same file: `xmip show xmip:///CL1` from the cli's
 build directory answers with the same figures, because its `cli.toml`
 ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 

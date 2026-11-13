@@ -82,7 +82,7 @@ public sealed class NewXmipCertificateCommand : CertificateCommand
     /// <summary>
     /// <para type="description">The node a key and certificate are issued
     /// to, or whose request is made, as its cluster's cluster.xmip declares
-    /// it: R1.</para>
+    /// it: RX1.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = Issuing)]
     [Parameter(Mandatory = true, ParameterSetName = Requesting)]
@@ -109,7 +109,7 @@ public sealed class NewXmipCertificateCommand : CertificateCommand
 
     /// <summary>
     /// <para type="description">Every name the node is reached by besides
-    /// its own: R1.xmip.test, C1, C1.xmip.test. To sign a carried request,
+    /// its own: RX1.xmip.test, CL1, CL1.xmip.test. To sign a carried request,
     /// the names it must ask for, its node's own among them.</para>
     /// </summary>
     [Parameter(ParameterSetName = Issuing)]
