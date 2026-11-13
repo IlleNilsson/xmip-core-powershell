@@ -100,7 +100,8 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 
 /// <summary>
 /// <para type="synopsis">One scope as a row of the tree: its mood, the leaf that
-/// explains it and that leaf's evidence, and its six figures.</para>
+/// explains it and that leaf's evidence, its six figures, and on a node's row
+/// what the node is for.</para>
 /// </summary>
 /// <remarks>
 /// The drill, in PowerShell: the same <see cref="ScopeItem"/> <c>xmip
@@ -110,7 +111,9 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// worst first — the topmost matches — and a row's <c>Worst</c> is the next
 /// scope to ask about on the way to the cause. Until 2026-09-26 the module
 /// had no row and no figure: <c>Get-XmipHealth</c> answered with every leaf
-/// beneath a scope, thousands for one node.
+/// beneath a scope, thousands for one node. A node's row carries its
+/// <c>Purpose</c>, each role it declares with its meaning, a line each
+/// (ADR-0056, amendment 2026-11-13).
 /// <para>A Send Port's row says, in its evidence, how many Messages failed
 /// there and the last with why (runtime-model.md section 13). The Messages
 /// that failed and the acts on one are parameters here rather than cmdlets

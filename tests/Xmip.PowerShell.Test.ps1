@@ -780,6 +780,26 @@ to = "node/$script:Receiver/process/onward"
             Should -Be 6 -Because 'a node has figures of its own'
     }
 
+    It 'says on a node''s row what the node is for, and on no other row' {
+        # The owner, 2026-11-12: "what are nodes purpose". The words are the
+        # runtime's (node::NodeRole::purpose), through Xmip.Surface's English;
+        # the fixture's receiving node publishes that it declares receiving.
+        [string] $cluster = Join-Path $script:Root `
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
+        [string] $node = "$($script:Cluster.Scope)/node/$script:Receiver"
+
+        $row = Get-XmipScope -Snapshot $cluster -Scope $node
+
+        $row.Purpose | Should -Be ([Xmip.Surface.English]::Purpose('receiving'))
+        $row.Purpose | Should -BeLike 'receiving: *'
+        (Get-XmipScope -Snapshot $cluster -Scope "$node/receive").Purpose |
+            Should -BeNullOrEmpty -Because 'a stage is no node'
+        (Get-XmipScope -Snapshot $cluster).Purpose |
+            Should -BeNullOrEmpty -Because 'the cluster is no node'
+        ($row | Format-Table | Out-String -Width 120) |
+            Should -BeLike '*receiving: *' -Because 'the row shows it beneath its scope'
+    }
+
     It 'follows, as xmip --follow does, until the pipeline is stopped' {
         # 2026-09-27: the command line followed health and measure and the
         # module could not. One follow (Xmip.Surface SurfaceFollow) for both.

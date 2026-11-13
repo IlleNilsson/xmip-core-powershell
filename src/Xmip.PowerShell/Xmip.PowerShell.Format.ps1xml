@@ -56,11 +56,15 @@
           <TableColumnHeader><Label>To</Label><Width>24</Width></TableColumnHeader>
           <TableColumnHeader><Label>Figures</Label></TableColumnHeader>
         </TableHeaders>
+        <!-- A node's row says beneath its scope what the node is for, a role a
+             line (ADR-0056, amendment 2026-11-13), so the row wraps: every
+             cell is shown whole, the figures too, rather than cut. -->
         <TableRowEntries>
           <TableRowEntry>
+            <Wrap />
             <TableColumnItems>
               <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Mood($_.Health)</ScriptBlock></TableColumnItem>
-              <TableColumnItem><PropertyName>Scope</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if ($_.Purpose) { "$($_.Scope)`n$($_.Purpose)" } else { $_.Scope }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>CameFrom</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>WentTo</PropertyName></TableColumnItem>
               <TableColumnItem><ScriptBlock>[Xmip.Surface.English]::Figures($_.Figures)</ScriptBlock></TableColumnItem>

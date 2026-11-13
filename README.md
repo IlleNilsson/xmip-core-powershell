@@ -31,7 +31,10 @@ the `ScopeItem` `xmip show` and `list` render, the cluster when no scope
 is named, `-Scope xmip:///CL1/*` the level beneath it worst first, and each
 row's `Worst` the next scope on the way to the cause, its `CameFrom` and
 `WentTo` where its work came from and went, in the runtime's words
-(ADR-0052, amendment 2026-11-11); the two acts the
+(ADR-0052, amendment 2026-11-11), and a node's own row its `Purpose`, what the
+node is for, each role it declares with its meaning, a line each, empty on
+every other row (`node::NodeRole::purpose`; ADR-0056, amendment 2026-11-13;
+the owner, 2026-11-12: *what are nodes purpose*); the two acts the
 boundary carries,
 `Suspend-XmipScope -Scope [-Who]` (the user the session runs as when omitted,
 `ScopeOperation.Who`, the rule `xmip pause --who` and the GUI follow;
@@ -271,7 +274,10 @@ cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
 operation, `MessageOperation` among them, and `ReportEntry` and `ReportRow`
 as tables, `ReportProbed` and `ReportRequirement` as lists. A mood, an age and the figures in a column are the words
 `English` in `Xmip.Surface` says, the words `xmip` and the web views say;
-an outcome is OK or REFUSED; `Format-List` still shows everything.
+an outcome is OK or REFUSED; `Format-List` still shows everything. A
+`ScopeItem`'s row wraps, so a node's `Purpose` stands beneath its scope, as
+`xmip list` writes it beneath the row, and every cell, the figures too, is
+shown whole rather than cut (2026-11-13).
 
 **The cmdlets read the surface `xmip` reads** (ADR-0052 clause 1). The
 four that take a `-Scope` take `-Remote`, `-Local`, `-Snapshot` and
