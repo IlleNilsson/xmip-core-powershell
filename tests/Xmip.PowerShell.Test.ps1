@@ -492,7 +492,7 @@ scope = "$scope/process"
         [string] $fixture = Join-Path $script:Root `
             '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
         [string] $beside = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-c2.xmip'
+            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-cl2.xmip'
 
         # Named by the session, never counted from files on disk: a surface is
         # stated (ADR-0052 clause 3). The followed one among them is not an
