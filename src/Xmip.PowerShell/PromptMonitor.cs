@@ -44,10 +44,11 @@ public static class PromptMonitor
     private static Task? _worker;
     private static XmipPromptSegment _current = Connecting();
 
-    // The snapshot the session said to follow, over the document's choice,
-    // and which observer may write the segment: one that was replaced must
-    // not overwrite what its successor published.
-    private static string? _followed;
+    // What the session said to follow, over the document's choice — a
+    // snapshot, or a node on this machine or another — and which observer may
+    // write the segment: one that was replaced must not overwrite what its
+    // successor published.
+    private static SurfaceLine _followed = SurfaceLine.None;
     private static int _generation;
 
     // How many clusters the session said are rolling beside the one followed.
@@ -103,12 +104,30 @@ public static class PromptMonitor
     /// </summary>
     public static void Follow(string snapshot, params string[] beside)
     {
+        Follow(new SurfaceLine(Snapshot: snapshot), beside);
+    }
+
+    /// <summary>
+    /// Follow what <paramref name="line"/> states — a node on another machine,
+    /// a node on this one, or a snapshot, by the one precedence every cmdlet
+    /// takes — knowing these snapshots are rolling beside it. A node that
+    /// gathers its cluster's view, a node declaring the monitoring role, is
+    /// followed for the whole cluster, and the segment names the cluster,
+    /// read from what every published scope shares (<see cref="SegmentRender.At"/>);
+    /// a node that gathers none, that node (the design approved 2026-11-12,
+    /// section 3.5). Which one the node is, its answer says, never its name.
+    /// </summary>
+    public static void Follow(SurfaceLine line, params string[] beside)
+    {
+        ArgumentNullException.ThrowIfNull(line);
         ArgumentNullException.ThrowIfNull(beside);
 
         lock (Gate)
         {
-            string followed = Path.GetFullPath(snapshot);
-            _followed = followed;
+            string? followed = string.IsNullOrWhiteSpace(line.Snapshot)
+                ? null
+                : Path.GetFullPath(line.Snapshot);
+            _followed = line with { Snapshot = followed };
             _beside = beside
                 .Where(other => !string.IsNullOrWhiteSpace(other))
                 .Select(Path.GetFullPath)
@@ -222,13 +241,13 @@ public static class PromptMonitor
         }
     }
 
-    // The snapshot the session named, stated over the document, by the one
+    // What the session named, stated over the document, by the one
     // precedence the executable and every cmdlet share: the document's
     // choice and the first cluster where it names several — the prompt is
     // one line (ADR-0052, amendment 2026-09-20) — else no node, said so.
     private static IOperatorSurface OpenSurface()
     {
-        return ModuleSurface.Stated(new SurfaceLine(Snapshot: Volatile.Read(ref _followed)));
+        return ModuleSurface.Stated(Volatile.Read(ref _followed));
     }
 
     private static void Publish(int generation, IOperatorSurface surface)

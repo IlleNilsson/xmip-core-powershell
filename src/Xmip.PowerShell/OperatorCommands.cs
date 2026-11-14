@@ -78,21 +78,24 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 
                 foreach (HealthRecord record in records)
                 {
-                    WriteObject(WithFromTo(Surface, record));
+                    WriteObject(Answered(Surface, record));
                 }
             }
         }
     }
 
     // The record with where its work came from and went, From and To, as
-    // the runtime says them (ADR-0052, amendment 2026-11-11).
-    private static PSObject WithFromTo(IOperatorSurface surface, HealthRecord record)
+    // the runtime says them (ADR-0052, amendment 2026-11-11), and where it
+    // was read, Source, as xmip health says it: at a node that gathers its
+    // cluster's view, who gathered it and how many nodes it reached.
+    private static PSObject Answered(IOperatorSurface surface, HealthRecord record)
     {
         FromTo path = surface.FromTo(record.Scope);
         PSObject row = PSObject.AsPSObject(record);
 
         row.Properties.Add(new PSNoteProperty("From", path.From));
         row.Properties.Add(new PSNoteProperty("To", path.To));
+        row.Properties.Add(new PSNoteProperty("Source", surface.Source));
 
         return row;
     }
@@ -347,7 +350,7 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
         MessageOperation done =
             Surface.Act(scope, journey, act, ScopeOperation.Who(Who), caller: null);
 
-        if (!done.Applied)
+        if (done.Outcome == ActOutcome.Refused)
         {
             Refuse(new ErrorRecord(
                 new InvalidOperationException(done.Result),
@@ -356,6 +359,11 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
                 target));
 
             return;
+        }
+
+        if (done.Outcome == ActOutcome.Asked)
+        {
+            WriteWarning(done.Result);
         }
 
         Acted(target, done.Result);

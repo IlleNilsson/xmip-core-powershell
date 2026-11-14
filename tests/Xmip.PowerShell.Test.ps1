@@ -687,6 +687,53 @@ Describe 'The cmdlets read the surface xmip reads' {
         }
     }
 
+    It 'answers for the whole cluster at a node that gathers it, and the prompt names it' {
+        # The design approved 2026-11-12, section 3.5: at a node declaring the
+        # monitoring role a cmdlet and the prompt follow the cluster's view it
+        # gathers, decided by the node's answer and never by its name; each
+        # record's Source says who gathered it, in the node's own words.
+        [string] $endpoint = "xmip-pester-gathered-$([guid]::NewGuid().ToString('n'))"
+        [string] $reason = ''
+        $me = [Xmip.Surface.RuntimeLibrary]::Rules.SecurityRoles.Process([ref] $reason)
+        $me | Should -Not -BeNullOrEmpty -Because $reason
+        [string[]] $observers = @($me.Name)
+        $me.Dispose()
+        $served = [Xmip.Surface.RuntimeLibrary]::Rules.Remotes.ServeLocal(
+            $endpoint, $observers, [string[]] @(), [string[]] @(), 'pester-gathered', [ref] $reason)
+        $served | Should -Not -BeNullOrEmpty -Because $reason
+        [string] $name = $script:Cluster.Name
+        [string] $words = "$name, gathered by a monitoring node: 2 of 2 nodes reached"
+        [string] $reached = @(
+            foreach ($node in $script:At) {
+                "[[records]]`nscope = `"$node/reached`"`nstate = `"fine`"`nseverity = 0`n" +
+                "evidence = `"`"`nobserved_unix_nanos = 1789111688000000000`n"
+            }
+        ) -join "`n"
+        try {
+            $served.Post([System.IO.File]::ReadAllText($script:Fixture))
+            $served.PostCluster(
+                "source = `"$words`"`nnode = `"$($script:Cluster.Scope)`"`n`n$reached")
+            [object[]] $records = @(Get-XmipHealth -Local $endpoint -Scope $script:Cluster.Scope)
+
+            $records.Count | Should -Be $script:At.Count
+            $records[0].Source | Should -Be "LOCAL — $endpoint — $words"
+
+            [Xmip.PowerShell.PromptMonitor]::Follow(
+                [Xmip.Surface.SurfaceLine]::new($null, $null, $null, $endpoint))
+            [string] $said = ''
+            foreach ($attempt in 1..40) {
+                $said = [Xmip.PowerShell.PromptMonitor]::Current.Text
+                if ($said -like "``[$name*") { break }
+                Start-Sleep -Milliseconds 100
+            }
+
+            $said | Should -BeLike "``[$name *]" -Because 'the prompt is at the cluster'
+        }
+        finally {
+            $served.Dispose()
+        }
+    }
+
     It 'ends with why the node -Local names does not answer' {
         { Get-XmipHealth -Local 'xmip-pester-nobody-listens' -Scope 'xmip:///' -ErrorAction Stop } |
             Should -Throw -ExpectedMessage '*LOCAL — xmip-pester-nobody-listens unreachable*'
@@ -1106,17 +1153,16 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
 
 Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
     # ADR-0065, amendment 2026-09-29: one cmdlet for the noun, the act a
-    # parameter on it, over the surface xmip reads. A snapshot of the
-    # test cluster whose publisher takes orders: an act is left there for the
-    # node. Its first two nodes hold one each; the first does not hear the third.
+    # parameter on it, over the surface xmip reads. A snapshot of the test
+    # cluster, never acted on (ADR-0014, amendment 2026-11-13): an act reaches
+    # it and is declined in its words. Its first two nodes hold one each; the
+    # first does not hear the third.
     BeforeAll {
         $script:Place = Join-Path -Path $TestDrive -ChildPath 'event-subscriptions'
-        $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
         Set-Content -LiteralPath $script:Published -Value @(
             "node = `"$($script:Cluster.Scope)`""
-            "orders = '$script:Orders'"
             '[[event_subscriptions]]'
             "node = `"$($script:At[0])`""
             'id = 1'
@@ -1174,21 +1220,19 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
     }
 
     It 'takes an act as a parameter, honors -WhatIf, and takes a listed one from the pipeline' {
-        Get-XmipEventSubscription -Snapshot $script:Published -Location $script:At[0] `
-            -Id 1 -Pause -WhatIf
-        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+        @(Get-XmipEventSubscription -Snapshot $script:Published -Location $script:At[0] `
+                -Id 1 -Pause -WhatIf -ErrorAction Stop).Count | Should -Be 0
 
-        [string] $second = $script:Cluster.Nodes[1]
-        $done = Get-XmipEventSubscription -Snapshot $script:Published `
-            -Location $script:At[1] |
-            Get-XmipEventSubscription -Snapshot $script:Published -Resume -Who 'ilian' `
-                -Confirm:$false
+        $declined = {
+            Get-XmipEventSubscription -Snapshot $script:Published -Location $script:At[1] |
+                Get-XmipEventSubscription -Snapshot $script:Published -Resume -Who 'ilian' `
+                    -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
 
-        $done | Should -BeOfType ([Xmip.Surface.EventSubscriptionOperation])
-        $done.Applied | Should -BeTrue
-        $done.Result | Should -BeLike "*left for $second*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
-            Count | Should -Be 1
+        $declined.FullyQualifiedErrorId | Should -BeLike 'XmipEventSubscriptionActRefused*'
+        $declined.Exception.Message | Should -Be ([Xmip.Surface.SnapshotOperator]::NotActed)
+        Get-FormatData -TypeName 'Xmip.Surface.EventSubscriptionOperation' |
+            Should -Not -BeNullOrEmpty
     }
 
     It 'refuses an act on an Event subscription that is not listed, in words' {
@@ -1208,7 +1252,6 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
     # remove, because the TOML configuration adds and removes a Subscription.
     BeforeAll {
         $script:Place = Join-Path -Path $TestDrive -ChildPath 'subscriptions'
-        $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
 
@@ -1234,7 +1277,6 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
 
         Set-Content -LiteralPath $script:Published -Value @(
             "node = `"$($script:Cluster.Scope)`""
-            "orders = '$script:Orders'"
             # The first node routes by two Subscriptions, the second by one.
             Get-Entry -Node $script:At[0] -Name 'structured' -State 'active' -PickedUp 12 -Held 0
             Get-Entry -Node $script:At[0] -Name 'edi' -State 'paused' -PickedUp 3 -Held 9
@@ -1269,30 +1311,29 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         (Get-Command -Name Get-XmipSubscription).Parameters.Keys | Should -Not -Contain 'Remove'
     }
 
-    It 'takes an act as a parameter, honors -WhatIf, and leaves a pause as an order file' {
-        Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0] `
-            -Name 'structured' -Pause -WhatIf
-        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+    It 'takes an act as a parameter, honors -WhatIf, and a snapshot declines it in words' {
+        @(Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0] `
+                -Name 'structured' -Pause -WhatIf -ErrorAction Stop).Count | Should -Be 0
 
-        [string] $first = $script:Cluster.Nodes[0]
-        $done = Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0] `
-            -Name 'structured' -Pause -Who 'ilian' -Confirm:$false
+        $declined = {
+            Get-XmipSubscription -Snapshot $script:Published -Location $script:At[0] `
+                -Name 'structured' -Pause -Who 'ilian' -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
 
-        $done | Should -BeOfType ([Xmip.Surface.SubscriptionOperation])
-        $done.Applied | Should -BeTrue
-        $done.Result | Should -BeLike "*left for $first*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*.toml').Count |
-            Should -Be 1
+        $declined.FullyQualifiedErrorId | Should -BeLike 'XmipSubscriptionActRefused*'
+        $declined.Exception.Message | Should -Be ([Xmip.Surface.SnapshotOperator]::NotActed)
     }
 
     It 'takes a listed Subscription from the pipeline by its Node and Name' {
-        [string] $second = $script:Cluster.Nodes[1]
-        $done = Get-XmipSubscription -Snapshot $script:Published -Location $script:At[1] |
-            Get-XmipSubscription -Snapshot $script:Published -Resume -Confirm:$false
+        $declined = {
+            Get-XmipSubscription -Snapshot $script:Published -Location $script:At[1] |
+                Get-XmipSubscription -Snapshot $script:Published -Resume -Confirm:$false `
+                    -ErrorAction Stop
+        } | Should -Throw -PassThru
 
-        $done.Name | Should -Be 'flat'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-resume.toml').
-            Count | Should -Be 1
+        # Found and asked, not refused as unlisted: the snapshot declined it.
+        $declined.FullyQualifiedErrorId | Should -BeLike 'XmipSubscriptionActRefused*'
+        $declined.TargetObject | Should -BeLike "*'flat'*"
     }
 
     It 'refuses an act on a Subscription that is not listed, in words' {
@@ -1311,7 +1352,6 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
     # matched; one cmdlet for the noun, Replay a parameter on it.
     BeforeAll {
         $script:Place = Join-Path -Path $TestDrive -ChildPath 'dead'
-        $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         New-Item -ItemType Directory -Path $script:Place | Out-Null
 
@@ -1329,7 +1369,6 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
 
         Set-Content -LiteralPath $script:Published -Value @(
             "node = `"$($script:Cluster.Scope)`""
-            "orders = '$script:Orders'"
             # The first node's queue keeps two Messages, the second's one.
             Get-Entry -Node $script:At[0] -Message 'm-1' -Sequence 1 -Rest @(
                 'declines = [["structured", "no MessageType"]]')
@@ -1373,32 +1412,31 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         ($one | Format-List | Out-String) | Should -BeLike '*edi: paused*'
     }
 
-    It 'takes Replay as a parameter, honors -WhatIf, and leaves it as an order file' {
+    It 'takes Replay as a parameter, honors -WhatIf, and a snapshot declines it in words' {
         (Get-Command -Name Get-XmipDeadMessage).Parameters.Keys |
             Should -Not -Contain 'Pause'
-        Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
-            -Message 'm-2' -Replay -WhatIf
-        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+        @(Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
+                -Message 'm-2' -Replay -WhatIf -ErrorAction Stop).Count | Should -Be 0
 
-        [string] $first = $script:Cluster.Nodes[0]
-        $done = Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
-            -Message 'm-2' -Replay -Who 'ilian' -Confirm:$false
+        $declined = {
+            Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[0] `
+                -Message 'm-2' -Replay -Who 'ilian' -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
 
-        $done | Should -BeOfType ([Xmip.Surface.DeadMessageOperation])
-        $done.Applied | Should -BeTrue
-        $done.Result | Should -BeLike "*left for $first*"
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $first) -Filter '*-replay.toml').
-            Count | Should -Be 1
+        $declined.FullyQualifiedErrorId | Should -BeLike 'XmipDeadMessageReplayRefused*'
+        $declined.Exception.Message | Should -Be ([Xmip.Surface.SnapshotOperator]::NotActed)
     }
 
     It 'takes a listed entry from the pipeline by its Node and Message' {
-        [string] $second = $script:Cluster.Nodes[1]
-        $done = Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[1] |
-            Get-XmipDeadMessage -Snapshot $script:Published -Replay -Confirm:$false
+        $declined = {
+            Get-XmipDeadMessage -Snapshot $script:Published -Location $script:At[1] |
+                Get-XmipDeadMessage -Snapshot $script:Published -Replay -Confirm:$false `
+                    -ErrorAction Stop
+        } | Should -Throw -PassThru
 
-        $done.Message | Should -Be 'm-3'
-        @(Get-ChildItem -LiteralPath (Join-Path $script:Orders $second) -Filter '*-replay.toml').
-            Count | Should -Be 1
+        # Found and asked, not refused as unkept: the snapshot declined it.
+        $declined.FullyQualifiedErrorId | Should -BeLike 'XmipDeadMessageReplayRefused*'
+        $declined.TargetObject | Should -BeLike 'Message m-3 *'
     }
 
     It 'refuses a Replay of a Message its queue does not keep, in words' {
@@ -1418,7 +1456,6 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
     # cmdlet, not a cmdlet of their own.
     BeforeAll {
         $script:Place = Join-Path -Path $TestDrive -ChildPath 'message'
-        $script:Orders = Join-Path $script:Place 'orders'
         $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
         $script:Sending = "$($script:Cluster.Scope)/node/$($script:Sender)"
         $script:Port = "$($script:Sending)/send/invoices"
@@ -1426,7 +1463,6 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
 
         Set-Content -LiteralPath $script:Published -Value @(
             "node = `"$($script:Cluster.Scope)`""
-            "orders = '$script:Orders'"
             ''
             '[[failed_messages]]'
             "node = `"$($script:Sending)`""
@@ -1482,7 +1518,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         # An answer is no error, none failing among them: no object, and nothing said.
         [Xmip.PowerShell.FailedMessageError]::Of(
             [Xmip.Abi.Operate.FailedMessageList]::new(
-                '', [Xmip.Abi.Operate.FailedMessagePort[]]@(), $true, ''),
+                [Xmip.Abi.Operate.FailedMessagePort[]]@(), $true, ''),
             $script:Port, 'SNAPSHOT') |
             Should -BeNullOrEmpty
         [object[]] $none = @()
@@ -1492,27 +1528,23 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         $none.Count | Should -Be 0
     }
 
-    It 'takes Retry and Dismiss as parameters, honors -WhatIf, and leaves an order file' {
+    It 'takes Retry and Dismiss as parameters, honors -WhatIf, and a snapshot declines them' {
         (Get-Command -Name Get-XmipScope).Parameters.Keys |
             Should -Contain 'Journey'
-        Get-XmipScope -Snapshot $script:Published -Scope $script:Port -Journey 'j-1' `
-            -Retry -WhatIf
-        Test-Path -LiteralPath $script:Orders | Should -BeFalse
+        @(Get-XmipScope -Snapshot $script:Published -Scope $script:Port -Journey 'j-1' `
+                -Retry -WhatIf -ErrorAction Stop).Count | Should -Be 0
 
-        $done = Get-XmipScope -Snapshot $script:Published -Scope $script:Port -Journey 'j-1' `
-            -Retry -Who 'ilian' -Confirm:$false
+        foreach ($act in @(
+                @{ Scope = $script:Port; Retry = $true },
+                @{ Scope = $script:Sending; Dismiss = $true })) {
+            $declined = {
+                Get-XmipScope -Snapshot $script:Published -Journey 'j-1' -Who 'ilian' `
+                    -Confirm:$false -ErrorAction Stop @act
+            } | Should -Throw -PassThru
 
-        $done | Should -BeOfType ([Xmip.Surface.MessageOperation])
-        $done.Applied | Should -BeTrue
-        $done.Node | Should -Be $script:Sending
-        $done.Result | Should -BeLike "*left for $($script:Sender)*"
-        [string] $kept = Join-Path $script:Orders $script:Sender
-        @(Get-ChildItem -LiteralPath $kept -Filter '*-retry.toml').Count | Should -Be 1
-
-        $dismissed = Get-XmipScope -Snapshot $script:Published -Scope $script:Sending `
-            -Journey 'j-1' -Dismiss -Confirm:$false
-        $dismissed.Act | Should -Be ([Xmip.Surface.MessageAct]::Dismiss)
-        @(Get-ChildItem -LiteralPath $kept -Filter '*-dismiss.toml').Count | Should -Be 1
+            $declined.FullyQualifiedErrorId | Should -BeLike 'XmipMessageActRefused*'
+            $declined.Exception.Message | Should -Be ([Xmip.Surface.SnapshotOperator]::NotActed)
+        }
         Get-FormatData -TypeName 'Xmip.Surface.MessageOperation' | Should -Not -BeNullOrEmpty
     }
 

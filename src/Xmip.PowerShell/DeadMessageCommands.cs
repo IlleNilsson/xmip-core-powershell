@@ -168,7 +168,7 @@ public sealed class GetXmipDeadMessageCommand : XmipSurfaceCommand
         Acting(target);
         DeadMessageOperation done = Surface.Act(one, act, ScopeOperation.Who(Who), caller: null);
 
-        if (!done.Applied)
+        if (done.Outcome == ActOutcome.Refused)
         {
             Refuse(new ErrorRecord(
                 new InvalidOperationException(done.Result),
@@ -177,6 +177,11 @@ public sealed class GetXmipDeadMessageCommand : XmipSurfaceCommand
                 target));
 
             return;
+        }
+
+        if (done.Outcome == ActOutcome.Asked)
+        {
+            WriteWarning(done.Result);
         }
 
         Acted(target, done.Result);
