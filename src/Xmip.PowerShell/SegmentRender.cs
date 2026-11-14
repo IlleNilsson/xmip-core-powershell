@@ -149,7 +149,7 @@ public static class SegmentRender
     /// What the prompt is at, from what every published scope shares: the
     /// node where they share one, else the cluster, the first name. Nothing
     /// shared is no name. The node is <see cref="ScopeTree.Node"/>'s, which is
-    /// <c>observe::Scope::node</c> in the runtime, so the Essentials'
+    /// <c>node::Scope::node</c> in the runtime, so the Essentials'
     /// <c>node</c> marker names nothing; and what lies below the node or the
     /// cluster, a scenario or a stage, is never where the prompt is.
     /// </summary>

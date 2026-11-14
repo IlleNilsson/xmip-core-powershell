@@ -592,7 +592,7 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
-              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>switch ($_.Outcome) { 'Taken' { 'OK' } 'Asked' { 'ASKED' } default { 'REFUSED' } }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
@@ -654,7 +654,7 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
-              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>switch ($_.Outcome) { 'Taken' { 'OK' } 'Asked' { 'ASKED' } default { 'REFUSED' } }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
@@ -730,7 +730,7 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
-              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>switch ($_.Outcome) { 'Taken' { 'OK' } 'Asked' { 'ASKED' } default { 'REFUSED' } }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Message</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>
@@ -826,7 +826,7 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem><PropertyName>Act</PropertyName></TableColumnItem>
-              <TableColumnItem><ScriptBlock>if ($_.Applied) { 'OK' } else { 'REFUSED' }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>switch ($_.Outcome) { 'Taken' { 'OK' } 'Asked' { 'ASKED' } default { 'REFUSED' } }</ScriptBlock></TableColumnItem>
               <TableColumnItem><PropertyName>Node</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Journey</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Result</PropertyName></TableColumnItem>

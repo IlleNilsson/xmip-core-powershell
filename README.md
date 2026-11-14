@@ -25,7 +25,12 @@ Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` a
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
 probe's own `ModuleProbe.Result` — a library it cannot load refused with its
 `Unloadable`, else `Conforms` and `Complaint` — all from `Xmip.Abi`. Five read a
-running Xmip: `Get-XmipHealth -Scope`, each record with `From` and `To`;
+running Xmip: `Get-XmipHealth -Scope`, each record with `From` and `To`,
+and `Source`, where it was read — at a node that gathers its cluster's view,
+a node declaring the monitoring role, which `-Local` and `-Remote` then
+answer for the whole cluster, who gathered it and how many of its nodes it
+reached, in the runtime's words (the design approved 2026-11-12, section
+3.5);
 `Get-XmipScope [-Scope]`, the drill —
 the `ScopeItem` `xmip show` and `list` render, the cluster when no scope
 is named, `-Scope xmip:///CL1/*` the level beneath it worst first, and each
@@ -122,7 +127,12 @@ Storage the node uses and whether it answers is the one above them,
 `Get-XmipHealth xmip:///<cluster>/node/<node>/storage`: Fine, or Done where
 no Storage node answered, each named with what it last came to; on a Storage
 node, whether it is the primary or a standby (ADR-0056, amendment
-2026-10-22).
+2026-10-22). A node's membership of its cluster is the record beside them,
+`Get-XmipHealth xmip:///<cluster>/node/*/membership`: Working until the
+node's row is in Xmip Storage, Fine saying since when it is a member, where
+it answers and the save it runs, and Stressed where that save is not its
+peers' (ADR-0056 and ADR-0031, amendments 2026-11-13), in the runtime's
+words.
 
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
@@ -176,6 +186,15 @@ fixed, routes the Message again against the node's Subscriptions of now,
 opens a Journey for each match and takes it out of the queue, once; a
 Message that still matches nothing stays, and the Replay is refused in
 words. The node audits it as `dead-message.replay`.
+
+Every act above, and `-Retry` and `-Dismiss` below, is asked at the door of
+the node the module reaches: written to Xmip Storage with who asked, and
+taken by the node that owns what it acts on (ADR-0014, amendment
+2026-11-13). A taken act emits its record with `Outcome` `Taken`; one that
+node has not taken yet emits it `Asked`, with a warning carrying the node's
+sentence — it takes it as soon as it runs, and the act never expires; a
+refused one is an error carrying the sentence. A snapshot is never acted
+on: every act over `-Snapshot` is declined in one sentence.
 
 `Set-XmipSecret -Name <name> -Kind password|key|certificate -Value <secure
 string>` sets the secret a Location presents to the party it connects to, the
@@ -321,7 +340,9 @@ remote for a stage that is fine, and posh-git's own `≡` when every stage is
 fine and nothing is retrying or failed. It keeps posh-git's order too,
 `[main ≡ +0 ~1 -0]` there and `[CL1 ≡ R:12 P:11 S:10]` here: first what the
 prompt is at — the node's name where it follows one node, the cluster's
-where it follows a cluster, in the color of the worst stage — then `≡` when
+where it follows a cluster, a node that gathers its cluster's view among
+them, read from what every published scope shares and never from a name, in
+the color of the worst stage — then `≡` when
 square, then the counts. R, P and S are the stage letters; a cluster or a
 node is called whatever its operator called it, and that name says nothing
 about what it does. A count is kept short in K, M and G, `R:5.3K`,
@@ -466,7 +487,12 @@ A roll started under another name is followed too: `Start-XmipTest` tells
 the prompt in its session which snapshot its roll publishes, so `-Cluster
 CL2` shows CL2 and not the CL1 the shipped document names (ADR-0052,
 amendment 2026-09-18). A roll started in another session is followed by
-writing its file into `powershell.toml`.
+writing its file into `powershell.toml`. `PromptMonitor.Follow` takes a
+`SurfaceLine` as well as a snapshot: a node on this machine or another,
+stated as a cmdlet states it, so the session's prompt can follow the node
+that gathers its cluster's view and show the cluster
+(`[Xmip.PowerShell.PromptMonitor]::Follow([Xmip.Surface.SurfaceLine]::new($null,
+$null, $null, 'xmip-<node>'))`).
 
 The executable reads the same file: `xmip show xmip:///CL1` from the cli's
 build directory answers with the same figures, because its `cli.toml`

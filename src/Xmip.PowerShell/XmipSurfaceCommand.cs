@@ -40,7 +40,10 @@ public abstract class XmipSurfaceCommand : XmipCommand, IDisposable
     /// endpoint as its [operate] local names it, such as xmip-node1: gRPC on a
     /// named pipe on Windows and a Unix domain socket elsewhere, the node
     /// taking every act as the user this session runs as (ADR-0014, amendment
-    /// 2026-10-13).</para>
+    /// 2026-10-13). At a node that gathers its cluster's view, one declaring
+    /// the monitoring role, the answer is the whole cluster's, and the Source
+    /// of each Get-XmipHealth record says who gathered it and how many nodes
+    /// it reached.</para>
     /// </summary>
     [Parameter]
     public string? Local { get; set; }
@@ -57,7 +60,8 @@ public abstract class XmipSurfaceCommand : XmipCommand, IDisposable
     /// operate address such as node1:7401, over everything else: gRPC inside
     /// Xmip's mutual TLS, presenting and trusting what powershell.toml or
     /// XMIP_CERTIFICATE, XMIP_PRIVATE_KEY and XMIP_TRUST_ANCHOR name
-    /// (ADR-0014, amendment 2026-10-12; ADR-0063).</para>
+    /// (ADR-0014, amendment 2026-10-12; ADR-0063). At a node that gathers its
+    /// cluster's view, the answer is the whole cluster's, as with -Local.</para>
     /// </summary>
     [Parameter]
     public string? Remote { get; set; }
