@@ -365,7 +365,11 @@ guessed (ADR-0052 clause 3). Local, it follows the node on this machine
 whose `[operate] local` names the endpoint `Local` names, over gRPC on a
 named pipe on Windows and a Unix domain socket elsewhere, the node taking
 every act as the user this session runs as (ADR-0014, amendment
-2026-10-13), and `-Local` does the same. Remote, it follows a node over gRPC to its operate
+2026-10-13), and `-Local` does the same. On Linux and macOS the socket is
+in its node's folder in `/run/xmip` or `/var/run/xmip`, or in the folder
+`XMIP_RUNTIME_DIRECTORY` names for a node no service manager started,
+which this session must name as the node's did (ADR-0014, amendment
+2026-11-15). Remote, it follows a node over gRPC to its operate
 listener at `Address`, `host:port`, and is told when the node's publication
 advances (ADR-0014, amendment 2026-10-12): the runtime's remote surface
 (`xmip_operate.h` section 17), inside Xmip's mutual TLS always — it presents
