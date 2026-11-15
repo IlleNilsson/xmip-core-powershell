@@ -40,7 +40,11 @@ public abstract class XmipSurfaceCommand : XmipCommand, IDisposable
     /// endpoint as its [operate] local names it, such as xmip-node1: gRPC on a
     /// named pipe on Windows and a Unix domain socket elsewhere, the node
     /// taking every act as the user this session runs as (ADR-0014, amendment
-    /// 2026-10-13). At a node that gathers its cluster's view, one declaring
+    /// 2026-10-13). On Linux and macOS the socket is in its node's folder in
+    /// /run/xmip or /var/run/xmip, or in the folder XMIP_RUNTIME_DIRECTORY
+    /// names for a node no service manager started, which this session must
+    /// name as the node's did (ADR-0014, amendment 2026-11-15). At a node
+    /// that gathers its cluster's view, one declaring
     /// the monitoring role, the answer is the whole cluster's, and the Source
     /// of each Get-XmipHealth record says who gathered it and how many nodes
     /// it reached.</para>
