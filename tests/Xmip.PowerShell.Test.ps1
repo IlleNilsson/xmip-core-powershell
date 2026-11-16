@@ -158,7 +158,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # The same day: nothing to say is nothing on the line, as posh-git
         # outside a repository, so the segment shows once a snapshot is read.
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
         [Xmip.PowerShell.PromptMonitor]::Follow(
             (Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.xmip'))
         Start-Sleep -Milliseconds 500
@@ -185,7 +185,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # published snapshot here loads the TOML reader and the configuration
         # abstractions in the session, which is what a prompt does.
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
         [string] $document = Join-Path $script:Output 'powershell.toml'
 
         [Xmip.Surface.SnapshotOperator]::new($fixture).Health('xmip:///').Count | Should -Be 5
@@ -200,7 +200,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # the file the shipped document names. Start-XmipTest now says which
         # file its roll publishes, through this.
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
 
         [Xmip.PowerShell.PromptMonitor]::Follow($fixture)
 
@@ -289,11 +289,11 @@ scope = "$scope/process"
         # and means nothing over time; a rate is bounded by throughput and can
         # say stalled.
         $seen = [DateTimeOffset]::UtcNow
-        $leaf = [Xmip.Abi.Operate.HealthRecord]
+        $leaf = [Xmip.Operate.HealthRecord]
         # Three scopes at the root that share no name, named as the test
         # cluster's first three nodes are.
         [string[]] $top = @($script:Cluster.Nodes[0..2] | ForEach-Object { "xmip:///$_" })
-        [Xmip.Abi.Operate.HealthRecord[]] $records = @(
+        [Xmip.Operate.HealthRecord[]] $records = @(
             $leaf::new("$($top[0])/receive/orders", 'Fine', 0, '', $seen)
             $leaf::new("$($top[1])/process/ok", 'Stressed', 55, 'x', $seen)
             $leaf::new("$($top[2])/send/bill", 'Done', 95, 'x', $seen)
@@ -322,7 +322,7 @@ scope = "$scope/process"
 
         # The owner, 2026-09-18: posh-git's look. Every stage fine and nothing
         # retrying or failed is square, and says so with posh-git's own sign.
-        [Xmip.Abi.Operate.HealthRecord[]] $fine = @(
+        [Xmip.Operate.HealthRecord[]] $fine = @(
             $leaf::new("$($top[0])/receive/orders", 'Fine', 0, '', $seen)
             $leaf::new("$($top[1])/process/ok", 'Fine', 0, '', $seen)
             $leaf::new("$($top[2])/send/bill", 'Fine', 0, '', $seen)
@@ -339,7 +339,7 @@ scope = "$scope/process"
         [string] $cluster = $script:Cluster.Name
         [string] $node = $script:Cluster.Nodes[0]
         [string] $here = "$($script:Cluster.Scope)/node/$node"
-        [Xmip.Abi.Operate.HealthRecord[]] $oneNode = @(
+        [Xmip.Operate.HealthRecord[]] $oneNode = @(
             $leaf::new("$here/receive/a", 'Fine', 0, '', $seen)
             $leaf::new("$here/send/b", 'Fine', 0, '', $seen)
         )
@@ -351,14 +351,14 @@ scope = "$scope/process"
         # A roll of one test shares its scenario too; the prompt is at the
         # cluster still, never at round-trip (the owner's RoundTrip, 2026-09-19).
         [string] $test = "$($script:Cluster.Scope)/round-trip/process"
-        [Xmip.Abi.Operate.HealthRecord[]] $oneTest = @(
+        [Xmip.Operate.HealthRecord[]] $oneTest = @(
             $leaf::new("$test/tcp/json", 'Fine', 0, '', $seen)
             $leaf::new("$test/udp/xml", 'Fine', 0, '', $seen)
         )
         $atOneTest = [Xmip.Surface.ScopeIndex]::Build($oneTest, $counts, 5, 'test')
         [Xmip.PowerShell.SegmentRender]::At($atOneTest) | Should -Be $cluster
 
-        [Xmip.Abi.Operate.HealthRecord[]] $twoNodes = @(
+        [Xmip.Operate.HealthRecord[]] $twoNodes = @(
             $leaf::new("$here/receive/a", 'Fine', 0, '', $seen)
             $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[2])/send/b",
                 'Done', 95, 'x', $seen)
@@ -441,8 +441,8 @@ scope = "$scope/process"
             Should -BeNullOrEmpty -Because 'a number written in full shows its own movement'
 
         $seen = [DateTimeOffset]::UtcNow
-        [Xmip.Abi.Operate.HealthRecord[]] $records = @(
-            [Xmip.Abi.Operate.HealthRecord]::new(
+        [Xmip.Operate.HealthRecord[]] $records = @(
+            [Xmip.Operate.HealthRecord]::new(
                 "$($script:Cluster.Scope)/receive/a", 'Fine', 0, '', $seen)
         )
         [Xmip.Surface.ScopeIndex+Count[]] $counts = @()
@@ -464,9 +464,9 @@ scope = "$scope/process"
         # clusters is at a scope in neither tree — and now says how many it is
         # not showing. Nothing beside is nothing on the line.
         $seen = [DateTimeOffset]::UtcNow
-        $leaf = [Xmip.Abi.Operate.HealthRecord]
+        $leaf = [Xmip.Operate.HealthRecord]
         [string] $cluster = $script:Cluster.Name
-        [Xmip.Abi.Operate.HealthRecord[]] $records = @(
+        [Xmip.Operate.HealthRecord[]] $records = @(
             $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[0])/receive/a",
                 'Fine', 0, '', $seen)
             $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[2])/send/b",
@@ -490,9 +490,9 @@ scope = "$scope/process"
 
     It 'follows one roll and counts the others the session named beside it' {
         [string] $fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
         [string] $beside = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster-cl2.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/cluster-cl2.xmip'
 
         # Named by the session, never counted from files on disk: a surface is
         # stated (ADR-0052 clause 3). The followed one among them is not an
@@ -642,7 +642,7 @@ Describe 'The cmdlets read the surface xmip reads' {
     # 2026-09-24 every cmdlet demanded -Library and took a scope literally.
     BeforeAll {
         [string] $script:Fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
     }
 
     It 'names no library as mandatory, and takes the scope first' {
@@ -680,7 +680,7 @@ Describe 'The cmdlets read the surface xmip reads' {
             [object[]] $records = @(Get-XmipHealth -Local $endpoint -Scope 'xmip:///')
 
             $records.Count | Should -Be 5
-            $records[0] | Should -BeOfType ([Xmip.Abi.Operate.HealthRecord])
+            $records[0] | Should -BeOfType ([Xmip.Operate.HealthRecord])
         }
         finally {
             $served.Dispose()
@@ -743,7 +743,7 @@ Describe 'The cmdlets read the surface xmip reads' {
         [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///')
 
         $records.Count | Should -Be 5
-        $records[0] | Should -BeOfType ([Xmip.Abi.Operate.HealthRecord])
+        $records[0] | Should -BeOfType ([Xmip.Operate.HealthRecord])
         "$($records[0].State)" | Should -Be 'Done'
     }
 
@@ -800,7 +800,7 @@ to = "node/$script:Receiver/process/onward"
         # answered with every leaf beneath a scope. Get-XmipScope is the row
         # xmip show and list render; a row's Worst is the next step.
         [string] $cluster = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
         # The fixture is the test cluster's; its sending node holds the cause.
         [string] $leaf = "$($script:Cluster.Scope)/node/$script:Sender/send/tcp/json"
 
@@ -832,7 +832,7 @@ to = "node/$script:Receiver/process/onward"
         # runtime's (node::NodeRole::purpose), through Xmip.Surface's English;
         # the fixture's receiving node publishes that it declares receiving.
         [string] $cluster = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/cluster.xmip'
         [string] $node = "$($script:Cluster.Scope)/node/$script:Receiver"
 
         $row = Get-XmipScope -Snapshot $cluster -Scope $node
@@ -985,7 +985,7 @@ Describe 'Every failure and every act is audited' {
     # XMIP_AUDIT_DIRECTORY, set here for this process alone.
     BeforeAll {
         [string] $script:Fixture = Join-Path $script:Root `
-            '../../../foundation/abi/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
+            '../operate/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
         $script:WasAuditing = $env:XMIP_AUDIT_DIRECTORY
     }
 
@@ -1063,18 +1063,18 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         $records = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Severity 'Error')
 
         $records.Count | Should -Be 1
-        $records[0] | Should -BeOfType ([Xmip.Abi.Operate.AuditEntry])
+        $records[0] | Should -BeOfType ([Xmip.Operate.AuditEntry])
         $records[0].Action | Should -Be 'Get-XmipModuleDescriptor'
         $records[0].Phase | Should -Be 'failure'
         $records[0].Properties['errorId'] | Should -BeLike 'XmipModuleUnloadable*'
-        Get-FormatData -TypeName 'Xmip.Abi.Operate.AuditEntry' | Should -Not -BeNullOrEmpty
+        Get-FormatData -TypeName 'Xmip.Operate.AuditEntry' | Should -Not -BeNullOrEmpty
     }
 
     It 'walks the writer''s audit chain with -Verify and says it whole, in words' {
         $chains = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
 
         $chains.Count | Should -Be 1
-        $chains[0] | Should -BeOfType ([Xmip.Abi.Operate.AuditChain])
+        $chains[0] | Should -BeOfType ([Xmip.Operate.AuditChain])
         $chains[0].Writer | Should -Be 'Xmip.PowerShell'
         $chains[0].Whole | Should -BeTrue -Because $chains[0].Said
         $chains[0].Said | Should -BeLike 'OK: *'
@@ -1087,7 +1087,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         $open = @(Get-XmipAudit -Program 'Xmip.PowerShell' -Verify)
         $open.Count | Should -Be 2
         $open[0].Whole | Should -BeTrue -Because $open[0].Said
-        $open[1] | Should -BeOfType ([Xmip.Abi.Operate.AuditFragment])
+        $open[1] | Should -BeOfType ([Xmip.Operate.AuditFragment])
         $open[1].Sealed | Should -BeFalse
         $open[1].Said | Should -BeLike 'UNFINISHED: *'
 
@@ -1098,7 +1098,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         $sealed[0].Whole | Should -BeTrue -Because $sealed[0].Said
         $sealed[1].Sealed | Should -BeTrue
         $sealed[1].Said | Should -BeLike 'FAILED: *'
-        Get-FormatData -TypeName 'Xmip.Abi.Operate.AuditFragment' | Should -Not -BeNullOrEmpty
+        Get-FormatData -TypeName 'Xmip.Operate.AuditFragment' | Should -Not -BeNullOrEmpty
     }
 
     It 'takes one record by its identifier from the pipeline' {
@@ -1191,7 +1191,7 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
         [object[]] $listed = @(Get-XmipEventSubscription -Snapshot $script:Published)
 
         $listed.Count | Should -Be 2
-        $listed[0] | Should -BeOfType ([Xmip.Abi.Operate.EventSubscriptionRecord])
+        $listed[0] | Should -BeOfType ([Xmip.Operate.EventSubscriptionRecord])
         # By who the subscriber is: its declared name, on-call before operations.
         [Xmip.Surface.EventSubscriptionQuery]::NodeName($listed[1]) |
             Should -Be $script:Cluster.Nodes[0]
@@ -1201,7 +1201,7 @@ Describe 'Get-XmipEventSubscription lists and acts on the Event subscriptions' {
                 Where-Object -Property Paused).Count | Should -Be 1
         (Get-XmipEventSubscription -Snapshot $script:Published -Sort 'queued' -Descending)[0].Id |
             Should -Be 2
-        Get-FormatData -TypeName 'Xmip.Abi.Operate.EventSubscriptionRecord' |
+        Get-FormatData -TypeName 'Xmip.Operate.EventSubscriptionRecord' |
             Should -Not -BeNullOrEmpty
     }
 
@@ -1288,7 +1288,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
         [object[]] $listed = @(Get-XmipSubscription -Snapshot $script:Published)
 
         $listed.Count | Should -Be 3
-        $listed[0] | Should -BeOfType ([Xmip.Abi.Operate.SubscriptionRecord])
+        $listed[0] | Should -BeOfType ([Xmip.Operate.SubscriptionRecord])
         # By name when no column is named: edi, flat, structured.
         $listed.Name | Should -Be @('edi', 'flat', 'structured')
         $listed[0].Held | Should -Be 9
@@ -1301,7 +1301,7 @@ Describe 'Get-XmipSubscription lists and pauses or resumes the Subscriptions' {
             Should -Be 'flat'
         (Get-XmipSubscription -Snapshot $script:Published -Sort 'picked-up' -Descending)[0].Name |
             Should -Be 'flat'
-        Get-FormatData -TypeName 'Xmip.Abi.Operate.SubscriptionRecord' |
+        Get-FormatData -TypeName 'Xmip.Operate.SubscriptionRecord' |
             Should -Not -BeNullOrEmpty
         Get-FormatData -TypeName 'Xmip.Surface.SubscriptionOperation' |
             Should -Not -BeNullOrEmpty
@@ -1384,7 +1384,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         [object[]] $listed = @(Get-XmipDeadMessage -Snapshot $script:Published)
 
         $listed.Count | Should -Be 3
-        $listed[0] | Should -BeOfType ([Xmip.Abi.Operate.DeadMessageRecord])
+        $listed[0] | Should -BeOfType ([Xmip.Operate.DeadMessageRecord])
         # The oldest first when no column is named.
         $listed.Message | Should -Be @('m-1', 'm-3', 'm-2')
         [Xmip.Surface.DeadMessageQuery]::NodeName($listed[1]) |
@@ -1396,7 +1396,7 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
         (Get-XmipDeadMessage -Snapshot $script:Published -Sort 'declines' -Descending)[0].
             Message | Should -Be 'm-2'
         # A table to list and a list to open one.
-        @((Get-FormatData -TypeName 'Xmip.Abi.Operate.DeadMessageRecord').
+        @((Get-FormatData -TypeName 'Xmip.Operate.DeadMessageRecord').
                 FormatViewDefinition).Count | Should -Be 2
         Get-FormatData -TypeName 'Xmip.Surface.DeadMessageOperation' |
             Should -Not -BeNullOrEmpty
@@ -1485,7 +1485,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         $failed = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Sending -FailedMessage)
 
         $failed.Count | Should -Be 2
-        $failed[0] | Should -BeOfType ([Xmip.Abi.Operate.FailedMessageRecord])
+        $failed[0] | Should -BeOfType ([Xmip.Operate.FailedMessageRecord])
         $failed[0].Journey | Should -Be 'j-1'
         $failed[0].SendPort | Should -Be 'invoices'
         $failed[0].Reason | Should -Be 'invoices: the far end refused it'
@@ -1493,7 +1493,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         $paged = @(Get-XmipScope -Snapshot $script:Published -Scope $script:Port `
             -FailedMessage -Offset 4 -Limit 1)
         $paged.Journey | Should -Be @('j-2')
-        Get-FormatData -TypeName 'Xmip.Abi.Operate.FailedMessageRecord' |
+        Get-FormatData -TypeName 'Xmip.Operate.FailedMessageRecord' |
             Should -Not -BeNullOrEmpty
     }
 
@@ -1501,7 +1501,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
         # A surface that cannot list them, and one that asked and was not
         # answered: the error Get-XmipScope -FailedMessage writes for each.
         $notListed = [Xmip.PowerShell.FailedMessageError]::Of(
-            [Xmip.Abi.Operate.FailedMessageList]::Unlisted, $script:Port, 'REMOTE — lost')
+            [Xmip.Operate.FailedMessageList]::Unlisted, $script:Port, 'REMOTE — lost')
         $notListed.FullyQualifiedErrorId | Should -Be 'XmipFailedMessagesNotListed'
         $notListed.CategoryInfo.Category | Should -Be 'ResourceUnavailable'
         $notListed.Exception.Message | Should -Be (
@@ -1509,7 +1509,7 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
             "wait at or beneath $($script:Port) is not known — not that none do.")
 
         $failed = [Xmip.PowerShell.FailedMessageError]::Of(
-            [Xmip.Abi.Operate.FailedMessageList]::Unanswered('Xmip Storage is not open'),
+            [Xmip.Operate.FailedMessageList]::Unanswered('Xmip Storage is not open'),
             $script:Port, 'LOCAL')
         $failed.FullyQualifiedErrorId | Should -Be 'XmipFailedMessagesUnanswered'
         $failed.CategoryInfo.Category | Should -Be 'ReadError'
@@ -1517,8 +1517,8 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
 
         # An answer is no error, none failing among them: no object, and nothing said.
         [Xmip.PowerShell.FailedMessageError]::Of(
-            [Xmip.Abi.Operate.FailedMessageList]::new(
-                [Xmip.Abi.Operate.FailedMessagePort[]]@(), $true, ''),
+            [Xmip.Operate.FailedMessageList]::new(
+                [Xmip.Operate.FailedMessagePort[]]@(), $true, ''),
             $script:Port, 'SNAPSHOT') |
             Should -BeNullOrEmpty
         [object[]] $none = @()

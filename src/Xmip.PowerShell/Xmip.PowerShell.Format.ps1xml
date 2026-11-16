@@ -14,9 +14,9 @@
 <Configuration>
   <ViewDefinitions>
     <View>
-      <Name>Xmip.Abi.Operate.HealthRecord</Name>
+      <Name>Xmip.Operate.HealthRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.HealthRecord</TypeName>
+        <TypeName>Xmip.Operate.HealthRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -122,9 +122,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.DatabaseScript</Name>
+      <Name>Xmip.Operate.DatabaseScript</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.DatabaseScript</TypeName>
+        <TypeName>Xmip.Operate.DatabaseScript</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -466,9 +466,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.AuditEntry</Name>
+      <Name>Xmip.Operate.AuditEntry</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.AuditEntry</TypeName>
+        <TypeName>Xmip.Operate.AuditEntry</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -496,9 +496,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.AuditChain</Name>
+      <Name>Xmip.Operate.AuditChain</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.AuditChain</TypeName>
+        <TypeName>Xmip.Operate.AuditChain</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -518,9 +518,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.AuditFragment</Name>
+      <Name>Xmip.Operate.AuditFragment</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.AuditFragment</TypeName>
+        <TypeName>Xmip.Operate.AuditFragment</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -540,9 +540,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.EventSubscriptionRecord</Name>
+      <Name>Xmip.Operate.EventSubscriptionRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.EventSubscriptionRecord</TypeName>
+        <TypeName>Xmip.Operate.EventSubscriptionRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -602,9 +602,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.SubscriptionRecord</Name>
+      <Name>Xmip.Operate.SubscriptionRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.SubscriptionRecord</TypeName>
+        <TypeName>Xmip.Operate.SubscriptionRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -664,9 +664,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.DeadMessageRecord</Name>
+      <Name>Xmip.Operate.DeadMessageRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.DeadMessageRecord</TypeName>
+        <TypeName>Xmip.Operate.DeadMessageRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -692,9 +692,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.DeadMessageRecord.Opened</Name>
+      <Name>Xmip.Operate.DeadMessageRecord.Opened</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.DeadMessageRecord</TypeName>
+        <TypeName>Xmip.Operate.DeadMessageRecord</TypeName>
       </ViewSelectedBy>
       <ListControl>
         <ListEntries>
@@ -786,9 +786,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Operate.FailedMessageRecord</Name>
+      <Name>Xmip.Operate.FailedMessageRecord</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Operate.FailedMessageRecord</TypeName>
+        <TypeName>Xmip.Operate.FailedMessageRecord</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>

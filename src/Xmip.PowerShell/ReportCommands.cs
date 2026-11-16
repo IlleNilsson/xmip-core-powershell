@@ -3,6 +3,7 @@ using System.Management.Automation;
 using System.Management.Automation.Language;
 using System.Reflection;
 using Xmip.Abi.Operate;
+using Xmip.Operate;
 using Xmip.Surface;
 
 namespace Xmip.PowerShell;

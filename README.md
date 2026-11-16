@@ -12,8 +12,10 @@ surface calls the same ABI, so drift of that kind has nothing to grow from.
 
 PowerShell Core runs on .NET, so this module shares its binding assembly with
 the `cli` and `gui` surfaces: the binding is `Xmip.Abi` in xmip-core-abi
-(`dotnet/Xmip.Abi`), referenced as a project, and nothing in this repository
-declares a struct of the header's own. What it adds is the PowerShell shape:
+(`dotnet/Xmip.Abi`), and what calls through it `Xmip.Operate`, beneath
+`Xmip.Surface`, in xmip-core-operate, each referenced as a project, and
+nothing in this repository declares a struct of the header's own. What it
+adds is the PowerShell shape:
 cmdlets with approved verbs, objects on the pipeline rather than text, and
 `-WhatIf` on anything that changes the estate.
 
@@ -514,8 +516,10 @@ provides it.
 
 ## Dependencies
 
-`Xmip.Abi` and `Xmip.Surface` from xmip-core-abi, referenced by project path
-inside the composed estate (ADR-0014, amendment of 2026-09-09), and nothing
+`Xmip.Abi` from xmip-core-abi and `Xmip.Surface` from xmip-core-operate,
+with its Operate model beneath it, referenced by project path inside the
+composed estate (ADR-0014, amendment of 2026-09-09; ADR-0052, amendment
+2026-11-16), and nothing
 else. No Xmip Rust crate is referenced, and none may be — the same test the
 cli states: that this project compiles without a single Xmip source file is
 the proof the boundary works (ADR-0012 clause 2).
@@ -579,6 +583,7 @@ loaded.
 
 The decisions that shape this are ADR-0014 (the operator surfaces), ADR-0027
 (the operator boundary), ADR-0052 (one model every surface renders) and
-ADR-0012 (the module boundary); the ABI it calls is `xmip-core-abi`. Until
+ADR-0012 (the module boundary); the ABI it calls, through
+`xmip-core-operate`, is `xmip-core-abi`'s. Until
 2026-09-14 an `ARCHITECTURE.md` beside this file said the same things a
 second time; ADR-0020 clause 1 is one document per subject, and this is it.
