@@ -1,6 +1,8 @@
 using System.Management.Automation;
 using Xmip.Abi;
 using Xmip.Abi.Module;
+using Xmip.Operate;
+using Xmip.Surface;
 
 namespace Xmip.PowerShell;
 
@@ -10,8 +12,9 @@ namespace Xmip.PowerShell;
 // console-versus-provider drift ADR-0014 exists to prevent. Since 2026-09-09
 // that is held by construction rather than by care: both call Xmip.Abi in
 // xmip-core-abi, the one binding over the header; since 2026-09-24 both take
-// the answer itself from there too — AbiBoundaries, StatusMeaning and the
-// probe's own judgment — and render or emit it.
+// the answer itself from there too — AbiBoundaries and StatusMeaning — and
+// since 2026-11-17 the probe from the runtime's one loader, through the C
+// ABI (xmip_module_probe_v1), and render or emit it.
 //
 // Objects out, never text. The cli renders for a human; a cmdlet's caller
 // pipes, filters and compares, and a rendered string can do none of that.
@@ -72,16 +75,17 @@ public sealed class ConvertFromXmipStatusCommand : XmipCommand
 /// The first of the seven conformance rules in section 11 of the header: the
 /// module exports the entrypoint, accepts the host's abi_version, fills the
 /// descriptor, and destroys cleanly. The same probe as <c>xmip probe</c>, and
-/// deliberately so. The one difference is earned rather than drift — the cli
-/// writes module log lines to stderr as they arrive, while a cmdlet has a
-/// verbose stream, so here they are collected and emitted after the probe.
-/// Whether the module conforms is the probe's own judgment
-/// (<see cref="ModuleProbe.Result.Complaint"/>), the one the cli exits on, and
-/// so is whether it loaded at all (<see cref="ModuleProbe.Result.Unloadable"/>);
-/// the object written is the probe's own result.
+/// deliberately so: the runtime's one loader opens the library, as a node
+/// opens one, and judges it by the rule a node judges it by
+/// (<c>xmip_operate.h</c> section 26; ADR-0012, amendment 2026-11-17). The
+/// lines the module logged come back with the answer and go to the verbose
+/// stream. Whether the module conforms is the probe's own judgment
+/// (<see cref="ModuleProbed.Refusal"/>), the one the cli exits on, and so is
+/// whether it loaded at all (<see cref="ModuleProbed.Unloadable"/>); the
+/// object written is the probe's own answer.
 /// </remarks>
 [Cmdlet(VerbsCommon.Get, "XmipModuleDescriptor")]
-[OutputType(typeof(ModuleProbe.Result))]
+[OutputType(typeof(ModuleProbed))]
 public sealed class GetXmipModuleDescriptorCommand : XmipCommand
 {
     /// <summary>
@@ -90,14 +94,29 @@ public sealed class GetXmipModuleDescriptorCommand : XmipCommand
     [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true)]
     public string[] Library { get; set; } = [];
 
+    private RuntimeModules? _modules;
+
+    /// <inheritdoc />
+    protected override void Begin()
+    {
+        try
+        {
+            _modules = RuntimeLibrary.Rules.Modules;
+        }
+        catch (InvalidOperationException unloaded)
+        {
+            Stop(new ErrorRecord(
+                unloaded, "XmipRuntimeUnloadable", ErrorCategory.ResourceUnavailable, null));
+        }
+    }
+
     /// <inheritdoc />
     protected override void Process()
     {
         foreach (var library in Library)
         {
             var path = GetUnresolvedProviderPathFromPSPath(library);
-            List<string> log = [];
-            ModuleProbe.Result answer = ModuleProbe.Probe(path, log.Add);
+            ModuleProbed answer = _modules!.Probe(path);
 
             if (!answer.Loaded)
             {
@@ -110,7 +129,7 @@ public sealed class GetXmipModuleDescriptorCommand : XmipCommand
                 continue;
             }
 
-            foreach (var line in log)
+            foreach (var line in answer.Log)
             {
                 WriteVerbose(line);
             }

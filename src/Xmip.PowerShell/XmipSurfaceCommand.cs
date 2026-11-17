@@ -26,11 +26,10 @@ public abstract class XmipSurfaceCommand : XmipCommand, IDisposable
 
     /// <summary>
     /// <para type="description">The runtime's native library to load, the one
-    /// exporting xmip_operate_v1, over what the module's document says: what
+    /// exporting xmip_operate_v1, which reads the module's document: what
     /// the surface calls the runtime through, its gRPC client among it. It
     /// chooses no surface. Omitted, it is found by the one rule:
-    /// RuntimeLibrary in the document, else XMIP_RUNTIME_LIBRARY, else beside
-    /// the module.</para>
+    /// XMIP_RUNTIME_LIBRARY, else beside the module.</para>
     /// </summary>
     [Parameter]
     public string? Library { get; set; }

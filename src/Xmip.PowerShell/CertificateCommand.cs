@@ -15,8 +15,8 @@ public abstract class CertificateCommand : XmipCommand
 {
     /// <summary>
     /// <para type="description">The runtime's native library to ask.
-    /// Omitted, it is found by the one rule: RuntimeLibrary in the module's
-    /// document, else XMIP_RUNTIME_LIBRARY, else beside the module.</para>
+    /// Omitted, it is found by the one rule: XMIP_RUNTIME_LIBRARY, else beside
+    /// the module.</para>
     /// </summary>
     [Parameter]
     public string? Library { get; set; }
