@@ -39,15 +39,18 @@ public static class ModuleSurface
     /// surface this build does not know.</exception>
     public static IOperatorSurface Stated(SurfaceLine line)
     {
+        ArgumentNullException.ThrowIfNull(line);
+
+        // Before the document: the runtime reads it, in this library.
+        _ = RuntimeLibrary.Stated(line.Runtime, Directory);
+
         return SurfaceChoice.Stated(line, TomlDocument.Read(DocumentPath), Directory, Directory);
     }
 
     /// <summary>The runtime library a cmdlet that asks a runtime loads:
-    /// <c>-Library</c>, else the document, the environment and beside the
-    /// module.</summary>
+    /// <c>-Library</c>, else the environment and beside the module.</summary>
     public static string Runtime(string? library)
     {
-        return RuntimeLibrary.Stated(
-            library, TomlDocument.Read(DocumentPath), Directory, Directory);
+        return RuntimeLibrary.Stated(library, Directory);
     }
 }

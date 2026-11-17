@@ -37,21 +37,9 @@
 #>
 
 BeforeAll {
-    # The test cluster's names, from the estate's one reader (ADR-0056,
-    # amendment 2026-10-03). It sets $script:Root to the estate's root, so it
-    # is read first and the module's own root set after.
+    # The estate's test helpers. It sets $script:Root to the estate's root, so
+    # it is read first and the module's own root set after.
     . (Join-Path $PSScriptRoot '../../../../../test/Initialize-XmipTest.ps1')
-    $script:Cluster = Get-XmipTestCluster
-    # A node is found by what it declares, the first in the names' order.
-    [string] $script:Receiver = @($script:Cluster.Nodes |
-            Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'receiving' })[0]
-    [string] $script:Sender = @($script:Cluster.Nodes |
-            Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'sending' })[0]
-    # Each node's scope, by its place in the names' order.
-    [string[]] $script:At = @($script:Cluster.Nodes |
-            ForEach-Object { "$($script:Cluster.Scope)/node/$_" })
-    # Two node names run together: no scope is named so.
-    [string] $script:Nowhere = "xmip:///$($script:Cluster.Nodes[0])$($script:Cluster.Nodes[1])"
 
     [string] $script:Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
@@ -81,6 +69,23 @@ BeforeAll {
         Import-Module -Global
 
     Import-Module (Join-Path $script:Output 'Xmip.PowerShell.psd1') -Force
+
+    # The test cluster's names, from the estate's one reader (ADR-0056,
+    # amendment 2026-10-03): configure, through this very operator module,
+    # which is why it is read after the import — a process loads one
+    # Xmip.PowerShell, and the estate's module takes the one loaded
+    # (Import-XmipOperatorModule; ADR-0031, amendment 2026-11-17).
+    $script:Cluster = Get-XmipTestCluster
+    # A node is found by what it declares, the first in the names' order.
+    [string] $script:Receiver = @($script:Cluster.Nodes |
+            Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'receiving' })[0]
+    [string] $script:Sender = @($script:Cluster.Nodes |
+            Where-Object { $script:Cluster.Role[$_] -split '[,+]' -contains 'sending' })[0]
+    # Each node's scope, by its place in the names' order.
+    [string[]] $script:At = @($script:Cluster.Nodes |
+            ForEach-Object { "$($script:Cluster.Scope)/node/$_" })
+    # Two node names run together: no scope is named so.
+    [string] $script:Nowhere = "xmip:///$($script:Cluster.Nodes[0])$($script:Cluster.Nodes[1])"
 
     $script:Module = Get-Module -Name Xmip.PowerShell
     $script:Declared = Import-PowerShellDataFile -Path $script:Manifest

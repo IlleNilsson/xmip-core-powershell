@@ -20,9 +20,10 @@
 # Start-XmipTest tell this session. A deployment writes its own.
 Surface = "snapshot"
 
-# The runtime's native library, exporting xmip_operate_v1: what the module
-# calls the runtime through, the gRPC client among it.
-# RuntimeLibrary = "../../../operate/target/debug/xmip_core_operate.dll"
+# The runtime's native library, exporting xmip_operate_v1, is what the module
+# calls the runtime through, the gRPC client among it, and what reads this
+# file, so it is not named here: -Library, else XMIP_RUNTIME_LIBRARY, else
+# the library beside the module.
 
 # The file to read when Surface = "snapshot". A path with no file behind it
 # shows no segment, never another file's figures. A relative path

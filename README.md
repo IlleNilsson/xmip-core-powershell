@@ -25,8 +25,10 @@ Scaffolded, which is what `architecture.toml` says: `maturity = "scaffolded"`.
 Three cmdlets describe the binding — `Get-XmipAbi`, `ConvertFrom-XmipStatus` and
 `Get-XmipModuleDescriptor` — and emit what `xmip abi`, `status` and
 `probe` render: `AbiBoundaries` (both boundaries), `StatusMeaning`, and the
-probe's own `ModuleProbe.Result` — a library it cannot load refused with its
-`Unloadable`, else `Conforms` and `Complaint` — all from `Xmip.Abi`. Five read a
+probe's own `ModuleProbed` — a library it cannot load refused with its
+`Unloadable`, else `Conforms` and `Refusal`, the runtime loader's answer
+through `xmip_module_probe_v1` (ADR-0012, amendment 2026-11-17), the lines
+the module logged on the verbose stream. Five read a
 running Xmip: `Get-XmipHealth -Scope`, each record with `From` and `To`,
 and `Source`, where it was read — at a node that gathers its cluster's view,
 a node declaring the monitoring role, which `-Local` and `-Remote` then
@@ -289,7 +291,7 @@ executable's `--follow` runs too.
 **Every object has a table view** (ADR-0014): `Xmip.PowerShell.Format.ps1xml`
 ships beside the module and is named in the manifest, one view per type a
 cmdlet emits — `HealthRecord`, `ScopeItem`, `ScopeOperation`,
-`ConfigurationVerdict`, `ModuleProbe.Result`, `StatusMeaning`,
+`ConfigurationVerdict`, `ModuleProbed`, `StatusMeaning`,
 `AbiBoundaries`, `AuditEntry`, `SubscriptionRecord`, `EventSubscriptionRecord`,
 `DeadMessageRecord` (and a list view that opens one) and each noun's
 operation, `MessageOperation` among them, and `ReportEntry` and `ReportRow`
@@ -362,7 +364,7 @@ stream and updates an in-memory segment; the prompt itself performs no runtime
 call, file read, subprocess, wait, or poll. Which surface it follows is stated
 in `powershell.toml` beside the module, with the same `[Xmip]` keys as
 the GUI hosts and the executable — `Surface = "local" | "snapshot" |
-"remote"`, `Local`, `RuntimeLibrary`, `Snapshot`, `Address` — and never
+"remote"`, `Local`, `Snapshot`, `Address` — and never
 guessed (ADR-0052 clause 3). Local, it follows the node on this machine
 whose `[operate] local` names the endpoint `Local` names, over gRPC on a
 named pipe on Windows and a Unix domain socket elsewhere, the node taking

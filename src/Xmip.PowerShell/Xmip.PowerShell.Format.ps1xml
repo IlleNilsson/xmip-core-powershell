@@ -384,9 +384,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Module.ModuleProbe+Result</Name>
+      <Name>Xmip.Operate.ModuleProbed</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Module.ModuleProbe+Result</TypeName>
+        <TypeName>Xmip.Operate.ModuleProbed</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -407,7 +407,7 @@
               <TableColumnItem><PropertyName>Standard</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>ModuleVersion</PropertyName></TableColumnItem>
               <TableColumnItem><ScriptBlock>[System.IO.Path]::GetFileName("$($_.Library)")</ScriptBlock></TableColumnItem>
-              <TableColumnItem><ScriptBlock>if (-not $_.Loaded) { $_.Unloadable } elseif ($_.Complaint) { $_.Complaint } else { $_.Meaning }</ScriptBlock></TableColumnItem>
+              <TableColumnItem><ScriptBlock>if (-not $_.Loaded) { $_.Unloadable } elseif ($_.Refusal) { $_.Refusal } else { $_.Meaning }</ScriptBlock></TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
         </TableRowEntries>

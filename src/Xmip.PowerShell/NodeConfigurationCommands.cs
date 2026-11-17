@@ -29,8 +29,7 @@ public sealed class TestXmipNodeConfigurationCommand : XmipCommand, IDisposable
     /// <summary>
     /// <para type="description">The runtime's native library to ask, the one
     /// exporting xmip_validate_v1. Omitted, it is found by the one rule:
-    /// RuntimeLibrary in the module's document, else XMIP_RUNTIME_LIBRARY,
-    /// else beside the module.</para>
+    /// XMIP_RUNTIME_LIBRARY, else beside the module.</para>
     /// </summary>
     [Parameter]
     public string? Library { get; set; }
