@@ -164,8 +164,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # outside a repository, so the segment shows once a snapshot is read.
         [string] $fixture = Join-Path $script:Root `
             '../operate/dotnet/Xmip.Surface.Test/Fixture/snapshot.xmip'
-        [Xmip.PowerShell.PromptMonitor]::Follow(
-            (Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.xmip'))
+        [Xmip.PowerShell.PromptMonitor]::Follow((Join-Path $TestDrive 'no-such-snapshot.xmip'))
         Start-Sleep -Milliseconds 500
         [string] $silent = -join @(& (Get-Item Function:\prompt).ScriptBlock)
         $silent | Should -Be 'provider> '
@@ -223,8 +222,7 @@ Describe 'The prompt reads its surface from the document beside the module' {
         # The owner, 2026-09-20: the number has to mean something over time.
         # The interval is the reader's own, between the two publications it
         # saw, because a published snapshot carries no clock for its counts.
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-rate-$stamp.xmip"
+        [string] $moving = Join-Path $TestDrive 'rate.xmip'
         [string] $name = $script:Cluster.Name
         [string] $scope = $script:Cluster.Scope
 
@@ -282,7 +280,6 @@ scope = "$scope/process"
         }
         finally {
             [Xmip.PowerShell.PromptMonitor]::Stop()
-            Remove-Item -LiteralPath $moving -Force -ErrorAction SilentlyContinue
         }
     }
 
@@ -859,8 +856,7 @@ to = "node/$script:Receiver/process/onward"
             $script:Module.ExportedCmdlets[$name].Parameters.Keys | Should -Contain 'Follow'
         }
 
-        [string] $stamp = [System.Guid]::NewGuid().ToString('n').Substring(0, 8)
-        [string] $moving = Join-Path ([System.IO.Path]::GetTempPath()) "xmip-follow-$stamp.xmip"
+        [string] $moving = Join-Path $TestDrive 'follow.xmip'
         Copy-Item -LiteralPath $script:Fixture -Destination $moving
         [string] $manifest = Join-Path $script:Output 'Xmip.PowerShell.psd1'
 
@@ -904,7 +900,6 @@ observed_unix_nanos = 1789111688000000000
         finally {
             $shell.Stop()
             $shell.Dispose()
-            Remove-Item -LiteralPath $moving -Force -ErrorAction SilentlyContinue
         }
     }
 
@@ -925,7 +920,7 @@ observed_unix_nanos = 1789111688000000000
     }
 
     It 'ends with the reason when the surface named does not answer' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'xmip-no-such-snapshot.xmip'
+        [string] $missing = Join-Path $TestDrive 'no-such-snapshot.xmip'
 
         { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } |
             Should -Throw -ExpectedMessage '*no file at*'
@@ -955,7 +950,7 @@ observed_unix_nanos = 1789111688000000000
     }
 
     It 'ends with the reason when the runtime to validate against does not load' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-runtime.dll'
+        [string] $missing = Join-Path $TestDrive 'no-such-xmip-runtime.dll'
 
         { Test-XmipNodeConfiguration -Library $missing -Path $script:Fixture -ErrorAction Stop } |
             Should -Throw -ExpectedMessage '*no runtime library at*'
@@ -966,14 +961,14 @@ Describe 'Get-XmipModuleDescriptor' {
     It 'writes an error rather than throwing when the library is not there' {
         # An operator probing a path that does not exist gets a record they
         # can inspect, and the pipeline survives to probe the next one.
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
+        [string] $missing = Join-Path $TestDrive 'no-such-xmip-module.dll'
 
         { Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue -ErrorVariable failure } |
             Should -Not -Throw
     }
 
     It 'reports the path it was asked about' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
+        [string] $missing = Join-Path $TestDrive 'no-such-xmip-module.dll'
 
         Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue -ErrorVariable failure |
             Out-Null
@@ -1006,7 +1001,7 @@ Describe 'Every failure and every act is audited' {
     }
 
     It 'records a non-terminating error as a failure of the cmdlet' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
+        [string] $missing = Join-Path $TestDrive 'no-such-xmip-module.dll'
 
         Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue | Out-Null
 
@@ -1019,7 +1014,7 @@ Describe 'Every failure and every act is audited' {
     }
 
     It 'records a terminating error once' {
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-snapshot.xmip'
+        [string] $missing = Join-Path $TestDrive 'no-such-snapshot.xmip'
 
         { Get-XmipHealth -Snapshot $missing -Scope 'xmip:///' -ErrorAction Stop } | Should -Throw
 
@@ -1055,7 +1050,7 @@ Describe 'Get-XmipAudit reads the audit the module writes' {
         $env:XMIP_AUDIT_DIRECTORY = $script:Read
 
         # One failure recorded by a cmdlet, as any operator's would be.
-        [string] $missing = Join-Path ([System.IO.Path]::GetTempPath()) 'no-such-xmip-module.dll'
+        [string] $missing = Join-Path $TestDrive 'no-such-xmip-module.dll'
         Get-XmipModuleDescriptor -Library $missing -ErrorAction SilentlyContinue | Out-Null
     }
 
