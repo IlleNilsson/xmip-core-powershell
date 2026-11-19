@@ -637,7 +637,7 @@ Describe 'Get-XmipAbi, both boundaries' {
 
         $abi.OperateEntrypoint | Should -Be 'xmip_operate_v1'
         $abi.ModuleEntrypoint | Should -Be 'xmip_create_module_v1'
-        $abi | Should -BeOfType ([Xmip.Abi.AbiBoundaries])
+        $abi | Should -BeOfType ([Xmip.Operate.AbiBoundaries])
     }
 }
 

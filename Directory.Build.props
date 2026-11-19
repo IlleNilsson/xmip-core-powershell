@@ -2,9 +2,9 @@
 
   <!--
     Properties every project in this repository shares. The same shape as
-    xmip-core-cli's and xmip-core-gui's, on purpose: repositories that must
-    agree about analyzers and warnings will eventually stop agreeing unless
-    the file is the same file.
+    xmip-core-gui's, on purpose: repositories that must agree about
+    analyzers and warnings will eventually stop agreeing unless the file is
+    the same file.
   -->
 
   <PropertyGroup>

@@ -1,6 +1,4 @@
 using System.Management.Automation;
-using Xmip.Abi;
-using Xmip.Abi.Module;
 using Xmip.Operate;
 using Xmip.Surface;
 
@@ -11,9 +9,9 @@ namespace Xmip.PowerShell;
 // must stay so: two surfaces disagreeing over one boundary is the BizTalk
 // console-versus-provider drift ADR-0014 exists to prevent. Since 2026-09-09
 // that is held by construction rather than by care: both call Xmip.Abi in
-// xmip-core-abi, the one binding over the header; since 2026-09-24 both take
-// the answer itself from there too — AbiBoundaries and StatusMeaning — and
-// since 2026-11-17 the probe from the runtime's one loader, through the C
+// xmip-core-abi, the one binding over the header; since 2026-11-17 both take
+// the answer itself from the runtime — AbiBoundaries and StatusMeaning,
+// section 28.3 — and the probe from the runtime's one loader, through the C
 // ABI (xmip_module_probe_v1), and render or emit it.
 //
 // Objects out, never text. The cli renders for a human; a cmdlet's caller
@@ -34,7 +32,7 @@ public sealed class GetXmipAbiCommand : XmipCommand
     /// <inheritdoc />
     protected override void Process()
     {
-        WriteObject(AbiBoundaries.Current);
+        WriteObject(RuntimeLibrary.Rules.Sentences.Boundaries());
     }
 }
 
@@ -62,7 +60,7 @@ public sealed class ConvertFromXmipStatusCommand : XmipCommand
     {
         foreach (var code in Code)
         {
-            WriteObject(StatusMeaning.Of(code));
+            WriteObject(RuntimeLibrary.Rules.Sentences.Meaning(code));
         }
     }
 }

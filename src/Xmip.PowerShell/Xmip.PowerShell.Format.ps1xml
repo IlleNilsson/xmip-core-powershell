@@ -414,9 +414,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.Module.StatusMeaning</Name>
+      <Name>Xmip.Operate.StatusMeaning</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.Module.StatusMeaning</TypeName>
+        <TypeName>Xmip.Operate.StatusMeaning</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -440,9 +440,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>Xmip.Abi.AbiBoundaries</Name>
+      <Name>Xmip.Operate.AbiBoundaries</Name>
       <ViewSelectedBy>
-        <TypeName>Xmip.Abi.AbiBoundaries</TypeName>
+        <TypeName>Xmip.Operate.AbiBoundaries</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
