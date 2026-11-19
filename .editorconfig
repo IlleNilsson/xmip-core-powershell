@@ -26,7 +26,7 @@ indent_size = 2
 
 # C# style. Enforced at build, not by review: TreatWarningsAsErrors in
 # Directory.Build.props turns each of these into a failure rather than a note
-# somebody scrolls past. The same lines as xmip-core-cli's and xmip-core-gui's.
+# somebody scrolls past. The same lines as xmip-core-gui's.
 [*.cs]
 csharp_style_namespace_declarations = file_scoped:error
 csharp_style_var_for_built_in_types = false:suggestion

@@ -303,20 +303,22 @@ an outcome is OK or REFUSED; `Format-List` still shows everything. A
 shown whole rather than cut (2026-11-13).
 
 **The cmdlets read the surface `xmip` reads** (ADR-0052 clause 1). The
-four that take a `-Scope` take `-Remote`, `-Local`, `-Snapshot` and
-`-Library` as the executable takes `--remote`, `--local`, `--snapshot` and
-`--runtime`, in the same order — a node's operate address on another
-machine, then a node's local endpoint on this one, then one cluster's
-snapshot, then `powershell.toml`; `-Library` names the runtime library
-the surface calls the runtime through and chooses none — because both ask
-`SurfaceChoice.Stated` in `Xmip.Surface`. A `-Scope` may be a wildcard over
-the scopes that exist, `Get-XmipHealth -Scope 'xmip:///CL1/node/RX*'`, selected
-by the executable's own `ScopeSelection`: each topmost scope it names is
-answered in turn and none is rolled up with another, and a pattern that names
-nothing is a non-terminating error that says REFUSED, the pattern and what
-there is. `Test-XmipNodeConfiguration -Library` finds its runtime the same
-way `xmip validate --runtime` does. Until 2026-09-24 every one of them
-demanded `-Library`, loaded the binding itself and took a scope literally.
+four that take a `-Scope` take `-Remote`, `-Local` and `-Snapshot` as
+`xmip` takes `--remote`, `--local` and `--snapshot`, in the same order — a
+node's operate address on another machine, then a node's local endpoint on
+this one, then one cluster's snapshot, then `powershell.toml` — because
+both decide by the runtime's one precedence (`operate::surface::choice`,
+which `SurfaceChoice.Stated` in `Xmip.Surface` asks through section 28.2).
+`-Library` names the runtime library a cmdlet calls the runtime through and
+chooses no surface; `xmip` links the runtime and takes none (ADR-0014,
+amendment 2026-11-17). A `-Scope` may be a wildcard over the scopes that
+exist, `Get-XmipHealth -Scope 'xmip:///CL1/node/RX*'`, selected by the
+runtime's one rule, the one `xmip` selects by: each topmost scope it names
+is answered in turn and none is rolled up with another, and a pattern that
+names nothing is a non-terminating error that says REFUSED, the pattern and
+what there is. `Test-XmipNodeConfiguration -Library` finds its runtime as
+every cmdlet does. Until 2026-09-24 every one of them demanded `-Library`,
+loaded the binding itself and took a scope literally.
 
 The public contract is the cmdlet names and the shape of the objects they
 emit. Both are pre-alpha and unstable, like the cli's output — but objects, so
