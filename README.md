@@ -137,8 +137,10 @@ node, whether it is the primary or a standby (ADR-0056, amendment
 `Get-XmipHealth xmip:///<cluster>/node/*/membership`: Working until the
 node's row is in Xmip Storage, Fine saying since when it is a member, where
 it answers and the save it runs, and Stressed where that save is not its
-peers' (ADR-0056 and ADR-0031, amendments 2026-11-13), in the runtime's
-words.
+peers' (ADR-0056 and ADR-0031, amendments 2026-11-13), and Done where a
+later start of the node is its member — its own start refused as
+superseded, or registered before a successor that runs beside it (ADR-0056,
+amendment 2026-11-20) — in the runtime's words.
 
 `Get-XmipSubscription` lists the Subscriptions the cluster's nodes route by
 (ADR-0013, amendment 2026-09-30): a Subscription picks a published Message up
