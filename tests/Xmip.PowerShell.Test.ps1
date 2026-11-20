@@ -1566,8 +1566,9 @@ Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses 
 
 Describe 'New-XmipCertificate makes and signs a person''s certificate' {
     # ADR-0034, amendment 2026-10-15: the key and request made, the request
-    # signed by the authority a node configuration's [provision.operator]
-    # names; the rules are the runtime's, tested in Rust where they are written.
+    # signed by the authority a node's slice names in [provision.operator],
+    # the slice read as its trust admits it (ADR-0031, amendment 2026-11-19);
+    # the rules are the runtime's, tested in Rust where they are written.
     BeforeAll {
         [string] $script:Place = Join-Path -Path $TestDrive -ChildPath 'certificate'
         [string] $kept = Join-Path -Path $script:Place -ChildPath 'authority'
@@ -1585,10 +1586,35 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
             -Value $authority.ExportCertificatePem()
         Set-Content -LiteralPath (Join-Path $kept 'authority.key') `
             -Value $key.ExportPkcs8PrivateKeyPem()
+        # The node's slice, signed by that authority through
+        # xmip_cluster_signed_slice_v1, as a cluster's file declares it.
+        [string] $cluster = "[service]`nname = `"n`"`n`n[nodes.d.provision.operator]`n" +
+            "authority = `"authority`"`n"
+        [string] $answer = ''
+        $sliced = [Xmip.Surface.RuntimeLibrary]::Rules.Design.TrySignedSlice(
+            $cluster, (Join-Path -Path $script:Place -ChildPath 'cluster.xmip'), 'd', 'c', $kept,
+            [ref] $answer)
+        $sliced | Should -BeTrue -Because $answer
         [string] $script:Configuration = Join-Path -Path $script:Place -ChildPath 'node.xmip'
-        Set-Content -LiteralPath $script:Configuration -Value (
-            "[service]`nname = `"n`"`ncluster_name = `"c`"`nnode_name = `"d`"`n`n" +
-            "[provision.operator]`nauthority = `"authority`"`n")
+        Set-Content -LiteralPath $script:Configuration -NoNewline -Value (
+            $answer | ConvertFrom-Json).text
+    }
+
+    It 'refuses a slice edited by hand' {
+        [string] $phone = Join-Path -Path $script:Place -ChildPath 'edited-phone'
+        $made = New-XmipCertificate -Operator 'alice@example.org' -Path $phone -Confirm:$false
+        [string] $edited = Join-Path -Path $script:Place -ChildPath 'edited.xmip'
+        Set-Content -LiteralPath $edited -NoNewline -Value (
+            (Get-Content -LiteralPath $script:Configuration -Raw).Replace(
+                'authority = "authority"', "authority = `"authority`"`nlifetime = `"876000h`""))
+
+        $refused = {
+            $made | New-XmipCertificate -Configuration $edited `
+                -Path (Join-Path -Path $phone -ChildPath 'operator.pem') -Confirm:$false `
+                -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $refused.FullyQualifiedErrorId | Should -BeLike 'XmipCertificateRefused*'
+        $refused.Exception.Message | Should -BeLike '*changed after it was signed*'
     }
 
     It 'makes a key and a request, and signs it piped by its Request' {

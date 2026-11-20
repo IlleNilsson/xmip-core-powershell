@@ -74,7 +74,9 @@ a request naming the person — as their directory knows them,
 `OperatorRequested`; `New-XmipCertificate -Request <request> -Configuration
 <node configuration> -Path <chain>` signs it by the authority that node
 configuration's `[provision.operator]` names, for its `lifetime`, and emits
-an `OperatorSigned`; a request asking more than client authentication for a
+an `OperatorSigned`, the configuration being the node's signed slice, read
+as its trust admits it, so one edited by hand is refused (ADR-0031,
+amendment 2026-11-19); a request asking more than client authentication for a
 person is refused in the runtime's words, and nothing is overwritten. Both
 take `-WhatIf` and `-Library`, and the first pipes into the second by its
 `Request`. Running the signing is the approval, out of band. The key and the
