@@ -131,7 +131,10 @@ database` uses. The schema version each database holds is a node's health
 record, `Get-XmipHealth xmip:///<cluster>/node/<node>/storage/*`, and which
 Storage the node uses and whether it answers is the one above them,
 `Get-XmipHealth xmip:///<cluster>/node/<node>/storage`: Fine, or Done where
-no Storage node answered, each named with what it last came to; on a Storage
+no Storage node answered, each named with what it last came to, and each
+standby with whether its primary says it follows it now — *a standby
+following the primary*, or *not following the primary* as soon as the
+primary knows it went (ADR-0056, amendment 2026-11-22); on a Storage
 node, whether it is the primary or a standby (ADR-0056, amendment
 2026-10-22). A node's membership of its cluster is the record beside them,
 `Get-XmipHealth xmip:///<cluster>/node/*/membership`: Working until the
