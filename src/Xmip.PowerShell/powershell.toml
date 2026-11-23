@@ -8,13 +8,13 @@
 [Xmip]
 # Which surface the prompt follows (ADR-0052 clause 3): "local", a node on
 # this machine followed over gRPC at the local endpoint Local names (ADR-0014,
-# amendment 2026-10-13), "snapshot", a file a node or the Essentials
-# publishes, or "remote", a node on another machine followed over gRPC at its
+# amendment 2026-10-13), "snapshot", a file a node or the System Tests
+# publish, or "remote", a node on another machine followed over gRPC at its
 # operate Address. Stated here and never guessed from an environment
 # variable or a file in a temp directory. With no surface named, the prompt
 # names no node and shows nothing, as posh-git outside a repository.
 #
-# As shipped, in a developer's clone: the Essentials roll the estate's own
+# As shipped, in a developer's clone: the System Tests roll the estate's own
 # walkthrough starts, which names its cluster CL1 only because a roll must be
 # given some name. Roll under another name and name that file below, or let
 # Start-XmipTest tell this session. A deployment writes its own.
@@ -29,9 +29,9 @@ Surface = "snapshot"
 # shows no segment, never another file's figures. A relative path
 # is from the directory the module is loaded from, bin/Debug/net11.0 under
 # this project: eight levels up is the estate root, where a roll publishes
-# under .local-work/essentials. The file is named for the cluster the roll was
+# under .local-work/system-test. The file is named for the cluster the roll was
 # started as, so this line follows one particular roll and no other.
-Snapshot = "../../../../../../../../../.local-work/essentials/CL1-snapshot.xmip"
+Snapshot = "../../../../../../../../../.local-work/system-test/CL1-snapshot.xmip"
 
 # The node on this machine to follow when Surface = "local": its local
 # endpoint, as its [operate] local names it; the same serves -Local. The node

@@ -477,7 +477,7 @@ dotnet build module/core/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
 Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net11.0/Xmip.PowerShell.psd1
-Start-XmipTest -Suite Essentials -Cluster CL1 -Test RoundTrip `
+Start-XmipTest -Suite System -Cluster CL1 -Test RoundTrip `
     -Nodes RX1, PX1, TX1 `
     -NodeRole @{ RX1 = 'receiving'; PX1 = 'processing'; TX1 = 'sending' }
 ```

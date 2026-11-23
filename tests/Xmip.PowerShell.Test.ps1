@@ -337,7 +337,7 @@ scope = "$scope/process"
 
         # posh-git's order, [main ≡ +0 ~1 -0]: what the prompt is at, its sign
         # when square, then the counts. At one node it is the node's name; at
-        # a cluster, the cluster's; the Essentials' `node` segment names nothing.
+        # a cluster, the cluster's; the System Tests' `node` segment names nothing.
         [string] $cluster = $script:Cluster.Name
         [string] $node = $script:Cluster.Nodes[0]
         [string] $here = "$($script:Cluster.Scope)/node/$node"
