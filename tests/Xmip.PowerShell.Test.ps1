@@ -1592,7 +1592,7 @@ Describe 'New-XmipCertificate makes and signs a person''s certificate' {
             "authority = `"authority`"`n"
         [string] $answer = ''
         $sliced = [Xmip.Surface.RuntimeLibrary]::Rules.Design.TrySignedSlice(
-            $cluster, (Join-Path -Path $script:Place -ChildPath 'cluster.xmip'), 'd', 'c', $kept,
+            $cluster, 'd', 'c', $kept,
             [ref] $answer)
         $sliced | Should -BeTrue -Because $answer
         [string] $script:Configuration = Join-Path -Path $script:Place -ChildPath 'node.xmip'
