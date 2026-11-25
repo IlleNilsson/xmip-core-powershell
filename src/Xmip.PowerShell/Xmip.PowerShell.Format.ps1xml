@@ -714,6 +714,63 @@
       </ListControl>
     </View>
     <View>
+      <Name>Xmip.Operate.WorkProcessInstanceRecord</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Operate.WorkProcessInstanceRecord</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>WorkProcess</Label><Width>18</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Instance</Label><Width>38</Width></TableColumnHeader>
+          <TableColumnHeader><Label>State</Label><Width>10</Width></TableColumnHeader>
+          <TableColumnHeader><Label>WaitsFor</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Correlation</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Turns</Label><Width>5</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Values</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>WorkProcess</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Instance</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>WaitsFor</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>($_.Correlations | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '</ScriptBlock></TableColumnItem>
+              <TableColumnItem><PropertyName>Turns</PropertyName></TableColumnItem>
+              <TableColumnItem><ScriptBlock>($_.Values | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '</ScriptBlock></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>Xmip.Operate.WorkProcessInstanceRecord.Opened</Name>
+      <ViewSelectedBy>
+        <TypeName>Xmip.Operate.WorkProcessInstanceRecord</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem><PropertyName>Instance</PropertyName></ListItem>
+              <ListItem><PropertyName>WorkProcess</PropertyName></ListItem>
+              <ListItem><PropertyName>Node</PropertyName></ListItem>
+              <ListItem><PropertyName>State</PropertyName></ListItem>
+              <ListItem><PropertyName>WaitsFor</PropertyName></ListItem>
+              <ListItem><PropertyName>Until</PropertyName></ListItem>
+              <ListItem><Label>Correlation</Label><ScriptBlock>($_.Correlations | ForEach-Object { "$($_.Key): $($_.Value)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+              <ListItem><PropertyName>Code</PropertyName></ListItem>
+              <ListItem><PropertyName>Reason</PropertyName></ListItem>
+              <ListItem><PropertyName>FailedBy</PropertyName></ListItem>
+              <ListItem><Label>Values</Label><ScriptBlock>($_.Values | ForEach-Object { "$($_.Key) = $($_.Value)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+              <ListItem><PropertyName>Turns</PropertyName></ListItem>
+              <ListItem><Label>History</Label><ScriptBlock>($_.History | ForEach-Object { "$($_.At.ToString('o')) $($_.What) $($_.Message) $($_.Journey)" }) -join [Environment]::NewLine</ScriptBlock></ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
       <Name>Xmip.Surface.DeadMessageOperation</Name>
       <ViewSelectedBy>
         <TypeName>Xmip.Surface.DeadMessageOperation</TypeName>

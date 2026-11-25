@@ -198,6 +198,27 @@ opens a Journey for each match and takes it out of the queue, once; a
 Message that still matches nothing stays, and the Replay is refused in
 words. The node audits it as `dead-message.replay`.
 
+`Get-XmipInstance` lists the Instances of each Work Process (runtime-model.md
+section 22; ADR-0066, amendment 2026-11-25), as `xmip instances` does: a
+node publishes the newest twenty of each Work Process it runs.
+`Get-XmipInstance [-WorkProcess] <name> -Location <scope> -Instance <id>`
+emits each `WorkProcessInstanceRecord` — its node, Work Process and
+identifier, its state (running, waiting, failed, dismissed or completed),
+what it waits for and until when, each Correlation it holds a key in, why it
+failed and the Journey whose turn failed it, its own values, its turns and
+its history of Messages — a table lists them and `Format-List` opens one;
+an Instance asked for and not listed is refused in words.
+`Get-XmipInstance -FailedMessage` emits each `FailedMessageRecord` that
+failed in a Work Process's queue, how many wait in each said with
+`-Verbose`. An Instance takes no act of its own: the Message that failed it
+is retried or dismissed by `Get-XmipScope -Scope <node scope> -Journey <id>
+-Retry|-Dismiss` (below), at the node that runs the Work Process, or piped:
+`Get-XmipInstance -FailedMessage | Get-XmipScope -Retry`; Retry takes its
+turn again from where the Instance stood, Dismiss ends the Instance. Which
+Instances a call selects is the runtime's (`operate::surface::instance_query`,
+asked through `WorkProcessInstanceQuery` in `Xmip.Surface`), the one `xmip
+instances` and the GUI's Instances view ask too.
+
 Every act above, and `-Retry` and `-Dismiss` below, is asked at the door of
 the node the module reaches: written to Xmip Storage with who asked, and
 taken by the node that owns what it acts on (ADR-0014, amendment
@@ -279,8 +300,13 @@ runtime's words (`FailedMessageError`) — the sentences `xmip message` says
 `Get-XmipScope -Scope <Send Port or node scope> -Journey <id>
 -Retry|-Dismiss -Who <name>`, with `-WhatIf` and
 `-Confirm`, emits the `MessageOperation`; a row piped from `Get-XmipScope`
-gives the scope. Retry sends it again, its tries begun anew; Dismiss writes
-it Dismissed and takes it out of its Port's queue. One scope, no wildcard,
+gives the scope, and a failed Message piped from `Get-XmipScope
+-FailedMessage` or `Get-XmipInstance -FailedMessage` its node and Journey.
+Retry sends it again, its tries begun anew; Dismiss writes
+it Dismissed and takes it out of its Port's queue. A Message that failed at a
+Work Process (`Get-XmipInstance -FailedMessage`) is acted on at the node
+that runs it: Retry takes its turn again from where its Instance stood,
+Dismiss ends the Instance. One scope, no wildcard,
 or the act is refused in words. The node audits it as `message.retry` or
 `message.dismiss`.
 

@@ -125,7 +125,10 @@ public sealed class GetXmipHealthCommand : XmipSurfaceCommand
 /// <c>xmip message</c> lists them; <c>-Journey &lt;id&gt; -Retry</c> or
 /// <c>-Dismiss</c>, with -WhatIf and -Confirm, on the Send Port's scope or
 /// its node's, emits the <see cref="MessageOperation"/> <c>xmip
-/// message</c> renders.</para>
+/// message</c> renders. A Message that failed at a Work Process is acted on
+/// the same way at the node that runs it (runtime-model.md section 22;
+/// ADR-0066, amendment 2026-11-25), as <c>Get-XmipInstance</c> lists
+/// it.</para>
 /// </remarks>
 [Cmdlet(
     VerbsCommon.Get, "XmipScope",
@@ -147,9 +150,12 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     /// as xmip:///&lt;cluster&gt;/node/*.
     /// Omitted, the cluster the surface publishes. With -Journey, the one
     /// Send Port's scope where its Message is said to have failed, such as
-    /// xmip:///&lt;cluster&gt;/node/&lt;node&gt;/send/&lt;Port&gt;, or its node's.</para>
+    /// xmip:///&lt;cluster&gt;/node/&lt;node&gt;/send/&lt;Port&gt;, or its node's;
+    /// for a Message that failed at a Work Process, the node that runs it. A
+    /// failed Message piped in gives its Node.</para>
     /// </summary>
     [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
+    [Alias("Node")]
     [SupportsWildcards]
     public string[] Scope { get; set; } = [];
 
@@ -192,24 +198,29 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
 
     /// <summary>
     /// <para type="description">The Journey of a Message that failed, by its identifier,
-    /// as its Send Port's row says it: the one -Retry or -Dismiss acts on.</para>
+    /// as its Send Port's row or Get-XmipInstance says it: the one -Retry or
+    /// -Dismiss acts on. A failed Message piped in gives its own.</para>
     /// </summary>
-    [Parameter(Mandatory = true, ParameterSetName = RetrySet)]
-    [Parameter(Mandatory = true, ParameterSetName = DismissSet)]
+    [Parameter(
+        Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = RetrySet)]
+    [Parameter(
+        Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = DismissSet)]
     public string? Journey { get; set; }
 
     /// <summary>
     /// <para type="description">Send the Message again, its tries begun anew,
     /// from the end of its Send Port's queue — or from its place, where it
-    /// blocks its sequence.</para>
+    /// blocks its sequence. At a Work Process, its turn is taken again from
+    /// where its Instance stood.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = RetrySet)]
     public SwitchParameter Retry { get; set; }
 
     /// <summary>
     /// <para type="description">Give the Message up: written Dismissed, its
-    /// history, Message and Stream kept, and taken out of its Send Port's
-    /// queue.</para>
+    /// history, Message and Stream kept, and taken out of its Send Port's or
+    /// Work Process's queue; at a Work Process, the Instance it failed
+    /// ends.</para>
     /// </summary>
     [Parameter(Mandatory = true, ParameterSetName = DismissSet)]
     public SwitchParameter Dismiss { get; set; }
@@ -321,19 +332,19 @@ public sealed class GetXmipScopeCommand : XmipSurfaceCommand
     }
 
     // An act names one Message on one scope, no wildcard: the node that sends
-    // its Send Port, or the Port's scope beneath it.
+    // its Send Port or runs its Work Process, or the Port's scope beneath it.
     private void Act(MessageAct act)
     {
         string journey = Journey ?? string.Empty;
-        string target = $"the Message of the Journey {journey} sent at {string.Join(", ", Scope)}";
+        string target = $"the Message of the Journey {journey} at {string.Join(", ", Scope)}";
 
         if (Scope is not [var scope] || WildcardPattern.ContainsWildcardCharacters(scope))
         {
             Refuse(new ErrorRecord(
                 new ArgumentException(
                     $"REFUSED: to {MessageOperation.Word(act)} {target}, name one scope: the "
-                    + "Send Port's, such as xmip:///<cluster>/node/<node>/send/<Port>, or its "
-                    + "node's."),
+                    + "Send Port's, such as xmip:///<cluster>/node/<node>/send/<Port>, or the "
+                    + "node's that sends it or runs its Work Process."),
                 "XmipMessageScopeRefused",
                 ErrorCategory.InvalidArgument,
                 target));

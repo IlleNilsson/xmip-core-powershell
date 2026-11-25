@@ -34,6 +34,7 @@
         'Get-XmipEventSubscription'
         'Get-XmipSubscription'
         'Get-XmipDeadMessage'
+        'Get-XmipInstance'
         'Set-XmipSecret'
         'Get-XmipReport'
     )

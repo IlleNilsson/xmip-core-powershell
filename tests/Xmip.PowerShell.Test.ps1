@@ -1434,6 +1434,107 @@ Describe 'Get-XmipDeadMessage lists, opens and replays the Dead Message Queues' 
     }
 }
 
+Describe 'Get-XmipInstance lists the Instances of each Work Process and opens one' {
+    # runtime-model.md section 22; ADR-0066, amendment 2026-11-25: one cmdlet
+    # for the noun; an Instance takes no act, a Message that failed at its
+    # Work Process is retried or dismissed by Get-XmipScope -Journey.
+    BeforeAll {
+        $script:Place = Join-Path -Path $TestDrive -ChildPath 'instances'
+        $script:Published = Join-Path $script:Place "$($script:Cluster.Name)-snapshot.xmip"
+        New-Item -ItemType Directory -Path $script:Place | Out-Null
+
+        Set-Content -LiteralPath $script:Published -Value @(
+            "node = `"$($script:Cluster.Scope)`""
+            '[[work_process_instances]]'
+            "node = `"$($script:At[0])`""
+            'work_process = "Order in parts"'
+            'failed_count = 1'
+            '[[work_process_instances.instances]]'
+            'instance = "i-1"'
+            'state = "waiting"'
+            'waits_for = "message or time"'
+            'until_unix_nanos = 9000000000'
+            'correlations = [["Order", "A-1001"]]'
+            'values = [["Ordered", "3"], ["Delivered", "1"]]'
+            'turns = 2'
+            'updated_unix_nanos = 5000000000'
+            '[[work_process_instances.instances.history]]'
+            'at_unix_nanos = 1000000000'
+            'what = "started"'
+            'message = "m-1"'
+            'journey = "j-0"'
+            '[[work_process_instances.instances]]'
+            'instance = "i-2"'
+            'state = "failed"'
+            'code = "offline"'
+            'reason = "the unit cannot reach its stock"'
+            'failed_by = "j-1"'
+            'turns = 4'
+            'updated_unix_nanos = 4000000000'
+            '[[work_process_instances.failed]]'
+            'journey = "j-1"'
+            'sequence = 7'
+            'reason = "Order in parts threw offline"'
+            '[[work_process_instances]]'
+            "node = `"$($script:At[1])`""
+            'work_process = "Returns"'
+            'failed_count = 0'
+        )
+    }
+
+    It 'lists each Instance as the record, by Work Process and where, with two views' {
+        [object[]] $listed = @(Get-XmipInstance -Snapshot $script:Published)
+
+        $listed.Count | Should -Be 2
+        $listed[0] | Should -BeOfType ([Xmip.Operate.WorkProcessInstanceRecord])
+        $listed.Instance | Should -Be @('i-1', 'i-2')
+        $listed[0].Values[1].Value | Should -Be '1'
+        @(Get-XmipInstance -Snapshot $script:Published -WorkProcess 'Returns').Count |
+            Should -Be 0
+        @(Get-XmipInstance -Snapshot $script:Published -Location $script:At[1]).Count |
+            Should -Be 0
+        @((Get-FormatData -TypeName 'Xmip.Operate.WorkProcessInstanceRecord').
+                FormatViewDefinition).Count | Should -Be 2
+    }
+
+    It 'opens one Instance with its values and its history of Messages' {
+        $one = Get-XmipInstance -Snapshot $script:Published -Instance 'i-1'
+
+        $one.Correlations[0].Value | Should -Be 'A-1001'
+        $one.History[0].What | Should -Be 'started'
+        ($one | Format-List | Out-String) | Should -BeLike '*Delivered = 1*'
+
+        $refusal = {
+            Get-XmipInstance -Snapshot $script:Published -Instance 'none' -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $refusal.FullyQualifiedErrorId | Should -BeLike 'XmipInstanceNotFound*'
+    }
+
+    It 'lists the Messages that failed in a queue, which Get-XmipScope retries' {
+        [object[]] $failed = @(Get-XmipInstance -Snapshot $script:Published -FailedMessage)
+
+        $failed.Journey | Should -Be @('j-1')
+        $failed[0] | Should -BeOfType ([Xmip.Operate.FailedMessageRecord])
+        (Get-Command -Name Get-XmipInstance).Parameters.Keys | Should -Not -Contain 'Retry'
+
+        $declined = {
+            Get-XmipScope -Snapshot $script:Published -Scope $failed[0].Node -Journey 'j-1' `
+                -Retry -Confirm:$false -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $declined.Exception.Message | Should -Be ([Xmip.Surface.SnapshotOperator]::NotActed)
+    }
+
+    It 'pipes a failed Message into Get-XmipScope, which takes its Node and Journey' {
+        $piped = {
+            Get-XmipInstance -Snapshot $script:Published -FailedMessage |
+                Get-XmipScope -Snapshot $script:Published -Dismiss -Confirm:$false `
+                    -ErrorAction Stop
+        } | Should -Throw -PassThru
+        $piped.Exception.Message | Should -Be ([Xmip.Surface.SnapshotOperator]::NotActed)
+        $piped.TargetObject | Should -Be "the Message of the Journey j-1 at $($script:At[0])"
+    }
+}
+
 Describe 'Get-XmipScope lists the Messages that failed and retries or dismisses one' {
     # runtime-model.md section 13: a Send Port's row says the last Message
     # that failed there; Retry and Dismiss are parameters on the scope's
