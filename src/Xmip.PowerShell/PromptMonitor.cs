@@ -267,6 +267,9 @@ public static class PromptMonitor
         Figures figures = surface.MessagePath();
         FigureFlow flow = _watch.See(figures, DateTimeOffset.UtcNow, index.Revision);
         int beside = Volatile.Read(ref _beside);
-        Say(generation, SegmentRender.Render(index, figures, flow, _watch.Before, beside));
+        // At the cluster, the prompt shows it as every surface does: its short
+        // name (ADR-0028, amendment 2026-11-28).
+        ClusterNamed cluster = ClusterNamed.Of(ClusterSurfaces.NameOf(surface), surface);
+        Say(generation, SegmentRender.Render(index, figures, flow, _watch.Before, beside, cluster));
     }
 }

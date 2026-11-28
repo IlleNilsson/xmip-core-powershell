@@ -31,6 +31,11 @@ public static class SegmentRender
     /// posh-git's own ≡ at the end when every stage is fine and nothing is
     /// retrying or failed — the cluster is square, as the branch is.
     /// <para>
+    /// <paramref name="cluster"/> is the cluster as every surface shows it:
+    /// at the cluster, the segment names it so, its short name where its
+    /// publisher says one (ADR-0028, amendment 2026-11-28).
+    /// </para>
+    /// <para>
     /// <paramref name="beside"/> is how many clusters are rolling that this
     /// prompt is not following. The prompt reads one publication — a mood or a
     /// sum over two clusters would be at a scope in neither tree — so where
@@ -69,7 +74,8 @@ public static class SegmentRender
         Figures figures,
         FigureFlow flow,
         FigureFlow? before = null,
-        int beside = 0)
+        int beside = 0,
+        ClusterNamed? cluster = null)
     {
         ArgumentNullException.ThrowIfNull(figures);
         ArgumentNullException.ThrowIfNull(flow);
@@ -90,7 +96,11 @@ public static class SegmentRender
         // R, P and S are the stage letters and never a name's first letter:
         // what a cluster or a node is called says nothing about what it does.
         List<XmipPromptPart> parts = [new XmipPromptPart("[", ConsoleColor.Yellow)];
-        string name = At(index);
+        string place = At(index);
+
+        // At the cluster, the name every surface shows for it: its short name
+        // where its publisher says one (ClusterNamed). A node is its own name.
+        string name = cluster is not null && place == cluster.Name ? cluster.Shown : place;
 
         if (name.Length > 0)
         {

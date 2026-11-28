@@ -30,6 +30,8 @@ probe's own `ModuleProbed` — a library it cannot load refused with its
 through `xmip_module_probe_v1` (ADR-0012, amendment 2026-11-17), the lines
 the module logged on the verbose stream. Five read a
 running Xmip: `Get-XmipHealth -Scope`, each record with `From` and `To`,
+`Cluster`, the cluster as every surface shows it, its short name, and
+`ClusterTitle`, what its tooltip carries (ADR-0028, amendment 2026-11-28),
 and `Source`, where it was read — at a node that gathers its cluster's view,
 a node declaring the monitoring role, which `-Local` and `-Remote` then
 answer for the whole cluster, who gathered it and how many of its nodes it

@@ -360,6 +360,15 @@ scope = "$scope/process"
         $atOneTest = [Xmip.Surface.ScopeIndex]::Build($oneTest, $counts, 5, 'test')
         [Xmip.PowerShell.SegmentRender]::At($atOneTest) | Should -Be $cluster
 
+        # At the cluster, the short name its publisher says; a node is its own
+        # name (ADR-0028, amendment 2026-11-28).
+        $naming = [Xmip.Operate.PublishedNaming]::new('Ab', '')
+        $named = [Xmip.Surface.ClusterNamed]::new($cluster, $naming)
+        [Xmip.PowerShell.SegmentRender]::Render($atOneTest, $calm, $flow, $null, 0, $named).Text |
+            Should -Be '[Ab ≡ R:12 P:11 S:10]'
+        [Xmip.PowerShell.SegmentRender]::Render($atNode, $calm, $flow, $null, 0, $named).Text |
+            Should -Be "[$node ≡ R:12 P:11 S:10]"
+
         [Xmip.Operate.HealthRecord[]] $twoNodes = @(
             $leaf::new("$here/receive/a", 'Fine', 0, '', $seen)
             $leaf::new("$($script:Cluster.Scope)/node/$($script:Cluster.Nodes[2])/send/b",
@@ -753,6 +762,21 @@ Describe 'The cmdlets read the surface xmip reads' {
         [object[]] $records = @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///*')
 
         $records.Count | Should -Be 5
+    }
+
+    It 'says the cluster as every surface shows it, its short name and its tooltip' {
+        # ADR-0028, amendment 2026-11-28: the runtime's rule, read through
+        # Xmip.Surface; the module writes none of it.
+        [string] $named = Join-Path $TestDrive 'named.xmip'
+        Set-Content -LiteralPath $named -Value (
+            (Get-Content -LiteralPath $script:Fixture -Raw) +
+            "`n[cluster]`nshort_name = `"Ab`"`nfile = `"c/a-file.xmip`"`n")
+        [object[]] $records = @(Get-XmipHealth -Snapshot $named -Scope 'xmip:///')
+
+        $records[0].Cluster | Should -Be 'Ab'
+        $records[0].ClusterTitle | Should -BeLike 'a-file · short name Ab*from c/a-file.xmip'
+        @(Get-XmipHealth -Snapshot $script:Fixture -Scope 'xmip:///')[0].ClusterTitle |
+            Should -Not -BeLike '*short name*' -Because 'a publisher saying nothing shows the name'
     }
 
     It 'says From and To on every record and row, in the runtime''s words' {
