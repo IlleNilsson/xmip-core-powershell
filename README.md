@@ -501,16 +501,17 @@ dotnet build module/core/operation/powershell/src/Xmip.PowerShell
 Import-Module posh-git
 Import-Module ./Xmip/Xmip.psd1
 Import-Module ./module/core/operation/powershell/src/Xmip.PowerShell/bin/Debug/net11.0/Xmip.PowerShell.psd1
-Start-XmipTest -Suite System -Cluster CL1 -Test RoundTrip `
+Start-XmipTest -Suite System -Test RoundTrip `
     -Nodes RX1, PX1, TX1 `
     -NodeRole @{ RX1 = 'receiving'; PX1 = 'processing'; TX1 = 'sending' }
 ```
 
-`CL1` and the three node names are arguments, nothing more: name them anything
-a file can be called. `RX1`, `PX1` and `TX1` are how the owner names nodes (ADR-0056,
-amendment 2026-11-12), a reminder to the person; what each does is the
-`-NodeRole` beside it, and Xmip never reads the name. `CL1` is written here only because the shipped
-`powershell.toml` follows that roll's snapshot.
+The three node names are arguments, nothing more: name them anything a
+file can be called. `RX1`, `PX1` and `TX1` are how the owner names nodes
+(ADR-0056, amendment 2026-11-12), a reminder to the person; what each does
+is the `-NodeRole` beside it, and Xmip never reads the name. The cluster's
+name is the Reference Environment's, the short name it declares, and the
+shipped `powershell.toml` follows that roll's snapshot.
 
 Press Enter after the import and the prompt is as it was, with no segment,
 until the roll publishes; a few seconds after the roll starts it says
@@ -524,10 +525,10 @@ the module always blocks its build, and it is `pwsh`, so
 segment to sit beside a repository's state; a console started with
 `-NoProfile` has skipped the profile that imports it.
 
-A roll started under another name is followed too: `Start-XmipTest` tells
-the prompt in its session which snapshot its roll publishes, so `-Cluster
-CL2` shows CL2 and not the CL1 the shipped document names (ADR-0052,
-amendment 2026-09-18). A roll started in another session is followed by
+`Start-XmipTest` tells the prompt in its session which snapshot its roll
+publishes, so the prompt follows the roll it started, whatever the shipped
+document names (ADR-0052, amendment 2026-09-18). A roll started in another
+session is followed by
 writing its file into `powershell.toml`. `PromptMonitor.Follow` takes a
 `SurfaceLine` as well as a snapshot: a node on this machine or another,
 stated as a cmdlet states it, so the session's prompt can follow the node
@@ -535,7 +536,7 @@ that gathers its cluster's view and show the cluster
 (`[Xmip.PowerShell.PromptMonitor]::Follow([Xmip.Surface.SurfaceLine]::new($null,
 $null, $null, 'xmip-<node>'))`).
 
-The executable reads the same file: `xmip show xmip:///CL1` from the cli's
+The executable reads the same file: `xmip show xmip:///<cluster>` from the cli's
 build directory answers with the same figures, because its `cli.toml`
 ships pointing at the same snapshot (ADR-0052, amendment 2026-09-18).
 

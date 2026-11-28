@@ -15,8 +15,7 @@
 # names no node and shows nothing, as posh-git outside a repository.
 #
 # As shipped, in a developer's clone: the System Tests roll the estate's own
-# walkthrough starts, which names its cluster CL1 only because a roll must be
-# given some name. Roll under another name and name that file below, or let
+# walkthrough starts, the Reference Environment's, named by its file; or let
 # Start-XmipTest tell this session. A deployment writes its own.
 Surface = "snapshot"
 
@@ -29,9 +28,10 @@ Surface = "snapshot"
 # shows no segment, never another file's figures. A relative path
 # is from the directory the module is loaded from, bin/Debug/net11.0 under
 # this project: eight levels up is the estate root, where a roll publishes
-# under .local-work/system-test. The file is named for the cluster the roll was
-# started as, so this line follows one particular roll and no other.
-Snapshot = "../../../../../../../../../.local-work/system-test/CL1-snapshot.xmip"
+# under .local-work/system-test. The file is named for the cluster the
+# Reference Environment names, its short name, so this line follows its roll
+# and no other; test/NodeName.Test.ps1 holds the name to that file.
+Snapshot = "../../../../../../../../../.local-work/system-test/CRE-snapshot.xmip"
 
 # The node on this machine to follow when Surface = "local": its local
 # endpoint, as its [operate] local names it; the same serves -Local. The node
